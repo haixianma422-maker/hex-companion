@@ -1,7 +1,8 @@
 """Compact, glanceable surfaces for champion selection and gameplay."""
 import tkinter as tk
 import os
-from .builds import six_item_reference
+from PIL import Image, ImageTk
+from .builds import recommended_items
 from .models import augment_label, sort_champions
 from .theme import (ACCENT, BG, GOLD, GRADES, GRADE_BACKGROUNDS, LINE, MUTED,
                     SURFACE, TEXT, TIER_BG, NEUTRAL_BG, Card, ScrollArea, button, configure_styles, label)
@@ -29,12 +30,33 @@ class CompanionPanel:
         self.width, self.height = 304, 480
         self.on_scan, self.on_settings, self.on_hide = on_scan, on_settings, on_hide
         self.on_preview = on_preview
+        self.hotkey_bindings = {'scan': 'F6', 'refresh': 'F7', 'toggle': 'F8'}
+        self.item_icons = None
+        self.icon_images = {}
         self.shell = Card(self.window, color=BG, padding=8, radius=20)
         self.shell.pack(fill='both', expand=True)
         self.inner = self.shell.body
         prepare_popup(self.window)
 
     label = staticmethod(label)
+
+    def set_hotkeys(self, bindings):
+        self.hotkey_bindings = dict(bindings)
+        if getattr(self, 'scan_button', None):
+            self._set(self.scan_button, text='识别海克斯  ' + bindings['scan'])
+
+    def _item_icon(self, item_id):
+        path = self.item_icons.path(item_id) if self.item_icons else None
+        if path is None:
+            return None
+        key = (item_id, str(path))
+        if key not in self.icon_images:
+            try:
+                with Image.open(path) as image:
+                    self.icon_images[key] = ImageTk.PhotoImage(image.convert('RGBA').resize((40, 40), Image.Resampling.LANCZOS), master=self.window)
+            except (OSError, ValueError):
+                return None
+        return self.icon_images[key]
 
     def button(self, parent, text, command, gold=False):
         return button(parent, text, command, primary=gold)
@@ -97,7 +119,7 @@ class CompanionPanel:
             caption = '查看选人预览' if state.stage == 'game' else '查看局内预览'
             button(actions, caption, self.on_preview, primary=True).pack(side='left')
         elif state.stage == 'game':
-            self.scan_button = button(actions, '识别海克斯  F6', self.on_scan, primary=True)
+            self.scan_button = button(actions, '识别海克斯  ' + self.hotkey_bindings['scan'], self.on_scan, primary=True)
             self.scan_button.pack(side='left')
         else:
             label(actions, '随客户端自动更新', MUTED, 9).pack(side='left', pady=8)
@@ -244,21 +266,28 @@ class CompanionPanel:
             hint = label(detail, '', MUTED, 9, anchor='w')
             hint.pack(fill='x')
             self.augment_views.append((card, badge, name, hint))
-        self.build_heading = self.section(parent, '推荐出装', '六件套 · 含鞋子')
+        self.build_heading = self.section(parent, '推荐出装', '三件核心＋鞋子')
         self.build_card = Card(parent, padding=0)
         self.build_card.pack(fill='x')
         self.build_views = []
+        self.icon_views = []
         self.build_card.body.configure(bg=BG)
         self.build_card.back.place_forget()
-        for index in range(6):
+        for index in range(4):
             row = Card(self.build_card.body, padding=7, radius=14)
-            row.grid(row=index // 3, column=index % 3, sticky='nsew', padx=(0, 4) if index % 3 < 2 else (0, 0), pady=(0, 6))
+            row.grid(row=index // 2, column=index % 2, sticky='nsew', padx=(0, 6) if index % 2 == 0 else (0, 0), pady=(0, 6))
             number = label(row.body, f'{index + 1:02}', ACCENT, 8, anchor='w')
             number.pack(fill='x')
-            name = label(row.body, '', TEXT, 9, anchor='w', justify='left', wraplength=78, height=3)
+            icon = label(row.body, '◇', GOLD, 20, width=40, height=40)
+            # Pixel dimensions are fixed by an empty PhotoImage, including offline fallback.
+            icon.placeholder = tk.PhotoImage(master=self.window, width=40, height=40)
+            icon.configure(image=icon.placeholder, compound='center')
+            icon.pack(pady=(4, 5))
+            self.icon_views.append(icon)
+            name = label(row.body, '', TEXT, 9, anchor='center', justify='center', wraplength=108, height=2)
             name.pack(fill='x', pady=(3, 0))
             self.build_views.append((row, name, number))
-        for column in range(3):
+        for column in range(2):
             self.build_card.body.columnconfigure(column, weight=1, uniform='items')
         self.build_note = label(parent, '', MUTED, 9, wraplength=266, anchor='w', justify='left', height=2)
         self.build_note.pack(fill='x', pady=(2, 4))
@@ -283,15 +312,20 @@ class CompanionPanel:
             self._set(name_label, text=name)
             hint = ('已匹配' if known else '暂无评级') if augment else ('待确认' if match and match.text else '等待识别')
             self._set(hint_label, text=('左侧', '中间', '右侧')[slot] + '  ·  ' + hint)
-        items = six_item_reference(data)
+        items = recommended_items(data)
         for index, (_, name, number) in enumerate(self.build_views):
             item = items[index] if index < len(items) else None
             self._set(name, text=item['name'] if item else '等待装备数据', fg=TEXT if item else MUTED)
             self._set(number, text=f'{index + 1:02}  {item["role"]}' if item else f'{index + 1:02}')
-        caption = '六件套 · 含鞋子' if any(item['role'] == '鞋子' for item in items) else '六件套参考'
-        self._set(self.build_heading, text=caption if len(items) == 6 else f'{len(items)}/6 已有数据')
+            icon = self.icon_views[index]
+            picture = self._item_icon(item['id']) if item else None
+            desired = picture or icon.placeholder
+            if getattr(icon, 'picture', None) is not desired:
+                icon.configure(image=desired, text='' if picture else '◇')
+                icon.picture = desired
+        self._set(self.build_heading, text='三件核心＋鞋子' if len(items) == 4 else f'{len(items)}/4 已有数据')
         mode_verified = (data or {}).get('build_mode_verified') and (data or {}).get('build_mode') == 'aram-mayhem'
-        self._set(self.build_note, text=('海克斯大乱斗 · OP.GG 模式出装\n核心＋鞋子＋后续装备参考' if mode_verified else
+        self._set(self.build_note, text=('海克斯大乱斗 · OP.GG 模式出装\n保留来源前三件核心装备与鞋子' if mode_verified else
                                        'OP.GG 装备参考\n模式尚未校验 · 请刷新资料'))
 
     def show_at(self, anchor):

@@ -8,6 +8,9 @@ root = Path(SPECPATH)
 datas = [(str(root / 'data' / filename), 'data') for filename in (
     'champions.json', 'augment_display_tags.json', 'item_catalog.json', 'tier_mapping_evidence.json')]
 seed = Path(os.environ.get('HEX_COMPANION_SEED_DIR', root / 'data'))
+for path in (seed / 'item-icons').rglob('*'):
+    if path.is_file() and path.suffix in ('.png', '.json'):
+        datas.append((str(path), 'data/' + path.parent.relative_to(seed).as_posix()))
 for path in (seed / 'heroes').glob('*.json'):
     row = json.loads(path.read_text(encoding='utf-8'))
     if row.get('build_mode_verified') and row.get('build_mode') == 'aram-mayhem':

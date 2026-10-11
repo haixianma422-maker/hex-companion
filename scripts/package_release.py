@@ -3,12 +3,15 @@ import hashlib
 import json
 import shutil
 import zipfile
+import argparse
 from pathlib import Path
 
 from PyInstaller.archive.readers import CArchiveReader
 
 ROOT = Path(__file__).resolve().parents[1]
-exe = ROOT / 'dist/HexCompanion.exe'
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--exe', type=Path, default=ROOT / 'dist/HexCompanion.exe')
+exe = parser.parse_args().exe.resolve()
 check = json.loads((ROOT / 'artifacts/packaged_desktop_check.json').read_text(encoding='utf-8'))
 assert check['status'] == 'passed' and check['frozen'] and check['clean_exit']
 assert (ROOT / 'artifacts/packaged_desktop_check.json').stat().st_mtime >= exe.stat().st_mtime, 'Run acceptance on the latest EXE first'
@@ -45,7 +48,7 @@ with zipfile.ZipFile(source, 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as arch
             continue
         if relative.parts[0] == 'artifacts' and path.name not in evidence:
             continue
-        if len(relative.parts) > 1 and relative.parts[0] not in {'aram_demo', 'tests', 'scripts', 'data', 'packaging', 'artifacts'}:
+        if len(relative.parts) > 1 and relative.parts[0] not in {'aram_demo', 'tests', 'scripts', 'data', 'packaging', 'artifacts', 'docs'}:
             continue
         archive.write(path, 'opgg-aram-demo/' + relative.as_posix())
 shutil.copyfile(source, ROOT.parent / 'opgg-aram-demo-source.zip')

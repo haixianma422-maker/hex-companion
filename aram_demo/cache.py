@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from .models import Champion
-from .opgg import BASE, fetch_html, page_patch, parse_augments, parse_builds, parse_champions, parse_item_options, verify_mayhem_page
+from .opgg import BASE, fetch_html, page_patch, parse_augments, parse_builds, parse_champions, verify_mayhem_page
 
 
 class DataStore:
@@ -64,24 +64,11 @@ class DataStore:
             if not verify_mayhem_page(build_html, build_url):
                 raise ValueError('出装页面未通过海克斯大乱斗模式校验，保留原有缓存')
             builds = parse_builds(build_html)
-            items_url = f'{BASE}/{champion.slug}/items'
-            items_note = ''
-            try:
-                items_html = fetch_html(items_url)
-                if not verify_mayhem_page(items_html, items_url):
-                    raise ValueError('装备详情页未通过海克斯大乱斗模式校验')
-                options = parse_item_options(items_html)
-                # Keep the primary Mayhem build order. The item page supplies
-                # only later choices, never a replacement core or boots.
-                builds += [row for row in options if row.category == '后续装备']
-            except (OSError, ValueError) as exc:
-                items_note = f'后续装备暂未更新：{type(exc).__name__}'
             data = {'champion_id': champion.id, 'name': champion.name,
                     'augments': [asdict(x) for x in augments], 'builds': [asdict(x) for x in builds],
                     'source': augment_url, 'build_source': build_url,
                     'build_mode_verified': True, 'build_mode': 'aram-mayhem', 'tier_labels': {},
                     'build_verification': 'OP.GG Mayhem URL, page title and isAramMayhem=true; core from build page',
-                    'items_source': items_url, 'items_note': items_note,
                     'patch': page_patch(aug_html), 'fetched_at': datetime.now(timezone.utc).isoformat()}
             self._write(f'heroes/{champion.id}.json', data)
         self.last_error = ''

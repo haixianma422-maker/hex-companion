@@ -8,7 +8,9 @@ from tkinter import filedialog, messagebox, ttk
 
 from .companion_state import MAYHEM_QUEUES, PLAYING, SessionTracker
 from .bubble import CompanionBubble
-from .hotkeys import Hotkeys
+from .builds import recommended_items
+from .hotkeys import ACTION_NAMES, DEFAULT_HOTKEYS, Hotkeys, normalize_bindings
+from .item_icons import ItemIconCache
 from .lcu import ClientState, LCUClient, live_champion_id, validate_install_path
 from .models import Augment
 from .panel import CompanionPanel
@@ -53,11 +55,17 @@ class CompanionApp:
         self.dialog = None
         self.anchor = None
         self.tray = None
+        self.item_icons = ItemIconCache(store.root, store.seed_root)
+        self.icons_pending = False
+        self.icons_requested = None
         self.panel = CompanionPanel(root, self.scan, self.show_settings, self.hide,
                                     self.preview_next if preview else None)
         self.bubble = CompanionBubble(root, self.expand)
         self.hotkeys = Hotkeys(lambda: self.dispatch(self.scan), lambda: self.dispatch(self.refresh),
-                               lambda: self.dispatch(self.hide))
+                               lambda: self.dispatch(self.hide), on_toggle=lambda: self.dispatch(self.toggle),
+                               bindings=self.settings.get('hotkeys'))
+        self.panel.item_icons = self.item_icons
+        self.panel.set_hotkeys(self.hotkeys.bindings)
         self.root.protocol('WM_DELETE_WINDOW', self.close)
         if services:
             from .tray import Tray
@@ -158,12 +166,25 @@ class CompanionApp:
         self.data = self.store.hero(cid) if cid else None
         self.augments = [Augment(**a) for a in (self.data or {}).get('augments', [])]
         self.status = self.cache_status()
+        self.refresh_icons()
         if cid in self.champions and self.services and not self.preview:
             self.fetch_hero(cid)
 
     def cache_status(self):
         stamp = (self.data or {}).get('fetched_at', '')[:16].replace('T', ' ')
         return f'OP.GG 快照 · {stamp} UTC' if stamp else '等待英雄数据'
+
+    def refresh_icons(self):
+        if not self.services or self.preview or self.icons_pending:
+            return
+        ids = tuple(item['id'] for item in recommended_items(self.data))
+        if not ids or ids == self.icons_requested:
+            return
+        self.icons_pending, self.icons_requested = True, ids
+        def finished():
+            self.icons_pending = False
+            self.refresh_icons()
+        self.background(lambda: self.item_icons.ensure(ids), lambda _: self.present(), done=finished)
 
     def fetch_hero(self, cid):
         if cid in self.fetching:
@@ -177,6 +198,7 @@ class CompanionApp:
                 self.data = data
                 self.augments = [Augment(**a) for a in data.get('augments', [])]
                 self.status = self.cache_status()
+                self.refresh_icons()
                 self.present()
         self.background(lambda: self.store.refresh(hero), loaded, done=lambda: self.fetching.discard(cid))
 
@@ -309,9 +331,9 @@ class CompanionApp:
         recognized = sum(m.augment_id is not None for m in matches)
         self.scan_interval = AUTO_SCAN_INTERVAL if recognized else IDLE_SCAN_INTERVAL
         if recognized == 3:
-            self.status = '模拟预览 · 海克斯已识别' if self.preview else '海克斯已识别 · F6 重新识别'
+            self.status = '模拟预览 · 海克斯已识别' if self.preview else f'海克斯已识别 · {self.hotkeys.bindings["scan"]} 重新识别'
         elif recognized:
-            self.status = ('模拟预览 · ' if self.preview else '') + f'已匹配 {recognized}/3 · 其余待确认 · F6 重试'
+            self.status = ('模拟预览 · ' if self.preview else '') + f'已匹配 {recognized}/3 · 其余待确认 · {self.hotkeys.bindings["scan"]} 重试'
         else:
             self.status = ('模拟预览 · ' if self.preview else '') + '等待海克斯选项 · 设置中可手动修正'
         self.present()
@@ -322,7 +344,7 @@ class CompanionApp:
         self.ocr_epoch += 1
         self.manual_override = True
         self.matches = match_slots(texts, self.augments)
-        self.status = '手动修正已保留 · F6 恢复识别'
+        self.status = f'手动修正已保留 · {self.hotkeys.bindings["scan"]} 恢复识别'
         self.present()
 
     def hide(self):
@@ -334,10 +356,14 @@ class CompanionApp:
         self.present()
 
     def toggle(self):
+        if self.state.stage == 'hidden':
+            return
         self.collapsed = not self.collapsed
         self.present()
 
     def refresh(self):
+        self.icons_requested = None
+        self.refresh_icons()
         self.refresh_index()
         if self.state.champion_id:
             self.fetch_hero(self.state.champion_id)
@@ -361,6 +387,8 @@ class CompanionApp:
             self.dialog.lift()
             return
         dialog = self.dialog = tk.Toplevel(self.root)
+        self.hotkeys.set_paused(True)
+        dialog.bind('<Destroy>', lambda event: self.hotkeys.set_paused(False) if event.widget == dialog else None)
         dialog.title('海克斯随行 · 设置')
         dialog.configure(bg=BG)
         dialog.attributes('-topmost', True)
@@ -371,7 +399,7 @@ class CompanionApp:
         header = tk.Frame(dialog, bg=BG)
         header.pack(fill='x', padx=20, pady=(20, 14))
         label(header, '随行设置', TEXT, 16, True, anchor='w').pack(fill='x')
-        label(header, '调整识别方式与当前三张海克斯', MUTED, 10, anchor='w').pack(fill='x', pady=(4, 0))
+        label(header, '快捷键、识别方式与客户端连接', MUTED, 10, anchor='w').pack(fill='x', pady=(4, 0))
 
         # Fixed actions stay visible while the content tabs scroll independently.
         footer = tk.Frame(dialog, bg=BG)
@@ -382,26 +410,28 @@ class CompanionApp:
         actions.pack(fill='x')
         notebook = ttk.Notebook(dialog, style='Hex.TNotebook')
         notebook.pack(fill='both', expand=True, padx=20)
-        common, advanced = ScrollArea(notebook), ScrollArea(notebook)
+        common, advanced, shortcuts = ScrollArea(notebook), ScrollArea(notebook), ScrollArea(notebook)
         notebook.add(common, text='常用设置')
         notebook.add(advanced, text='识别与连接')
+        notebook.add(shortcuts, text='快捷键')
         connection = Card(common.body)
         connection.pack(fill='x', pady=(4, 10))
         phase = {'ChampSelect': '选人阶段', 'InProgress': '对局中', 'Lobby': '大厅',
                  'Disconnected': '等待客户端连接'}.get(self.state.phase, self.state.phase)
         label(connection.body, '模拟预览' if self.preview else phase, ACCENT, 11, True, anchor='w').pack(fill='x')
-        label(connection.body, 'F6 立即识别 · F7 刷新资料', MUTED, 9, anchor='w').pack(fill='x', pady=(5, 0))
+        label(connection.body, self.hotkeys.summary(), MUTED, 9, anchor='w', wraplength=350).pack(fill='x', pady=(5, 0))
         auto = tk.BooleanVar(value=self.auto)
         tk.Checkbutton(common.body, text='局内自动识别海克斯', variable=auto, bg=BG, fg=TEXT,
                        selectcolor=BG, activebackground=BG, activeforeground=ACCENT,
                        font=(FONT, 10), highlightcolor=ACCENT, cursor='hand2',
                        takefocus=True).pack(anchor='w')
-        label(common.body, '快速跟随海克斯刷新，F6 可立即重新识别。', MUTED, 9, anchor='w').pack(fill='x', pady=(2, 14))
+        scan_key = self.hotkeys.bindings['scan']
+        label(common.body, f'快速跟随海克斯刷新，{scan_key} 可立即重新识别。', MUTED, 9, anchor='w').pack(fill='x', pady=(2, 14))
 
         manual = Card(common.body)
         manual.pack(fill='x')
         label(manual.body, '手动修正三张海克斯', TEXT, 11, True, anchor='w').pack(fill='x')
-        label(manual.body, '只应用于当前英雄；按 F6 恢复自动识别。', MUTED, 9,
+        label(manual.body, f'只应用于当前英雄；按 {scan_key} 恢复自动识别。', MUTED, 9,
               anchor='w', justify='left', wraplength=350).pack(fill='x', pady=(6, 10))
         choices = []
         for slot, name in enumerate(('左侧', '中间', '右侧')):
@@ -436,6 +466,38 @@ class CompanionApp:
                 var.set(', '.join(map(str, region)))
         button(calibration.body, '恢复 16:9 预设', reset_regions).pack(anchor='w', pady=(8, 0))
         opened_revision = self.state.revision
+        shortcut_card = Card(shortcuts.body)
+        shortcut_card.pack(fill='x', pady=(4, 10))
+        label(shortcut_card.body, '全局快捷键', TEXT, 11, True, anchor='w').pack(fill='x')
+        label(shortcut_card.body, '点击输入框后按下组合键，也可直接填写。\n例如 F8、Ctrl+Alt+H；保存后立即生效。', MUTED, 9,
+              anchor='w', justify='left', wraplength=350).pack(fill='x', pady=(6, 12))
+        hotkey_vars = {}
+        shortcut_error = tk.StringVar()
+        for action, title in ACTION_NAMES.items():
+            row = tk.Frame(shortcut_card.body, bg=shortcut_card.body.cget('bg'))
+            row.pack(fill='x', pady=5)
+            label(row, title, TEXT, 10, anchor='w', width=12).pack(side='left')
+            value = hotkey_vars[action] = tk.StringVar(value=self.hotkeys.bindings[action])
+            entry = ttk.Entry(row, textvariable=value, style='Hex.TEntry', width=19, font=(FONT, 10))
+            entry.pack(side='right', fill='x', expand=True)
+            def capture(event, variable=value):
+                if event.keysym in ('Shift_L', 'Shift_R', 'Control_L', 'Control_R', 'Alt_L', 'Alt_R'):
+                    return 'break'
+                mods = [name for mask, name in ((4, 'Ctrl'), (0x20000, 'Alt'), (1, 'Shift')) if event.state & mask]
+                if event.keysym.startswith('F') and event.keysym[1:].isdigit() or mods and len(event.keysym) == 1:
+                    variable.set('+'.join(mods + [event.keysym.upper()]))
+                    return 'break'
+            entry.bind('<KeyPress>', capture)
+        label(shortcuts.body, '展开 / 收起会在面板与小浮标之间切换。\nEsc 保留为收起快捷键。设置窗口打开时暂停全局快捷键。', MUTED, 9,
+              wraplength=350, justify='left', anchor='w').pack(fill='x', pady=(0, 12))
+        label(shortcuts.body, '', color='#ff9c9c', size=9, textvariable=shortcut_error,
+              wraplength=350, justify='left', anchor='w').pack(fill='x', pady=(0, 8))
+        def reset_hotkeys():
+            for action, value in DEFAULT_HOTKEYS.items():
+                hotkey_vars[action].set(value)
+            shortcut_error.set('')
+        button(shortcuts.body, '恢复默认快捷键', reset_hotkeys).pack(anchor='w')
+        self.hotkey_vars = hotkey_vars
         def save():
             try:
                 recognizer = Recognizer([tuple(float(x.strip()) for x in var.get().split(',')) for var in regions])
@@ -449,16 +511,33 @@ class CompanionApp:
                 except ValueError as exc:
                     messagebox.showerror('安装目录无效', str(exc), parent=dialog)
                     return
-            self.recognizer, self.auto = recognizer, auto.get()
-            self.settings.update(regions=recognizer.regions, auto_recognize=self.auto)
+            old_bindings = dict(self.hotkeys.bindings)
+            try:
+                bindings = normalize_bindings({key: value.get() for key, value in hotkey_vars.items()})
+                self.hotkeys.configure(bindings)
+            except ValueError as exc:
+                shortcut_error.set(str(exc))
+                notebook.select(shortcuts)
+                return
+            settings = dict(self.settings, regions=recognizer.regions, auto_recognize=auto.get(), hotkeys=bindings)
             if path_changed:
-                self.settings['install_path'] = install_path.get()
-            self.store._write('settings.json', self.settings)
+                settings['install_path'] = install_path.get()
+            try:
+                self.store._write('settings.json', settings)
+            except OSError as exc:
+                self.hotkeys.configure(old_bindings)
+                shortcut_error.set('设置未能保存：' + str(exc))
+                notebook.select(shortcuts)
+                return
+            self.settings, self.recognizer, self.auto = settings, recognizer, auto.get()
+            self.panel.set_hotkeys(bindings)
             self.ocr_epoch += 1
             selected_choices = [v.get().strip() for v in choices]
             if selected_choices != initial_choices and opened_revision == self.state.revision:
                 self.apply_manual(selected_choices)
             dialog.destroy()
+            self.status = self.cache_status()
+            self.present()
             if path_changed:
                 self.refresh()
         def install():
@@ -481,6 +560,7 @@ class CompanionApp:
         button(actions, '保存并应用', save, primary=True).pack(side='right')
         common.bind_wheel()
         advanced.bind_wheel()
+        shortcuts.bind_wheel()
 
     def close(self):
         if self.closed:

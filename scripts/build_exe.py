@@ -5,11 +5,16 @@ import subprocess
 import sys
 import tempfile
 import os
+import shutil
+import argparse
 from pathlib import Path
 
 from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[1]
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--dist-dir', type=Path, default=ROOT / 'dist')
+options = parser.parse_args()
 assets = ROOT / 'packaging'
 assets.mkdir(exist_ok=True)
 image = Image.new('RGBA', (256, 256), (0, 0, 0, 0))
@@ -44,6 +49,8 @@ build_cache = ROOT / '.build-cache'
 build_cache.mkdir(exist_ok=True)
 seed = Path(tempfile.mkdtemp(prefix='release-seed-', dir=build_cache))
 (seed / 'heroes').mkdir()
+if (ROOT / 'data/item-icons').is_dir():
+    shutil.copytree(ROOT / 'data/item-icons', seed / 'item-icons')
 for path in (ROOT / 'data/heroes').glob('*.json'):
     row = json.loads(path.read_text(encoding='utf-8'))
     if row.get('build_mode_verified') and row.get('build_mode') == 'aram-mayhem':
@@ -51,5 +58,5 @@ for path in (ROOT / 'data/heroes').glob('*.json'):
 environment = dict(os.environ, HEX_COMPANION_SEED_DIR=str(seed))
 subprocess.run([sys.executable, '-m', 'PyInstaller', '--noconfirm',
                 '--workpath', str(ROOT / '.build-cache/pyinstaller'),
-                '--distpath', str(ROOT / 'dist'), str(ROOT / 'HexCompanion.spec')],
+                '--distpath', str(options.dist_dir.resolve()), str(ROOT / 'HexCompanion.spec')],
                cwd=ROOT, check=True, env=environment)

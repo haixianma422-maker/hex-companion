@@ -370,21 +370,59 @@ class CompanionAppTests(unittest.TestCase):
         self.assertEqual(self.app.panel.window.winfo_height(), 780)
         self.assertIs(self.app.panel.content, content)
 
-    def test_six_build_slots_reuse_widgets_when_data_becomes_incomplete(self):
+    def test_four_build_slots_reuse_widgets_when_data_becomes_incomplete(self):
         import copy
         self.app.on_client_state(ClientState('InProgress', 222, queue_id=3270))
         self.root.update()
         views = tuple(self.app.panel.build_views)
-        self.assertEqual(len(views), 6)
-        self.assertIn('饮血剑', self.app.panel.content_text())
+        self.assertEqual(len(views), 4)
+        self.assertNotIn('饮血剑', self.app.panel.content_text())
+        self.assertIn('三件核心＋鞋子', self.app.panel.content_text())
         data = copy.deepcopy(self.app.data)
         data['builds'] = []
         self.app.data = data
         self.app.present()
         self.root.update()
         self.assertEqual(tuple(self.app.panel.build_views), views)
-        self.assertEqual(sum(name.cget('text') == '等待装备数据' for _, name, _ in views), 6)
-        self.assertEqual(self.app.panel.build_heading.cget('text'), '0/6 已有数据')
+        self.assertEqual(sum(name.cget('text') == '等待装备数据' for _, name, _ in views), 4)
+        self.assertEqual(self.app.panel.build_heading.cget('text'), '0/4 已有数据')
+
+    def test_hotkey_toggle_can_restore_panel_after_collapse(self):
+        self.app.on_client_state(ClientState('InProgress', 222, queue_id=2400))
+        self.app.hotkeys.callbacks[3]()
+        self.app.events.get_nowait()[1]()
+        self.assertTrue(self.app.bubble.visible)
+        self.assertFalse(self.app.panel.visible)
+        self.app.hotkeys.callbacks[3]()
+        self.app.events.get_nowait()[1]()
+        self.assertTrue(self.app.panel.visible)
+        self.assertFalse(self.app.bubble.visible)
+
+    def test_custom_hotkeys_save_and_reload_with_matching_button_caption(self):
+        with tempfile.TemporaryDirectory() as directory:
+            self.app.store = DataStore(Path(directory))
+            self.app.panel.on_preview = None
+            self.app.on_client_state(ClientState('InProgress', 222, queue_id=2400))
+            self.app.show_settings()
+            self.app.hotkey_vars['scan'].set('Ctrl+Alt+J')
+            self.app.hotkey_vars['toggle'].set('Ctrl+Alt+H')
+            next(w for w in self.settings_widgets() if isinstance(w, tk.Button) and w.cget('text') == '保存并应用').invoke()
+            saved = self.app.store.read('settings.json')['hotkeys']
+            self.assertEqual(saved['toggle'], 'Ctrl+Alt+H')
+            self.assertIn('Ctrl+Alt+J', self.app.panel.scan_button.cget('text'))
+            from aram_demo.hotkeys import Hotkeys
+            reloaded = Hotkeys(lambda: None, lambda: None, lambda: None, bindings=saved)
+            self.assertEqual(reloaded.bindings, saved)
+
+    def test_duplicate_hotkey_keeps_settings_open_and_does_not_save(self):
+        with tempfile.TemporaryDirectory() as directory:
+            self.app.store = DataStore(Path(directory))
+            self.app.show_settings()
+            self.app.hotkey_vars['toggle'].set('F6')
+            next(w for w in self.settings_widgets() if isinstance(w, tk.Button) and w.cget('text') == '保存并应用').invoke()
+            self.assertTrue(self.app.dialog.winfo_exists())
+            self.assertIsNone(self.app.store.read('settings.json'))
+            self.assertEqual(self.app.hotkeys.bindings['toggle'], 'F8')
 
     def test_auto_detection_resumes_within_half_second_after_previous_result(self):
         self.app.on_client_state(ClientState('InProgress', 222, queue_id=3270))

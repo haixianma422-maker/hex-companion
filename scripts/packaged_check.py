@@ -56,18 +56,35 @@ def run(report_path):
             app.accept_matches(matches)
             root.update()
             assert app.panel.visible and root.state() == 'withdrawn'
+            assert len(app.panel.build_views) == 4
+            assert all(getattr(icon, 'picture', None) is not icon.placeholder for icon in app.panel.icon_views), 'Bundled item icons missing'
             app.hide()
             root.update()
             assert app.bubble.visible and not app.panel.visible
             app.expand()
             root.update()
             assert app.panel.visible and not app.bubble.visible
-            store._write('settings.json', {'auto_recognize': False})
-            assert store.read('settings.json') == {'auto_recognize': False}
+            custom = {'scan': 'Ctrl+Alt+F10', 'refresh': 'Ctrl+Alt+F11', 'toggle': 'Ctrl+Alt+F12'}
+            app.hotkeys.configure(custom)
+            assert app.hotkeys.bindings == custom and len(app.hotkeys.registered) == 3
+            ctypes.windll.user32.PostThreadMessageW(app.hotkeys.thread.native_id, 0x0312, 3, 0)
+            deadline = time.monotonic() + 2
+            while not app.collapsed and time.monotonic() < deadline:
+                root.update()
+                time.sleep(.02)
+            assert app.collapsed and app.bubble.visible
+            ctypes.windll.user32.PostThreadMessageW(app.hotkeys.thread.native_id, 0x0312, 3, 0)
+            deadline = time.monotonic() + 2
+            while app.collapsed and time.monotonic() < deadline:
+                root.update()
+                time.sleep(.02)
+            assert app.panel.visible and not app.bubble.visible
+            store._write('settings.json', {'auto_recognize': False, 'hotkeys': custom})
+            assert store.read('settings.json')['hotkeys'] == custom
             report.update(status='passed', champions=len(store.champions()),
                           ocr=[{'text': m.text, 'augment_id': m.augment_id} for m in matches],
                           mayhem_build_verified=True, tray_visible=True,
-                          hotkeys=app.hotkeys.status, panel_bubble_toggle=True,
+                          hotkeys=app.hotkeys.status, native_hotkey_toggle=True, item_icons=4, source_build_slots=4, panel_bubble_toggle=True,
                           writable_cache_and_settings=True, tcl_version=root.tk.call('info', 'patchlevel'))
             app.close()
             assert not app.tray.icon.visible

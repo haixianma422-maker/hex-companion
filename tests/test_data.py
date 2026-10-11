@@ -12,6 +12,11 @@ def flight(value):
 
 
 class DataTests(unittest.TestCase):
+    def recommended_items(self, *args):
+        function = getattr(self.module('builds'), 'recommended_items', None)
+        self.assertTrue(callable(function), 'Source-only core plus boots recommendation is not implemented')
+        return function(*args)
+
     def module(self, name):
         try:
             return importlib.import_module('aram_demo.' + name)
@@ -81,13 +86,14 @@ class DataTests(unittest.TestCase):
             ['$', 'section', None, {'children': [{'children': '装备'}, {'metaItem': {'id': 3, 'name': '后续装备'}}]}]])
         with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as tmp:
             store = cache.DataStore(Path(tmp))
-            with patch('aram_demo.cache.fetch_html', side_effect=[augment, build, items]):
+            with patch('aram_demo.cache.fetch_html', side_effect=[augment, build, items]) as fetch:
                 result = store.refresh(models.Champion(222, '暴走萝莉', 'jinx', 1, 1))
             self.assertTrue(result['build_mode_verified'])
             self.assertEqual(result['build_mode'], 'aram-mayhem')
             core = next(r for r in result['builds'] if r['category'] == '核心装备')
             self.assertEqual(core['items'][0]['id'], 1)
-            self.assertEqual(result['builds'][-1]['items'][0]['id'], 3)
+            self.assertEqual(fetch.call_count, 2)
+            self.assertFalse(any(row['category'] == '后续装备' for row in result['builds']))
 
     def test_failed_refresh_preserves_cache_bytes(self):
         cache = self.module('cache')
@@ -127,19 +133,19 @@ class DataTests(unittest.TestCase):
         self.assertEqual([r.category for r in rows], ['核心装备', '鞋子', '后续装备'])
         self.assertEqual(rows[2].items[0]['id'], 3)
 
-    def test_six_item_reference_keeps_core_adds_one_boot_and_filters_components(self):
-        from aram_demo.builds import six_item_reference
+    def test_mode_build_preserves_three_source_core_items_and_one_boot_only(self):
+        recommended_items = self.recommended_items
         data = {'builds': [{'category': '核心装备', 'items': [{'id': i, 'name': str(i)} for i in (1, 2, 3)]},
                            {'category': '鞋子', 'items': [{'id': 4, 'name': '鞋子'}]},
                            {'category': '后续装备', 'items': [{'id': i, 'name': str(i)} for i in (1, 9, 5, 6)]}]}
         catalog = {str(i): {'complete': i != 9, 'crit': 0, 'groups': []} for i in range(1, 10)}
-        items = six_item_reference(data, catalog)
-        self.assertEqual([i['id'] for i in items], [1, 2, 3, 4, 5, 6])
-        self.assertEqual(items[4]['role'], '后续参考')
-        self.assertEqual(len(six_item_reference({'builds': data['builds'][:1]}, catalog)), 3)
+        items = recommended_items(data, catalog)
+        self.assertEqual([i['id'] for i in items], [1, 2, 3, 4])
+        self.assertEqual([i['role'] for i in items], ['核心', '核心', '核心', '鞋子'])
+        self.assertEqual(len(recommended_items({'builds': data['builds'][:1]}, catalog)), 3)
 
-    def test_six_item_reference_filters_conflicts_and_excess_crit(self):
-        from aram_demo.builds import six_item_reference
+    def test_missing_core_slots_are_not_filled_from_popular_items(self):
+        recommended_items = self.recommended_items
         data = {'builds': [{'category': '核心装备', 'items': [{'id': 1, 'name': '核心'}]},
                            {'category': '鞋子', 'items': [{'id': 4, 'name': '鞋'}]},
                            {'category': '后续装备', 'items': [{'id': i, 'name': str(i)} for i in (2, 3, 5)]}]}
@@ -147,7 +153,11 @@ class DataTests(unittest.TestCase):
                    '2': {'complete': True, 'crit': 0, 'groups': ['last_whisper']},
                    '3': {'complete': True, 'crit': .25, 'groups': []},
                    '5': {'complete': True, 'crit': 0, 'groups': []}}
-        self.assertEqual([i['id'] for i in six_item_reference(data, catalog)], [1, 4, 5])
+        self.assertEqual([i['id'] for i in recommended_items(data, catalog)], [1, 4])
+
+    def test_boots_can_be_shown_even_when_source_core_is_unavailable(self):
+        recommended_items = self.recommended_items
+        self.assertEqual(recommended_items({'builds': [{'category': '鞋子', 'items': [{'id': 4, 'name': '鞋'}]}]}, {})[0]['id'], 4)
 
 
 if __name__ == '__main__':

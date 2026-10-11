@@ -24,4 +24,6 @@ inside the executable. The application uses the bundled PP-OCRv6 detection
 and recognition models; model inference does not require a network download.
 
 OP.GG snapshot files record their source URLs and retrieval timestamps.
+Equipment icons are Riot Games Data Dragon assets. Their version and source
+are recorded in data/item-icons/manifest.json in the source repository.
 This project is an independently developed personal companion.
