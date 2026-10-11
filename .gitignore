@@ -1,0 +1,22 @@
+.venv/
+__pycache__/
+*.pyc
+data/settings.json
+*.tmp
+.build-cache/
+dist/
+packaging/licenses/
+artifacts/
+.superpowers/
+design-system/
+.pytest_cache/
+.ruff_cache/
+.env
+.env.*
+!.env.example
+lockfile
+*.log
+*.zip
+*.exe
+# Runtime hero downloads are local. Add reviewed snapshots explicitly with git add -f.
+data/heroes/*.json

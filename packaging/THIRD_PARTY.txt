@@ -1,0 +1,27 @@
+Third-party components
+
+Dependency versions and license texts are in licenses/.
+The executable includes Python, Tcl/Tk, Pillow, RapidOCR, ONNX Runtime,
+OpenCV, NumPy, pystray and their runtime dependencies.
+
+Upstream source:
+Python: https://www.python.org/downloads/source/
+Tcl/Tk: https://www.tcl.tk/software/tcltk/
+Pillow: https://github.com/python-pillow/Pillow
+RapidOCR: https://github.com/RapidAI/RapidOCR
+ONNX Runtime: https://github.com/microsoft/onnxruntime
+OpenCV Python: https://github.com/opencv/opencv-python
+NumPy: https://github.com/numpy/numpy
+pystray: https://github.com/moses-palmer/pystray
+
+pystray 0.19.5 is distributed under LGPL-3.0.
+Its unmodified installed Python source is also included in licenses/pystray-source/.
+The companion source package includes its PyInstaller spec and build script,
+so developers can rebuild with a replacement dependency.
+
+OCR model origin/configuration is recorded in RapidOCR's default_models.yaml
+inside the executable. The application uses the bundled PP-OCRv6 detection
+and recognition models; model inference does not require a network download.
+
+OP.GG snapshot files record their source URLs and retrieval timestamps.
+This project is an independently developed personal companion.

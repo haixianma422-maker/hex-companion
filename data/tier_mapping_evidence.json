@@ -1,0 +1,57 @@
+{
+  "source": "https://op.gg/zh-cn/lol/modes/aram-mayhem/jinx/augments",
+  "verified_date": "2026-10-11",
+  "method": "Rendered browser badge inspection and source SVG glyph cross-check",
+  "mapping": {
+    "0": "S",
+    "1": "A",
+    "2": "B",
+    "3": "C",
+    "4": "D",
+    "5": "E"
+  },
+  "examples": [
+    {
+      "augment_id": 1356,
+      "name": "暴击飞弹",
+      "raw_tier": 0,
+      "badge": "S",
+      "glyph_path": "M15 6.5v1.75h-2V7.5l-.5-.5h-1l-.5.5v1l.5.5h2l1.5 1.5v3L13.5 15h-3L9 13.5v-1.75h2v.75l.5.5h1l.5-.5v-1l-.5-.5h-2L9 9.5v-3L10.5 5h3z"
+    },
+    {
+      "augment_id": 1373,
+      "name": "缩小引擎",
+      "raw_tier": 1,
+      "badge": "A",
+      "glyph_path": "M13 15h2V6.5L13.5 5h-3L9 6.5V15h2v-3h2zm-1.5-8h1l.5.5V10h-2V7.5z"
+    },
+    {
+      "augment_id": 1133,
+      "name": "魔法飞弹",
+      "raw_tier": 2,
+      "badge": "B",
+      "glyph_path": "M13.5 5H9v10h4.5l1.5-1.5V11l-1-1 1-1V6.5zM11 13v-2h1.5l.5.5v1l-.5.5zm0-6v2h1.5l.5-.5v-1l-.5-.5z"
+    },
+    {
+      "augment_id": 1325,
+      "name": "玻璃大炮",
+      "raw_tier": 3,
+      "badge": "C",
+      "glyph_path": "M15 6.5 13.5 5h-3L9 6.5v7l1.5 1.5h3l1.5-1.5v-2h-2v1l-.5.5h-1l-.5-.5v-5l.5-.5h1l.5.5v1h2z"
+    },
+    {
+      "augment_id": 1150,
+      "name": "面包和果酱",
+      "raw_tier": 4,
+      "badge": "D",
+      "glyph_path": "M9 5h4.5L15 6.5v7L13.5 15H9zm2 2h1.5l.5.5v5l-.5.5H11z"
+    },
+    {
+      "augment_id": 2018,
+      "name": "纯粹主义者 - 术师",
+      "raw_tier": 5,
+      "badge": "E",
+      "glyph_path": "M15 7V5H9v10h6v-2h-4v-2h3V9h-3V7z"
+    }
+  ]
+}

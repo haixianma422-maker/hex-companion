@@ -1,0 +1,20 @@
+{
+  "source": "https://raw.communitydragon.org/16.20/game/zh_cn/data/menu/en_us/lol.stringtable.json",
+  "patch": "16.20",
+  "locale": "zh_CN",
+  "source_sha256": "a70e6f8ae91f90ca7c6cc558258d254d02f18b7b035afa351427c377918843c7",
+  "key_prefix": "cherry_augmentdisplaytag_",
+  "tags": {
+    "cherry_augmentdisplaytag_ally": "己方 ",
+    "cherry_augmentdisplaytag_classicish": "经典模式版",
+    "cherry_augmentdisplaytag_damage": "伤害",
+    "cherry_augmentdisplaytag_economy": "经济",
+    "cherry_augmentdisplaytag_general": "综合",
+    "cherry_augmentdisplaytag_quest": "任务",
+    "cherry_augmentdisplaytag_questline": "任务线",
+    "cherry_augmentdisplaytag_resilience": "复原力",
+    "cherry_augmentdisplaytag_speed": "速度",
+    "cherry_augmentdisplaytag_statanvil": "属性锻造器",
+    "cherry_augmentdisplaytag_utility": "功能"
+  }
+}
