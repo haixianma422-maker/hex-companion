@@ -1,5 +1,9 @@
 Third-party components
 
+Hex Companion's original code and documentation are licensed under the MIT
+License. See the project LICENSE file included with new release packages.
+Third-party components and resources retain their respective licenses and terms.
+
 Dependency versions and license texts are in licenses/.
 The executable includes Python, Tcl/Tk, Pillow, RapidOCR, ONNX Runtime,
 OpenCV, NumPy, pystray and their runtime dependencies.
@@ -26,4 +30,7 @@ and recognition models; model inference does not require a network download.
 OP.GG snapshot files record their source URLs and retrieval timestamps.
 Equipment icons are Riot Games Data Dragon assets. Their version and source
 are recorded in data/item-icons/manifest.json in the source repository.
+Game text metadata is sourced from CommunityDragon.
+OP.GG data and Riot Games assets remain subject to their owners' terms;
+the project's MIT license does not grant rights to those third-party resources.
 This project is an independently developed personal companion.

@@ -27,6 +27,7 @@ for name in hero_names:
 release = ROOT.parent / 'HexCompanion-Windows-x64.zip'
 with zipfile.ZipFile(release, 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
     archive.write(exe, 'HexCompanion/HexCompanion.exe')
+    archive.write(ROOT / 'LICENSE', 'HexCompanion/LICENSE')
     for filename in ('使用说明.txt', 'THIRD_PARTY.txt'):
         archive.write(ROOT / 'packaging' / filename, 'HexCompanion/' + filename)
     for path in (ROOT / 'packaging/licenses').rglob('*'):

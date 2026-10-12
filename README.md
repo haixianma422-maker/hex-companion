@@ -147,3 +147,9 @@ tests/          自动测试
 packaging/      图标、使用说明和第三方依赖说明
 app.py          启动入口
 ```
+
+## 许可证
+
+本项目原创代码和文档采用 [MIT License](LICENSE)，版权归 haixianma422-maker 所有。
+
+第三方依赖、OCR 模型、OP.GG 统计快照、Riot Games 游戏文本及图标等资源，适用各自的许可证或服务条款。来源与许可说明见 [第三方组件说明](packaging/THIRD_PARTY.txt)；Windows 发布包中的 `licenses/` 目录提供依赖许可证文本。
