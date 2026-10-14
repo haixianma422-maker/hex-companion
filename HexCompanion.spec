@@ -5,16 +5,22 @@ import json
 from PyInstaller.utils.hooks import collect_data_files, collect_dynamic_libs
 
 root = Path(SPECPATH)
-datas = [(str(root / 'data' / filename), 'data') for filename in (
-    'champions.json', 'augment_display_tags.json', 'item_catalog.json', 'tier_mapping_evidence.json')]
 seed = Path(os.environ.get('HEX_COMPANION_SEED_DIR', root / 'data'))
-for path in (seed / 'item-icons').rglob('*'):
-    if path.is_file() and path.suffix in ('.png', '.json'):
-        datas.append((str(path), 'data/' + path.parent.relative_to(seed).as_posix()))
-for path in (seed / 'heroes').glob('*.json'):
-    row = json.loads(path.read_text(encoding='utf-8'))
-    if row.get('build_mode_verified') and row.get('build_mode') == 'aram-mayhem':
-        datas.append((str(path), 'data/heroes'))
+datas = [(str(seed / filename), 'data') for filename in (
+    'champions.json', 'augment_display_tags.json', 'item_catalog.json', 'tier_mapping_evidence.json',
+    'visual_catalog.json')]
+for folder in ('item-icons', 'visual-assets', 'advice-icons'):
+    for path in (seed / folder).rglob('*'):
+        if path.is_file() and path.suffix in ('.png', '.jpg', '.jpeg', '.json'):
+            datas.append((str(path), 'data/' + path.parent.relative_to(seed).as_posix()))
+for prefix in (Path(), Path('sources/qq101')):
+    index = seed / prefix / 'champions.json'
+    if prefix.parts and index.is_file():
+        datas.append((str(index), 'data/' + prefix.as_posix()))
+    for path in (seed / prefix / 'heroes').glob('*.json'):
+        row = json.loads(path.read_text(encoding='utf-8'))
+        if row.get('build_mode_verified') and row.get('build_mode') == 'aram-mayhem':
+            datas.append((str(path), 'data/' + (prefix / 'heroes').as_posix()))
 datas += collect_data_files('rapidocr', includes=['*.yaml', 'models/PP-OCRv6_det_small.onnx', 'models/PP-OCRv6_rec_small.onnx'])
 datas += [(str(path), 'licenses') for path in (root / 'packaging/licenses').glob('*')]
 

@@ -3,19 +3,24 @@ import queue
 import threading
 import time
 import tkinter as tk
+import logging
 from dataclasses import replace
-from tkinter import filedialog, messagebox, ttk
+from tkinter import messagebox
 
 from .companion_state import MAYHEM_QUEUES, PLAYING, SessionTracker
+from .cache import DataStore, SOURCE_NAMES
+from .advice_icons import AdviceIconCache
 from .bubble import CompanionBubble
 from .builds import recommended_items
-from .hotkeys import ACTION_NAMES, DEFAULT_HOTKEYS, Hotkeys, normalize_bindings
+from .hotkeys import Hotkeys
 from .item_icons import ItemIconCache
-from .lcu import ClientState, LCUClient, live_champion_id, validate_install_path
+from .lcu import ClientState, LCUClient, live_champion_id
 from .models import Augment
 from .panel import CompanionPanel
-from .theme import ACCENT, BG, FONT, MUTED, TEXT, Card, ScrollArea, button, label
-from .recognition import DEFAULT_REGIONS, Recognizer, match_slots
+from .settings_ui import show_settings
+from .visual_assets import VisualAssetCache
+from .runtime_log import health as log_health
+from .recognition import Recognizer, match_slots
 from .windows import LeagueWindow, find_league_window, foreground_is_ours
 
 AUTO_SCAN_INTERVAL = .25
@@ -44,6 +49,7 @@ class CompanionApp:
         self.data, self.augments, self.matches = None, [], []
         self.status = '等待海克斯大乱斗'
         self.collapsed = self.scanning = self.poll_pending = False
+        self.scan_feedback = False
         self.ocr_epoch = 0
         self.manual_override = False
         self.index_pending = self.index_requested = False
@@ -51,21 +57,44 @@ class CompanionApp:
         self.scan_interval = IDLE_SCAN_INTERVAL
         self.missing_frames = 0
         self.last_window_check = float('-inf')
+        self.last_health_check = float('-inf')
+        self.logged_client_state = None
         self.fetching = set()
+        self.source_errors = {}
         self.dialog = None
         self.anchor = None
         self.tray = None
         self.item_icons = ItemIconCache(store.root, store.seed_root)
+        self.advice_icons = AdviceIconCache(store.root, store.seed_root)
+        self.visual_assets = VisualAssetCache(store.root, store.seed_root)
+        self.visual_pending = False
+        self.visual_requested = None
+        self.visual_retry_at = None
+        self.advice_pending = False
+        self.advice_requested = None
+        self.advice_retry_at = None
         self.icons_pending = False
         self.icons_requested = None
         self.panel = CompanionPanel(root, self.scan, self.show_settings, self.hide,
-                                    self.preview_next if preview else None)
+                                    self.preview_next if preview else None, on_source=self.select_source)
         self.bubble = CompanionBubble(root, self.expand)
         self.hotkeys = Hotkeys(lambda: self.dispatch(self.scan), lambda: self.dispatch(self.refresh),
                                lambda: self.dispatch(self.hide), on_toggle=lambda: self.dispatch(self.toggle),
                                bindings=self.settings.get('hotkeys'))
         self.panel.item_icons = self.item_icons
+        self.panel.advice_icons = self.advice_icons
+        self.panel.visual_assets = self.visual_assets
+        self.panel.on_correct = lambda slot: self.show_settings(slot)
+        self.panel.on_refresh = self.refresh
+        self.panel.data_loading = False
+        self.panel.network_error = ''
+        self.panel.images_loading = False
+        self.panel.images_error = ''
+        self.panel.source_name = store.source_name
         self.panel.set_hotkeys(self.hotkeys.bindings)
+        self.panel.set_motion(self.settings.get('animations', True))
+        self.bubble.set_motion(self.settings.get('animations', True))
+        self.bubble.set_hotkeys(self.hotkeys.bindings)
         self.root.protocol('WM_DELETE_WINDOW', self.close)
         if services:
             from .tray import Tray
@@ -84,13 +113,33 @@ class CompanionApp:
         return self.state.revision, self.ocr_epoch
 
     def deliver(self, ticket, callback, result, error):
-        if self.closed or (ticket is not None and ticket != self.ocr_ticket()):
+        if ticket and ticket[0] == 'source':
+            expected = ('source', id(self.store))
+        elif ticket and ticket[0] == 'hero':
+            expected = ('hero', id(self.store), self.state.champion_id)
+        else:
+            expected = self.ocr_ticket()
+        if self.closed or (ticket is not None and ticket != expected):
             return
+        source_request = ticket and ticket[0] in ('source', 'hero')
+        error_key = ('index', ticket[1]) if source_request and ticket[0] == 'source' else ticket
         if error:
+            logging.getLogger(__name__).warning('background operation failed: %s', error)
+            if source_request:
+                self.source_errors[error_key] = error
+                self.update_source_error()
             self.status = '操作未完成，保留缓存 · ' + error
             self.present()
         else:
+            if source_request:
+                self.source_errors.pop(error_key, None)
+                self.update_source_error()
             callback(result)
+
+    def update_source_error(self):
+        identity = id(self.store)
+        self.panel.network_error = (self.source_errors.get(('hero', identity, self.state.champion_id))
+                                    or self.source_errors.get(('index', identity), ''))
 
     def background(self, job, callback, ticket=None, done=None):
         def worker():
@@ -121,8 +170,18 @@ class CompanionApp:
 
     def tray_failed(self, detail):
         if not self.closed:
-            messagebox.showerror('海克斯随行', '系统托盘启动失败，程序将退出。\n' + detail, parent=self.root)
-            self.close()
+            self.startup_failed = True
+            # A fatal startup dialog must not leave an apparently usable
+            # companion running behind it, even inside Tk's modal event loop.
+            self.panel.hide()
+            self.bubble.hide()
+            if self.dialog is not None and self.dialog.winfo_exists():
+                self.dialog.destroy()
+            self.hotkeys.set_paused(True)
+            try:
+                messagebox.showerror('海克斯随行', '系统托盘启动失败，程序将退出。\n' + detail, parent=self.root)
+            finally:
+                self.close()
 
     def poll(self):
         if self.closed:
@@ -141,6 +200,10 @@ class CompanionApp:
     def on_client_state(self, raw):
         old = self.state
         self.state = self.tracker.update(raw)
+        diagnostic = (raw.phase, self.state.champion_id, self.state.queue_id, raw.message)
+        if diagnostic != self.logged_client_state:
+            self.logged_client_state = diagnostic
+            logging.getLogger(__name__).info('client phase=%s hero=%s queue=%s detail=%s', *diagnostic)
         queue_label = str(self.state.queue_id) if self.state.queue_id is not None else '尚未读取'
         reason = raw.message
         if self.state.stage == 'hidden' and raw.phase != 'Disconnected':
@@ -156,6 +219,10 @@ class CompanionApp:
             self.collapsed = False
         if self.state.champion_id != old.champion_id:
             self.load_data()
+        elif self.state.stage != old.stage:
+            self.refresh_advice_icons()
+        if self.state.candidate_ids != old.candidate_ids or self.state.stage != old.stage:
+            self.refresh_visual_assets()
         if self.state.stage != 'hidden' and self.services and not self.preview and not self.index_requested:
             self.index_requested = True
             self.refresh_index()
@@ -166,54 +233,204 @@ class CompanionApp:
         self.data = self.store.hero(cid) if cid else None
         self.augments = [Augment(**a) for a in (self.data or {}).get('augments', [])]
         self.status = self.cache_status()
+        self.update_source_error()
+        self.update_data_loading()
         self.refresh_icons()
+        self.refresh_visual_assets()
         if cid in self.champions and self.services and not self.preview:
             self.fetch_hero(cid)
 
     def cache_status(self):
         stamp = (self.data or {}).get('fetched_at', '')[:16].replace('T', ' ')
-        return f'OP.GG 快照 · {stamp} UTC' if stamp else '等待英雄数据'
+        return f'{self.store.source_name} 快照 · {stamp} UTC' if stamp else f'{self.store.source_name} · 等待英雄数据'
+
+    def change_source(self, source):
+        if source == self.store.source:
+            return
+        self.store.retire()
+        self.store = DataStore(self.store.root, self.store.seed_root, source=source)
+        logging.getLogger(__name__).info('source switched to %s', source)
+        self.panel.source_name = self.store.source_name
+        self.source_errors.clear()
+        self.update_source_error()
+        self.ocr_epoch += 1
+        self.matches = []
+        self.manual_override = False
+        self.fetching.clear()
+        self.index_pending = self.index_requested = False
+        self.update_data_loading()
+        # Champion identity is shared; source-specific ranks are not. Keeping
+        # identity allows a cold source to fetch this hero alongside its index.
+        identities = {cid: replace(hero, tier=None, rank=None) for cid, hero in self.champions.items()}
+        identities.update({c.id: c for c in self.store.champions()})
+        self.champions = identities
+        self.icons_requested = self.advice_requested = None
+        self.visual_requested = None
+        self.load_data()
+        if self.services and not self.preview:
+            self.index_requested = True
+            self.refresh_index()
+        self.present()
+
+    def update_data_loading(self):
+        """Hero and index requests may overlap; neither can hide the other."""
+        self.panel.data_loading = self.index_pending or (id(self.store), self.state.champion_id) in self.fetching
+
+    def update_image_loading(self):
+        self.panel.images_loading = self.visual_pending or self.advice_pending or self.icons_pending
+
+    def refresh_visual_assets(self):
+        requests = []
+        cid = self.state.champion_id
+        if cid in self.champions:
+            requests.extend((('portrait', cid), ('splash', cid)))
+        requests.extend(('portrait', candidate) for candidate in self.state.candidate_ids if candidate in self.champions)
+        known_augments = {augment.id for augment in self.augments}
+        requests.extend(('augment', match.augment_id) for match in self.matches
+                        if match.augment_id in known_augments)
+        requests = tuple(dict.fromkeys(requests))
+        if not self.services or self.preview or self.visual_pending or not requests or requests == self.visual_requested:
+            return
+        self.visual_pending, self.visual_requested = True, requests
+        self.update_image_loading()
+        def finished():
+            self.visual_pending = False
+            self.update_image_loading()
+            self.refresh_visual_assets()
+        def loaded(result):
+            self.panel.images_error = '部分图片暂不可用' if result.get('failed') else ''
+            if result.get('failed'):
+                self.visual_retry_at = time.monotonic() + 60
+            self.panel.signature = None
+            if self.dialog is not None and self.dialog.winfo_exists():
+                refresh = getattr(self, '_settings_refresh_icons', None)
+                if refresh:
+                    refresh()
+            self.present()
+            if result.get('deferred'):
+                self.visual_requested = None
+                self.refresh_visual_assets()
+        # Visual IDs are shared between sources. A source change can reuse an
+        # image downloaded by an earlier request without changing source data.
+        def download():
+            try:
+                return self.visual_assets.ensure(requests, on_progress=lambda: self.dispatch(self.images_loaded))
+            except Exception:
+                return {'failed': len(requests)}
+        self.background(download, loaded, done=finished)
+
+    def select_source(self, source_name):
+        source = next((key for key, name in SOURCE_NAMES.items() if name == source_name), None)
+        if source is None or source == self.store.source:
+            self.present()
+            return
+        settings = dict(self.settings, data_source=source)
+        try:
+            self.store._write('settings.json', settings)
+        except OSError as exc:
+            self.status = '来源未切换 · 设置未能保存：' + str(exc)
+            self.panel.quick_source_var.set(self.store.source_name)
+            self.present()
+            return
+        self.settings = settings
+        if self.dialog is not None and self.dialog.winfo_exists():
+            self.source_var.set(source_name)
+        self.change_source(source)
+
+    def images_loaded(self):
+        self.panel.signature = None
+        self.present()
 
     def refresh_icons(self):
+        self.refresh_advice_icons()
         if not self.services or self.preview or self.icons_pending:
             return
         ids = tuple(item['id'] for item in recommended_items(self.data))
         if not ids or ids == self.icons_requested:
             return
         self.icons_pending, self.icons_requested = True, ids
+        self.update_image_loading()
         def finished():
             self.icons_pending = False
+            self.update_image_loading()
             self.refresh_icons()
-        self.background(lambda: self.item_icons.ensure(ids), lambda _: self.present(), done=finished)
+        self.background(lambda: self.item_icons.ensure(ids), lambda _: self.images_loaded(), done=finished)
+
+    def refresh_advice_icons(self):
+        if not self.services or self.preview or self.advice_pending:
+            return
+        data = self.data or {}
+        skills = self.visual_assets.champion_skill_icons(self.state.champion_id) if self.state.stage == 'game' else {}
+        if self.state.stage == 'game':
+            skills.update(data.get('skill_icons', {}))
+        spells = data.get('summoner_spells', []) if self.state.stage == 'select' else []
+        urls = tuple(dict.fromkeys([url for url in skills.values() if url] +
+                                  [s.get('icon_url') for s in spells if s.get('icon_url')]))
+        if not urls or urls == self.advice_requested:
+            return
+        self.advice_pending, self.advice_requested = True, urls
+        self.update_image_loading()
+        def finished():
+            self.advice_pending = False
+            self.update_image_loading()
+            self.refresh_advice_icons()
+        def loaded(_):
+            if any(self.advice_icons.path(url) is None for url in urls):
+                self.advice_retry_at = time.monotonic() + 60
+            self.images_loaded()
+        self.background(lambda: self.advice_icons.ensure(urls, on_progress=lambda: self.dispatch(self.images_loaded)),
+                        loaded, done=finished)
 
     def fetch_hero(self, cid):
-        if cid in self.fetching:
+        store = self.store
+        key = (id(store), cid)
+        if key in self.fetching:
             return
         hero = self.champions.get(cid)
         if not hero:
             return
-        self.fetching.add(cid)
+        self.fetching.add(key)
+        started = time.monotonic()
+        self.update_data_loading()
         def loaded(data):
-            if self.state.champion_id == cid:
+            if self.store is store and self.state.champion_id == cid:
+                logging.getLogger(__name__).info('hero data loaded source=%s hero=%s augments=%s verified_build=%s elapsed=%.2fs',
+                                                store.source, cid, len(data.get('augments', [])), data.get('build_mode_verified'),
+                                                time.monotonic() - started)
                 self.data = data
                 self.augments = [Augment(**a) for a in data.get('augments', [])]
                 self.status = self.cache_status()
                 self.refresh_icons()
+                self.refresh_visual_assets()
                 self.present()
-        self.background(lambda: self.store.refresh(hero), loaded, done=lambda: self.fetching.discard(cid))
+        def finished():
+            self.fetching.discard(key)
+            self.update_data_loading()
+        ticket = ('hero', id(store), cid)
+        def ready(data):
+            self.events.put(('result', ticket, loaded, data, None, None))
+        self.background(lambda: store.refresh(hero, on_ready=ready), loaded, ticket=ticket,
+                        done=finished)
 
     def refresh_index(self):
         if self.index_pending:
             return
         self.index_pending = True
+        self.update_data_loading()
+        store = self.store
         def loaded(data):
-            self.champions = {c.id: c for c in self.store.champions()}
+            self.champions = {c.id: c for c in store.champions()}
             self.panel.signature = None
             if self.data is None and self.state.champion_id:
                 self.load_data()
+            self.refresh_visual_assets()
             self.present()
-        self.background(lambda: self.store.refresh(None), loaded,
-                        done=lambda: setattr(self, 'index_pending', False))
+        def finished():
+            if self.store is store:
+                self.index_pending = False
+            self.update_data_loading()
+        self.background(lambda: store.refresh(None), loaded, ticket=('source', id(store)),
+                        done=finished)
 
     def locate(self):
         if self.preview:
@@ -222,7 +439,7 @@ class CompanionApp:
         return find_league_window(self.state.stage)
 
     def present(self):
-        if self.closed:
+        if self.closed or getattr(self, 'startup_failed', False):
             return
         if self.state.stage == 'hidden':
             self.panel.hide()
@@ -236,13 +453,18 @@ class CompanionApp:
             self.hotkeys.set_overlay_visible(False)
             return
         if self.collapsed:
-            self.panel.hide()
-            self.bubble.show_at(self.anchor)
+            anchor = self.anchor
+            rectangle = (self.panel.window.winfo_rootx(), self.panel.window.winfo_rooty(), self.panel.width, self.panel.height)
+            def reveal_bubble():
+                if not self.closed and self.collapsed and self.anchor is not None:
+                    self.bubble.show_at(self.anchor, rectangle)
+            self.panel.hide(animate=True, done=reveal_bubble)
             self.hotkeys.set_overlay_visible(False)
             return
-        self.bubble.hide()
+        self.bubble.hide(animate=True)
+        self.panel.manual_override = self.manual_override
         self.panel.render(self.state, self.champions, self.data, self.matches, self.status,
-                          self.preview, self.scanning)
+                          self.preview, self.scanning and self.scan_feedback)
         self.panel.show_at(self.anchor)
         self.hotkeys.set_overlay_visible(True)
 
@@ -250,15 +472,33 @@ class CompanionApp:
         if self.closed:
             return
         now = time.monotonic()
+        if now - self.last_health_check >= 60:
+            self.last_health_check = now
+            log_health()
         if now - self.last_window_check >= WINDOW_CHECK_INTERVAL:
             self.last_window_check = now
             self.present()
+        if (self.visual_retry_at is not None and now >= self.visual_retry_at
+                and not self.visual_pending and self.state.stage != 'hidden'):
+            self.visual_retry_at = None
+            self.visual_requested = None
+            self.refresh_visual_assets()
+        if (self.advice_retry_at is not None and now >= self.advice_retry_at
+                and not self.advice_pending and self.state.stage != 'hidden'):
+            self.advice_retry_at = None
+            self.advice_requested = None
+            self.refresh_advice_icons()
         if self.auto and not self.preview and self.state.stage == 'game' and self.panel.visible and now - self.last_scan >= self.scan_interval:
             self.scan(force=False)
         self.root.after(UI_TICK_MS, self._tick)
 
     def scan(self, force=True):
-        if self.state.stage != 'game' or not self.augments or self.scanning:
+        if self.state.stage != 'game' or not self.augments:
+            return
+        if self.scanning:
+            if force:
+                self.scan_feedback = True
+                self.present()
             return
         if self.manual_override and not force:
             return
@@ -290,6 +530,9 @@ class CompanionApp:
                 self.present()
                 return
         self.scanning, self.last_scan = True, time.monotonic()
+        self.scan_feedback = bool(force)
+        if force:
+            self.present()
         ticket, augments, recognizer = self.ocr_ticket(), list(self.augments), self.recognizer
         # The game screenshot stays in memory; OCR reads the three title crops.
         def capture():
@@ -308,8 +551,14 @@ class CompanionApp:
                 self.present()
                 return
             self.background(lambda: recognizer.read_screen(image, augments, force=force, automatic=not force), self.accept_matches,
-                            ticket, lambda: setattr(self, 'scanning', False))
+                            ticket, self.scan_finished)
         capture()
+
+    def scan_finished(self):
+        show_completion = self.scan_feedback
+        self.scanning = self.scan_feedback = False
+        if show_completion:
+            self.present()
 
     def accept_matches(self, matches):
         if self.state.stage != 'game':
@@ -327,6 +576,10 @@ class CompanionApp:
             matches = []
         else:
             self.missing_frames = 0
+        previous = [(m.slot, m.augment_id, m.status) for m in self.matches]
+        current = [(m.slot, m.augment_id, m.status) for m in matches]
+        if previous != current:
+            logging.getLogger(__name__).info('recognition slots=%s manual=%s', current, self.manual_override)
         self.matches = matches
         recognized = sum(m.augment_id is not None for m in matches)
         self.scan_interval = AUTO_SCAN_INTERVAL if recognized else IDLE_SCAN_INTERVAL
@@ -336,6 +589,7 @@ class CompanionApp:
             self.status = ('模拟预览 · ' if self.preview else '') + f'已匹配 {recognized}/3 · 其余待确认 · {self.hotkeys.bindings["scan"]} 重试'
         else:
             self.status = ('模拟预览 · ' if self.preview else '') + '等待海克斯选项 · 设置中可手动修正'
+        self.refresh_visual_assets()
         self.present()
 
     def apply_manual(self, texts):
@@ -345,6 +599,7 @@ class CompanionApp:
         self.manual_override = True
         self.matches = match_slots(texts, self.augments)
         self.status = f'手动修正已保留 · {self.hotkeys.bindings["scan"]} 恢复识别'
+        self.refresh_visual_assets()
         self.present()
 
     def hide(self):
@@ -363,7 +618,10 @@ class CompanionApp:
 
     def refresh(self):
         self.icons_requested = None
+        self.advice_requested = None
+        self.visual_requested = None
         self.refresh_icons()
+        self.refresh_visual_assets()
         self.refresh_index()
         if self.state.champion_id:
             self.fetch_hero(self.state.champion_id)
@@ -375,198 +633,28 @@ class CompanionApp:
 
     def preview_next(self):
         if self.state.stage == 'hidden':
-            self.on_client_state(ClientState('ChampSelect', 222, [99, 86], queue_id=2400))
+            self.on_client_state(ClientState('ChampSelect', 222, [90, 99, 222, 201, 86, 17], queue_id=2400))
         elif self.state.stage == 'select':
             self.on_client_state(ClientState('InProgress', 222, queue_id=2400, match_id=1))
             self.scan()
         else:
-            self.on_client_state(ClientState('ChampSelect', 222, [99, 86], queue_id=2400))
+            self.on_client_state(ClientState('ChampSelect', 222, [90, 99, 222, 201, 86, 17], queue_id=2400))
 
-    def show_settings(self):
-        if self.dialog is not None and self.dialog.winfo_exists():
-            self.dialog.lift()
-            return
-        dialog = self.dialog = tk.Toplevel(self.root)
-        self.hotkeys.set_paused(True)
-        dialog.bind('<Destroy>', lambda event: self.hotkeys.set_paused(False) if event.widget == dialog else None)
-        dialog.title('海克斯随行 · 设置')
-        dialog.configure(bg=BG)
-        dialog.attributes('-topmost', True)
-        dialog.resizable(False, False)
-        dialog.bind('<Escape>', lambda _: dialog.destroy())
-        height = min(600, dialog.winfo_screenheight() - 100)
-        dialog.geometry(f'440x{height}')
-        header = tk.Frame(dialog, bg=BG)
-        header.pack(fill='x', padx=20, pady=(20, 14))
-        label(header, '随行设置', TEXT, 16, True, anchor='w').pack(fill='x')
-        label(header, '快捷键、识别方式与客户端连接', MUTED, 10, anchor='w').pack(fill='x', pady=(4, 0))
-
-        # Fixed actions stay visible while the content tabs scroll independently.
-        footer = tk.Frame(dialog, bg=BG)
-        footer.pack(side='bottom', fill='x', padx=20, pady=(10, 16))
-        label(footer, self.hotkeys.status, MUTED, 9, wraplength=400,
-              anchor='w', justify='left').pack(fill='x', pady=(0, 10))
-        actions = tk.Frame(footer, bg=BG)
-        actions.pack(fill='x')
-        notebook = ttk.Notebook(dialog, style='Hex.TNotebook')
-        notebook.pack(fill='both', expand=True, padx=20)
-        common, advanced, shortcuts = ScrollArea(notebook), ScrollArea(notebook), ScrollArea(notebook)
-        notebook.add(common, text='常用设置')
-        notebook.add(advanced, text='识别与连接')
-        notebook.add(shortcuts, text='快捷键')
-        connection = Card(common.body)
-        connection.pack(fill='x', pady=(4, 10))
-        phase = {'ChampSelect': '选人阶段', 'InProgress': '对局中', 'Lobby': '大厅',
-                 'Disconnected': '等待客户端连接'}.get(self.state.phase, self.state.phase)
-        label(connection.body, '模拟预览' if self.preview else phase, ACCENT, 11, True, anchor='w').pack(fill='x')
-        label(connection.body, self.hotkeys.summary(), MUTED, 9, anchor='w', wraplength=350).pack(fill='x', pady=(5, 0))
-        auto = tk.BooleanVar(value=self.auto)
-        tk.Checkbutton(common.body, text='局内自动识别海克斯', variable=auto, bg=BG, fg=TEXT,
-                       selectcolor=BG, activebackground=BG, activeforeground=ACCENT,
-                       font=(FONT, 10), highlightcolor=ACCENT, cursor='hand2',
-                       takefocus=True).pack(anchor='w')
-        scan_key = self.hotkeys.bindings['scan']
-        label(common.body, f'快速跟随海克斯刷新，{scan_key} 可立即重新识别。', MUTED, 9, anchor='w').pack(fill='x', pady=(2, 14))
-
-        manual = Card(common.body)
-        manual.pack(fill='x')
-        label(manual.body, '手动修正三张海克斯', TEXT, 11, True, anchor='w').pack(fill='x')
-        label(manual.body, f'只应用于当前英雄；按 {scan_key} 恢复自动识别。', MUTED, 9,
-              anchor='w', justify='left', wraplength=350).pack(fill='x', pady=(6, 10))
-        choices = []
-        for slot, name in enumerate(('左侧', '中间', '右侧')):
-            row = tk.Frame(manual.body, bg=manual.body.cget('bg'))
-            row.pack(fill='x', pady=4)
-            label(row, name, MUTED, 10, width=4, anchor='w').pack(side='left', padx=(0, 8))
-            current = next((a.name for a in self.augments if any(m.slot == slot and m.augment_id == a.id for m in self.matches)), '')
-            var = tk.StringVar(value=current)
-            ttk.Combobox(row, textvariable=var, values=[''] + [a.name for a in self.augments],
-                         width=25, style='Hex.TCombobox', font=(FONT, 10)).pack(side='left', fill='x', expand=True)
-            choices.append(var)
-        initial_choices = [v.get() for v in choices]
-        initial_path = self.settings.get('install_path', '')
-        install_path = tk.StringVar(value=initial_path)
-
-        calibration = Card(advanced.body, padding=10)
-        calibration.pack(fill='x', pady=(4, 10))
-        label(calibration.body, '海克斯标题区域', TEXT, 11, True, anchor='w').pack(fill='x')
-        label(calibration.body, '相对于游戏窗口填写 x1, y1, x2, y2，范围 0～1。', MUTED, 9,
-              wraplength=350, anchor='w', justify='left').pack(fill='x', pady=(6, 10))
-        regions = []
-        for name, region in zip(('左侧', '中间', '右侧'), self.recognizer.regions):
-            row = tk.Frame(calibration.body, bg=calibration.body.cget('bg'))
-            row.pack(fill='x', pady=3)
-            label(row, name, MUTED, 10, width=4, anchor='w').pack(side='left', padx=(0, 8))
-            var = tk.StringVar(value=', '.join(map(str, region)))
-            ttk.Entry(row, textvariable=var, width=29, style='Hex.TEntry',
-                      font=(FONT, 10)).pack(side='left', fill='x', expand=True)
-            regions.append(var)
-        def reset_regions():
-            for var, region in zip(regions, DEFAULT_REGIONS):
-                var.set(', '.join(map(str, region)))
-        button(calibration.body, '恢复 16:9 预设', reset_regions).pack(anchor='w', pady=(8, 0))
-        opened_revision = self.state.revision
-        shortcut_card = Card(shortcuts.body)
-        shortcut_card.pack(fill='x', pady=(4, 10))
-        label(shortcut_card.body, '全局快捷键', TEXT, 11, True, anchor='w').pack(fill='x')
-        label(shortcut_card.body, '点击输入框后按下组合键，也可直接填写。\n例如 F8、Ctrl+Alt+H；保存后立即生效。', MUTED, 9,
-              anchor='w', justify='left', wraplength=350).pack(fill='x', pady=(6, 12))
-        hotkey_vars = {}
-        shortcut_error = tk.StringVar()
-        for action, title in ACTION_NAMES.items():
-            row = tk.Frame(shortcut_card.body, bg=shortcut_card.body.cget('bg'))
-            row.pack(fill='x', pady=5)
-            label(row, title, TEXT, 10, anchor='w', width=12).pack(side='left')
-            value = hotkey_vars[action] = tk.StringVar(value=self.hotkeys.bindings[action])
-            entry = ttk.Entry(row, textvariable=value, style='Hex.TEntry', width=19, font=(FONT, 10))
-            entry.pack(side='right', fill='x', expand=True)
-            def capture(event, variable=value):
-                if event.keysym in ('Shift_L', 'Shift_R', 'Control_L', 'Control_R', 'Alt_L', 'Alt_R'):
-                    return 'break'
-                mods = [name for mask, name in ((4, 'Ctrl'), (0x20000, 'Alt'), (1, 'Shift')) if event.state & mask]
-                if event.keysym.startswith('F') and event.keysym[1:].isdigit() or mods and len(event.keysym) == 1:
-                    variable.set('+'.join(mods + [event.keysym.upper()]))
-                    return 'break'
-            entry.bind('<KeyPress>', capture)
-        label(shortcuts.body, '展开 / 收起会在面板与小浮标之间切换。\nEsc 保留为收起快捷键。设置窗口打开时暂停全局快捷键。', MUTED, 9,
-              wraplength=350, justify='left', anchor='w').pack(fill='x', pady=(0, 12))
-        label(shortcuts.body, '', color='#ff9c9c', size=9, textvariable=shortcut_error,
-              wraplength=350, justify='left', anchor='w').pack(fill='x', pady=(0, 8))
-        def reset_hotkeys():
-            for action, value in DEFAULT_HOTKEYS.items():
-                hotkey_vars[action].set(value)
-            shortcut_error.set('')
-        button(shortcuts.body, '恢复默认快捷键', reset_hotkeys).pack(anchor='w')
-        self.hotkey_vars = hotkey_vars
-        def save():
-            try:
-                recognizer = Recognizer([tuple(float(x.strip()) for x in var.get().split(',')) for var in regions])
-            except ValueError as exc:
-                messagebox.showerror('区域无效', str(exc), parent=dialog)
-                return
-            path_changed = install_path.get() != initial_path
-            if path_changed:
-                try:
-                    validate_install_path(install_path.get())
-                except ValueError as exc:
-                    messagebox.showerror('安装目录无效', str(exc), parent=dialog)
-                    return
-            old_bindings = dict(self.hotkeys.bindings)
-            try:
-                bindings = normalize_bindings({key: value.get() for key, value in hotkey_vars.items()})
-                self.hotkeys.configure(bindings)
-            except ValueError as exc:
-                shortcut_error.set(str(exc))
-                notebook.select(shortcuts)
-                return
-            settings = dict(self.settings, regions=recognizer.regions, auto_recognize=auto.get(), hotkeys=bindings)
-            if path_changed:
-                settings['install_path'] = install_path.get()
-            try:
-                self.store._write('settings.json', settings)
-            except OSError as exc:
-                self.hotkeys.configure(old_bindings)
-                shortcut_error.set('设置未能保存：' + str(exc))
-                notebook.select(shortcuts)
-                return
-            self.settings, self.recognizer, self.auto = settings, recognizer, auto.get()
-            self.panel.set_hotkeys(bindings)
-            self.ocr_epoch += 1
-            selected_choices = [v.get().strip() for v in choices]
-            if selected_choices != initial_choices and opened_revision == self.state.revision:
-                self.apply_manual(selected_choices)
-            dialog.destroy()
-            self.status = self.cache_status()
-            self.present()
-            if path_changed:
-                self.refresh()
-        def install():
-            path = filedialog.askdirectory(parent=dialog, title='选择英雄联盟安装目录')
-            if path:
-                install_path.set(path)
-                if not path_hint.winfo_manager():
-                    path_hint.pack(fill='x', pady=(6, 0))
-        client = Card(advanced.body, padding=10)
-        client.pack(fill='x')
-        label(client.body, '客户端连接', TEXT, 11, True, anchor='w').pack(fill='x')
-        label(client.body, '', textvariable=self.connection_text, wraplength=350,
-              color=MUTED, size=9, anchor='w', justify='left').pack(fill='x', pady=(6, 8))
-        button(client.body, '选择联盟安装目录', install).pack(anchor='w')
-        path_hint = label(client.body, '', MUTED, 9, textvariable=install_path,
-                          wraplength=350, anchor='w', justify='left')
-        if initial_path:
-            path_hint.pack(fill='x', pady=(6, 0))
-        button(actions, '取消', dialog.destroy).pack(side='left')
-        button(actions, '保存并应用', save, primary=True).pack(side='right')
-        common.bind_wheel()
-        advanced.bind_wheel()
-        shortcuts.bind_wheel()
+    def show_settings(self, slot=None):
+        show_settings(self, slot)
 
     def close(self):
         if self.closed:
             return
         self.closed = True
-        self.hotkeys.stop()
-        if self.tray:
-            self.tray.stop()
-        self.root.destroy()
+        logging.getLogger(__name__).info('shutdown requested')
+        try:
+            try:
+                self.hotkeys.stop()
+            finally:
+                if self.tray:
+                    self.tray.stop()
+        except Exception:
+            logging.getLogger(__name__).exception('关闭后台服务失败')
+        finally:
+            self.root.destroy()

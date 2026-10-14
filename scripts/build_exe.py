@@ -12,18 +12,15 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+from aram_demo.theme import brand_image
+from scripts.release_seed import snapshot_seed
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--dist-dir', type=Path, default=ROOT / 'dist')
 options = parser.parse_args()
 assets = ROOT / 'packaging'
 assets.mkdir(exist_ok=True)
-image = Image.new('RGBA', (256, 256), (0, 0, 0, 0))
-draw = ImageDraw.Draw(image)
-draw.polygon([(128, 8), (232, 68), (232, 188), (128, 248), (24, 188), (24, 68)],
-             fill='#091428', outline='#c8aa6e', width=16)
-draw.line([(92, 80), (92, 176)], fill='#0ac8b9', width=20)
-draw.line([(164, 80), (164, 176)], fill='#0ac8b9', width=20)
-draw.line([(92, 128), (164, 128)], fill='#0ac8b9', width=20)
+image = brand_image(256)
 image.save(assets / 'hex-companion.ico', sizes=[(16, 16), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])
 
 licenses = assets / 'licenses'
@@ -48,13 +45,7 @@ if python_license.is_file():
 build_cache = ROOT / '.build-cache'
 build_cache.mkdir(exist_ok=True)
 seed = Path(tempfile.mkdtemp(prefix='release-seed-', dir=build_cache))
-(seed / 'heroes').mkdir()
-if (ROOT / 'data/item-icons').is_dir():
-    shutil.copytree(ROOT / 'data/item-icons', seed / 'item-icons')
-for path in (ROOT / 'data/heroes').glob('*.json'):
-    row = json.loads(path.read_text(encoding='utf-8'))
-    if row.get('build_mode_verified') and row.get('build_mode') == 'aram-mayhem':
-        (seed / 'heroes' / path.name).write_text(json.dumps(row, ensure_ascii=False, indent=2), encoding='utf-8')
+snapshot_seed(ROOT / 'data', seed)
 environment = dict(os.environ, HEX_COMPANION_SEED_DIR=str(seed))
 subprocess.run([sys.executable, '-m', 'PyInstaller', '--noconfirm',
                 '--workpath', str(ROOT / '.build-cache/pyinstaller'),

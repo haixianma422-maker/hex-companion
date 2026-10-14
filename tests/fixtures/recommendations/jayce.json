@@ -1,0 +1,505 @@
+{
+  "source": "https://op.gg/zh-cn/lol/modes/aram-mayhem/jayce/build",
+  "patch": "16.20.1",
+  "rows": [
+    [
+      "$",
+      "tr",
+      null,
+      {
+        "children": [
+          [
+            "$",
+            "td",
+            null,
+            {
+              "children": [
+                "$",
+                "div",
+                null,
+                {
+                  "className": "flex h-[46px] items-center gap-1 md:h-12",
+                  "children": [
+                    [
+                      "$",
+                      "$L61",
+                      "spell_0",
+                      {
+                        "metaId": 4,
+                        "metaType": "spell",
+                        "mode": "$undefined",
+                        "children": [
+                          "$",
+                          "$L62",
+                          null,
+                          {
+                            "className": "rounded",
+                            "src": "https://opgg-static.akamaized.net/meta/images/lol/16.20.1/spell/SummonerFlash.png",
+                            "width": 32,
+                            "height": 32,
+                            "alt": "闪现"
+                          }
+                        ]
+                      }
+                    ],
+                    [
+                      "$",
+                      "$L61",
+                      "spell_1",
+                      {
+                        "metaId": 32,
+                        "metaType": "spell",
+                        "mode": "$undefined",
+                        "children": [
+                          "$",
+                          "$L62",
+                          null,
+                          {
+                            "className": "rounded",
+                            "src": "https://opgg-static.akamaized.net/meta/images/lol/16.20.1/spell/SummonerSnowball.png",
+                            "width": 32,
+                            "height": 32,
+                            "alt": "标记"
+                          }
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ],
+          false,
+          false
+        ]
+      }
+    ],
+    [
+      "$",
+      "tr",
+      null,
+      {
+        "children": [
+          [
+            "$",
+            "td",
+            null,
+            {
+              "children": [
+                "$",
+                "div",
+                null,
+                {
+                  "className": "flex h-[46px] items-center gap-1 md:h-12",
+                  "children": [
+                    [
+                      "$",
+                      "$L61",
+                      "spell_0",
+                      {
+                        "metaId": 4,
+                        "metaType": "spell",
+                        "mode": "$undefined",
+                        "children": [
+                          "$",
+                          "$L62",
+                          null,
+                          {
+                            "className": "rounded",
+                            "src": "https://opgg-static.akamaized.net/meta/images/lol/16.20.1/spell/SummonerFlash.png",
+                            "width": 32,
+                            "height": 32,
+                            "alt": "闪现"
+                          }
+                        ]
+                      }
+                    ],
+                    [
+                      "$",
+                      "$L61",
+                      "spell_1",
+                      {
+                        "metaId": 6,
+                        "metaType": "spell",
+                        "mode": "$undefined",
+                        "children": [
+                          "$",
+                          "$L62",
+                          null,
+                          {
+                            "className": "rounded",
+                            "src": "https://opgg-static.akamaized.net/meta/images/lol/16.20.1/spell/SummonerHaste.png",
+                            "width": 32,
+                            "height": 32,
+                            "alt": "幽灵疾步"
+                          }
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ],
+          false,
+          false
+        ]
+      }
+    ],
+    [
+      "$",
+      "tr",
+      null,
+      {
+        "children": [
+          [
+            "$",
+            "td",
+            null,
+            {
+              "children": [
+                "$",
+                "div",
+                null,
+                {
+                  "className": "flex-1",
+                  "children": [
+                    "$",
+                    "div",
+                    null,
+                    {
+                      "className": "inline-flex flex-col gap-2 pt-1 md:py-2",
+                      "children": [
+                        "$",
+                        "div",
+                        null,
+                        {
+                          "className": "inline-flex flex-col gap-2",
+                          "children": [
+                            [
+                              "$",
+                              "div",
+                              null,
+                              {
+                                "className": "flex flex-row flex-wrap justify-between gap-2",
+                                "children": [
+                                  [
+                                    "$",
+                                    "div",
+                                    null,
+                                    {
+                                      "className": "inline-flex flex-wrap items-center",
+                                      "children": [
+                                        [
+                                          "$",
+                                          "$1",
+                                          "skill_0",
+                                          {
+                                            "children": [
+                                              false,
+                                              [
+                                                "$",
+                                                "$L61",
+                                                null,
+                                                {
+                                                  "metaType": "skill",
+                                                  "metaId": "jayce",
+                                                  "extraData": "Q",
+                                                  "mode": "$undefined",
+                                                  "className": "* cursor-pointer",
+                                                  "children": [
+                                                    "$",
+                                                    "div",
+                                                    null,
+                                                    {
+                                                      "className": "relative cursor-pointer w-[32px]",
+                                                      "children": [
+                                                        [
+                                                          "$",
+                                                          "$L62",
+                                                          null,
+                                                          {
+                                                            "className": "rounded",
+                                                            "src": "https://opgg-static.akamaized.net/meta/images/lol/16.20.1/spell/JayceToTheSkies.png",
+                                                            "alt": "苍穹之跃 / 电能震荡",
+                                                            "width": 32,
+                                                            "height": 32
+                                                          }
+                                                        ],
+                                                        [
+                                                          "$",
+                                                          "strong",
+                                                          null,
+                                                          {
+                                                            "translate": "no",
+                                                            "className": "absolute bottom-0 right-0 flex items-center justify-center rounded text-[11px] size-4 bg-[var(--color-gray-900)] text-[var(--color-blue-500)]",
+                                                            "children": "Q"
+                                                          }
+                                                        ]
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            ]
+                                          }
+                                        ],
+                                        [
+                                          "$",
+                                          "$1",
+                                          "skill_1",
+                                          {
+                                            "children": [
+                                              [
+                                                "$",
+                                                "svg",
+                                                null,
+                                                {
+                                                  "xmlns": "http://www.w3.org/2000/svg",
+                                                  "width": 24,
+                                                  "height": 24,
+                                                  "viewBox": "0 0 24 24",
+                                                  "className": "flex-shrink-0 text-gray-400 dark:text-[var(--color-darkpurple-400)]",
+                                                  "children": "$60:props:children:props:children:1:props:children"
+                                                }
+                                              ],
+                                              [
+                                                "$",
+                                                "$L61",
+                                                null,
+                                                {
+                                                  "metaType": "skill",
+                                                  "metaId": "jayce",
+                                                  "extraData": "E",
+                                                  "mode": "$undefined",
+                                                  "className": "* cursor-pointer",
+                                                  "children": [
+                                                    "$",
+                                                    "div",
+                                                    null,
+                                                    {
+                                                      "className": "relative cursor-pointer w-[32px]",
+                                                      "children": [
+                                                        [
+                                                          "$",
+                                                          "$L62",
+                                                          null,
+                                                          {
+                                                            "className": "rounded",
+                                                            "src": "https://opgg-static.akamaized.net/meta/images/lol/16.20.1/spell/JayceThunderingBlow.png",
+                                                            "alt": "雷霆一击 / 加速之门",
+                                                            "width": 32,
+                                                            "height": 32
+                                                          }
+                                                        ],
+                                                        [
+                                                          "$",
+                                                          "strong",
+                                                          null,
+                                                          {
+                                                            "translate": "no",
+                                                            "className": "absolute bottom-0 right-0 flex items-center justify-center rounded text-[11px] size-4 bg-[var(--color-gray-900)] text-[var(--color-orange-500)]",
+                                                            "children": "E"
+                                                          }
+                                                        ]
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            ]
+                                          }
+                                        ],
+                                        [
+                                          "$",
+                                          "$1",
+                                          "skill_2",
+                                          {
+                                            "children": [
+                                              [
+                                                "$",
+                                                "svg",
+                                                null,
+                                                {
+                                                  "xmlns": "http://www.w3.org/2000/svg",
+                                                  "width": 24,
+                                                  "height": 24,
+                                                  "viewBox": "0 0 24 24",
+                                                  "className": "flex-shrink-0 text-gray-400 dark:text-[var(--color-darkpurple-400)]",
+                                                  "children": "$60:props:children:props:children:1:props:children"
+                                                }
+                                              ],
+                                              [
+                                                "$",
+                                                "$L61",
+                                                null,
+                                                {
+                                                  "metaType": "skill",
+                                                  "metaId": "jayce",
+                                                  "extraData": "W",
+                                                  "mode": "$undefined",
+                                                  "className": "* cursor-pointer",
+                                                  "children": [
+                                                    "$",
+                                                    "div",
+                                                    null,
+                                                    {
+                                                      "className": "relative cursor-pointer w-[32px]",
+                                                      "children": [
+                                                        [
+                                                          "$",
+                                                          "$L62",
+                                                          null,
+                                                          {
+                                                            "className": "rounded",
+                                                            "src": "https://opgg-static.akamaized.net/meta/images/lol/16.20.1/spell/JayceStaticField.png",
+                                                            "alt": "闪电领域 / 超能电荷",
+                                                            "width": 32,
+                                                            "height": 32
+                                                          }
+                                                        ],
+                                                        [
+                                                          "$",
+                                                          "strong",
+                                                          null,
+                                                          {
+                                                            "translate": "no",
+                                                            "className": "absolute bottom-0 right-0 flex items-center justify-center rounded text-[11px] size-4 bg-[var(--color-gray-900)] text-[var(--color-teal-400)]",
+                                                            "children": "W"
+                                                          }
+                                                        ]
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            ]
+                                          }
+                                        ]
+                                      ]
+                                    }
+                                  ],
+                                  false
+                                ]
+                              }
+                            ],
+                            [
+                              "$",
+                              "div",
+                              null,
+                              {
+                                "className": "inline-flex flex-wrap gap-0.5",
+                                "children": [
+                                  [
+                                    "$",
+                                    "span",
+                                    "0",
+                                    {
+                                      "className": "inline-flex flex-col items-center gap-0.5 text-[11px]",
+                                      "children": [
+                                        "$undefined",
+                                        [
+                                          "$",
+                                          "strong",
+                                          null,
+                                          {
+                                            "translate": "no",
+                                            "className": "inline-flex h-[18px] w-[18px] items-center justify-center rounded md:h-6 md:w-6 bg-[var(--color-gray-900)] text-[var(--color-blue-500)]",
+                                            "children": "Q"
+                                          }
+                                        ]
+                                      ]
+                                    }
+                                  ],
+                                  [
+                                    "$",
+                                    "span",
+                                    "1",
+                                    {
+                                      "className": "inline-flex flex-col items-center gap-0.5 text-[11px]",
+                                      "children": [
+                                        "$undefined",
+                                        [
+                                          "$",
+                                          "strong",
+                                          null,
+                                          {
+                                            "translate": "no",
+                                            "className": "inline-flex h-[18px] w-[18px] items-center justify-center rounded md:h-6 md:w-6 bg-[var(--color-gray-900)] text-[var(--color-teal-400)]",
+                                            "children": "W"
+                                          }
+                                        ]
+                                      ]
+                                    }
+                                  ],
+                                  [
+                                    "$",
+                                    "span",
+                                    "2",
+                                    {
+                                      "className": "inline-flex flex-col items-center gap-0.5 text-[11px]",
+                                      "children": [
+                                        "$undefined",
+                                        [
+                                          "$",
+                                          "strong",
+                                          null,
+                                          {
+                                            "translate": "no",
+                                            "className": "inline-flex h-[18px] w-[18px] items-center justify-center rounded md:h-6 md:w-6 bg-[var(--color-gray-900)] text-[var(--color-orange-500)]",
+                                            "children": "E"
+                                          }
+                                        ]
+                                      ]
+                                    }
+                                  ],
+                                  [
+                                    "$",
+                                    "span",
+                                    "3",
+                                    {
+                                      "className": "inline-flex flex-col items-center gap-0.5 text-[11px]",
+                                      "children": [
+                                        "$undefined",
+                                        [
+                                          "$",
+                                          "strong",
+                                          null,
+                                          {
+                                            "translate": "no",
+                                            "className": "inline-flex h-[18px] w-[18px] items-center justify-center rounded md:h-6 md:w-6 bg-[var(--color-gray-900)] text-[var(--color-blue-500)]",
+                                            "children": "Q"
+                                          }
+                                        ]
+                                      ]
+                                    }
+                                  ],
+                                  "$L77",
+                                  "$L78",
+                                  "$L79",
+                                  "$L7a",
+                                  "$L7b",
+                                  "$L7c",
+                                  "$L7d",
+                                  "$L7e",
+                                  "$L7f",
+                                  "$L80",
+                                  "$L81"
+                                ]
+                              }
+                            ]
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          false
+        ]
+      }
+    ]
+  ]
+}

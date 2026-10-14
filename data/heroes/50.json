@@ -1495,5 +1495,21 @@
   "items_source": "https://op.gg/zh-cn/lol/modes/aram-mayhem/swain/items",
   "items_note": "",
   "patch": "16.20.1",
-  "fetched_at": "2026-10-11T13:06:33.511450+00:00"
+  "fetched_at": "2026-10-11T13:06:33.511450+00:00",
+  "skill_priority": [
+    "Q",
+    "W"
+  ],
+  "summoner_spells": [
+    {
+      "id": 4,
+      "name": "闪现"
+    },
+    {
+      "id": 32,
+      "name": "标记"
+    }
+  ],
+  "recommendation_source": "https://op.gg/zh-cn/lol/modes/aram-mayhem/swain/build",
+  "recommendation_fetched_at": "2026-10-14T03:29:43.344879+00:00"
 }

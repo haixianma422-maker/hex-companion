@@ -112,6 +112,36 @@ def parse_builds(html):
     return list(result.values())
 
 
+def parse_recommendations(html):
+    """Keep the first complete source recommendation; alternatives stay separate."""
+    priority, spells = [], []
+    for node in flight_nodes(html):
+        for row in walk(node):
+            if not isinstance(row, list) or len(row) != 4 or row[1] != 'tr':
+                continue
+            props = [value for value in walk(row[3]) if isinstance(value, dict)]
+            if not priority:
+                keys = [value.get('extraData') for value in props if value.get('metaType') == 'skill']
+                if len(keys) == 3 and all(isinstance(key, str) for key in keys) and set(keys) == {'Q', 'W', 'E'}:
+                    priority = keys[:2]
+            if not spells:
+                pair = []
+                for value in props:
+                    if value.get('metaType') != 'spell':
+                        continue
+                    sid = integer(value.get('metaId'))
+                    name = next((child['alt'].strip() for child in walk(value)
+                                 if isinstance(child, dict) and isinstance(child.get('alt'), str)
+                                 and child['alt'].strip()), '')
+                    if sid and name:
+                        pair.append({'id': sid, 'name': name})
+                if len(pair) == 2 and pair[0]['id'] != pair[1]['id']:
+                    spells = pair
+            if priority and spells:
+                return {'skill_priority': priority, 'summoner_spells': spells}
+    return {'skill_priority': priority, 'summoner_spells': spells}
+
+
 def page_patch(html):
     match = re.search(r'/meta/images/lol/(\d+\.\d+(?:\.\d+)?)/', html)
     return match.group(1) if match else None

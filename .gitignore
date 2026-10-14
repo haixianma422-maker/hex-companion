@@ -2,6 +2,7 @@
 __pycache__/
 *.pyc
 data/settings.json
+data/logs/
 *.tmp
 .build-cache/
 dist/
@@ -20,3 +21,5 @@ lockfile
 *.exe
 # Runtime hero downloads are local. Add reviewed snapshots explicitly with git add -f.
 data/heroes/*.json
+data/sources/
+data/advice-icons/

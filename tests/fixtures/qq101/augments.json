@@ -1,0 +1,1442 @@
+[
+  {
+    "augmentID": 1001,
+    "name_cn": "泰坦的坚决",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1002,
+    "name_cn": "尖端发明家",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1004,
+    "name_cn": "回归基本功",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1005,
+    "name_cn": "喂呜喂呜",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1006,
+    "name_cn": "利刃华尔兹",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1007,
+    "name_cn": "大力",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1011,
+    "name_cn": "你摸不到",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1013,
+    "name_cn": "星界躯体",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1015,
+    "name_cn": "死亡之环",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1018,
+    "name_cn": "巨像的勇气",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1019,
+    "name_cn": "全凭身法",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1020,
+    "name_cn": "黎明使者的坚决",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1022,
+    "name_cn": "灵巧",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1025,
+    "name_cn": "俯冲轰炸",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1026,
+    "name_cn": "唯快不破",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1027,
+    "name_cn": "大地苏醒",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1028,
+    "name_cn": "侵蚀",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1029,
+    "name_cn": "虚幻武器",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1030,
+    "name_cn": "尤里卡",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1034,
+    "name_cn": "防护面纱",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1036,
+    "name_cn": "火上浇油",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1037,
+    "name_cn": "急救用具",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1038,
+    "name_cn": "有始有终",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1041,
+    "name_cn": "歌利亚巨人",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1042,
+    "name_cn": "恶趣味",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1044,
+    "name_cn": "冰寒",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1045,
+    "name_cn": "炼狱导管",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1046,
+    "name_cn": "炼狱龙魂",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1047,
+    "name_cn": "关键暴击",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1048,
+    "name_cn": "珠光护手",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1051,
+    "name_cn": "点亮他们！",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1053,
+    "name_cn": "科学狂人",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1054,
+    "name_cn": "物法皆修",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1056,
+    "name_cn": "由心及物",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1057,
+    "name_cn": "山脉龙魂",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1058,
+    "name_cn": "秘术冲拳",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1060,
+    "name_cn": "海洋龙魂",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1061,
+    "name_cn": "回力OK镖",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1062,
+    "name_cn": "全能龙魂",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1063,
+    "name_cn": "狂徒豪气",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1064,
+    "name_cn": "坚韧",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1066,
+    "name_cn": "量子计算",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1067,
+    "name_cn": "活力焕发",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1068,
+    "name_cn": "循环往复",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1071,
+    "name_cn": "更万用的瞄准镜",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1072,
+    "name_cn": "炽烈黎明",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1073,
+    "name_cn": "暗影疾奔",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1074,
+    "name_cn": "缩小射线",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1075,
+    "name_cn": "慢炖",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1076,
+    "name_cn": "天音爆",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1077,
+    "name_cn": "灵魂虹吸",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1079,
+    "name_cn": "战争交响乐",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1080,
+    "name_cn": "会心防御",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1081,
+    "name_cn": "踢踏舞",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1084,
+    "name_cn": "穿针引线",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1087,
+    "name_cn": "台风",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1088,
+    "name_cn": "终极刷新",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1092,
+    "name_cn": "易损",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1095,
+    "name_cn": "风语者的祝福",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1097,
+    "name_cn": "巫师式思考",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1098,
+    "name_cn": "急急小子",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1103,
+    "name_cn": "面包和黄油",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1104,
+    "name_cn": "仆从大师",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1105,
+    "name_cn": "家园卫士",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1112,
+    "name_cn": "终极不可阻挡",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1113,
+    "name_cn": "老练狙神",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1115,
+    "name_cn": "最万用的瞄准镜",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1116,
+    "name_cn": "闪现向前",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1118,
+    "name_cn": "会心治疗",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1129,
+    "name_cn": "神射法师",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1133,
+    "name_cn": "魔法飞弹",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1134,
+    "name_cn": "亮出你的剑",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1136,
+    "name_cn": "扇巴掌",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1138,
+    "name_cn": "渴血",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1141,
+    "name_cn": "全心为你",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1149,
+    "name_cn": "不动如山",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1150,
+    "name_cn": "面包和果酱",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1151,
+    "name_cn": "面包和奶酪",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1152,
+    "name_cn": "钢化你心",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1154,
+    "name_cn": "海牛阿福的勇士",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1156,
+    "name_cn": "沃格勒特的巫师帽",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1170,
+    "name_cn": "万用瞄准镜",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1180,
+    "name_cn": "超强大脑",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1181,
+    "name_cn": "重量级打击手",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1187,
+    "name_cn": "闪光弹",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1194,
+    "name_cn": "精怪魔法",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1195,
+    "name_cn": "巨人杀手",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1204,
+    "name_cn": "叠角龙",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1205,
+    "name_cn": "物理转魔法",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1206,
+    "name_cn": "魔法转物理",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1208,
+    "name_cn": "轨道镭射",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1211,
+    "name_cn": "杀戮时间到了",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1214,
+    "name_cn": "旋转至胜",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1220,
+    "name_cn": "连拨击锤",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1225,
+    "name_cn": "双刀流",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1237,
+    "name_cn": "质变：黄金阶",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1238,
+    "name_cn": "质变：棱彩阶",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1243,
+    "name_cn": "质变：混沌",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1301,
+    "name_cn": "神圣干预",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1305,
+    "name_cn": "练腿日",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1308,
+    "name_cn": "火狐",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1310,
+    "name_cn": "小丑学院",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1311,
+    "name_cn": "溢流",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1314,
+    "name_cn": "强力护盾",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1315,
+    "name_cn": "快中求稳",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1318,
+    "name_cn": "升级：中娅",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1319,
+    "name_cn": "升级：献祭",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1320,
+    "name_cn": "升级：收集者",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1322,
+    "name_cn": "罪恶快感",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1323,
+    "name_cn": "残忍",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1324,
+    "name_cn": "蛋白粉奶昔",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1325,
+    "name_cn": "玻璃大炮",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1326,
+    "name_cn": "夜狩",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1327,
+    "name_cn": "坚若磐石",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1328,
+    "name_cn": "暴击律动",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1329,
+    "name_cn": "史上最大雪球",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1330,
+    "name_cn": "活力再生",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1331,
+    "name_cn": "至高天诺言",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1332,
+    "name_cn": "不祥契约",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1333,
+    "name_cn": "逃跑计划",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1334,
+    "name_cn": "升级：雪球",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1335,
+    "name_cn": "夺金",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1336,
+    "name_cn": "升级：无尽之刃",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1337,
+    "name_cn": "尊我为王",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1339,
+    "name_cn": "激光治疗",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1340,
+    "name_cn": "升级：米凯尔的祝福",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1342,
+    "name_cn": "雪球扭蛋机",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1344,
+    "name_cn": "最终形态",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1345,
+    "name_cn": "心灵净化",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1346,
+    "name_cn": "吸血习性",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1347,
+    "name_cn": "吵闹鬼",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1348,
+    "name_cn": "闪闪现现",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1349,
+    "name_cn": "终极唤醒",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1353,
+    "name_cn": "坦克引擎",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1356,
+    "name_cn": "暴击飞弹",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1358,
+    "name_cn": "弹球",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1361,
+    "name_cn": "艾卡西亚的陷落",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1372,
+    "name_cn": "小猫咪找妈妈",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1373,
+    "name_cn": "缩小引擎",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1375,
+    "name_cn": "吞噬灵魂",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1384,
+    "name_cn": "捐赠",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1386,
+    "name_cn": "转得我眩晕了",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1388,
+    "name_cn": "无限循环往复",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1389,
+    "name_cn": "男爵之手",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1390,
+    "name_cn": "超凡邪恶",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1392,
+    "name_cn": "神圣雪球",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1400,
+    "name_cn": "最终都市列车",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1401,
+    "name_cn": "生机迸发",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1402,
+    "name_cn": "属性叠属性叠属性！",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1403,
+    "name_cn": "属性叠属性！",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1404,
+    "name_cn": "属性！",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1406,
+    "name_cn": "祖母的辣椒油",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1409,
+    "name_cn": "魄罗爆破手",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1413,
+    "name_cn": "和我一起困在这里",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1414,
+    "name_cn": "卡皮巴拉空投",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1415,
+    "name_cn": "双生火焰",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1416,
+    "name_cn": "海克斯科技龙魂",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 1420,
+    "name_cn": "咏叹奏鸣",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 1421,
+    "name_cn": "舞会女王",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1424,
+    "name_cn": "???",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 1996,
+    "name_cn": "升级：耀光",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 2003,
+    "name_cn": "魄罗之王的弹跳",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 2004,
+    "name_cn": "信念者的强化",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 2005,
+    "name_cn": "扳机炼狱",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 2006,
+    "name_cn": "飞身踢",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 2007,
+    "name_cn": "你肩上的恶魔",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 2009,
+    "name_cn": "狂热者",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 2010,
+    "name_cn": "双发快射",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 2016,
+    "name_cn": "注魔",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 2018,
+    "name_cn": "纯粹主义者 - 术师",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 2024,
+    "name_cn": "由暴生急",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 2026,
+    "name_cn": "杀意翻涌",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 2031,
+    "name_cn": "空投熊",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 2032,
+    "name_cn": "鲨鱼诱饵",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 2034,
+    "name_cn": "鲨鱼暴风",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 2042,
+    "name_cn": "藏身草丛",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 2043,
+    "name_cn": "自然即是治愈",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 2046,
+    "name_cn": "魄罗蛮冲",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 2054,
+    "name_cn": "三重射击",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 2055,
+    "name_cn": "多重射击",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 2062,
+    "name_cn": "回响施放",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 2063,
+    "name_cn": "位面转移",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 2064,
+    "name_cn": "快步",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 2065,
+    "name_cn": "惊惧",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 2072,
+    "name_cn": "咒语裂变",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 2073,
+    "name_cn": "虹吸",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 2076,
+    "name_cn": "保持坚定",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 2077,
+    "name_cn": "贪欲束缚",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 2078,
+    "name_cn": "连锁反应",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 2080,
+    "name_cn": "冰雪爆裂",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 2082,
+    "name_cn": "我们的治疗",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 2083,
+    "name_cn": "牙仙子",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 2087,
+    "name_cn": "大法师",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 2088,
+    "name_cn": "下雪天",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 2089,
+    "name_cn": "哎哟，我的硬币！",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 2091,
+    "name_cn": "无尽大杀四方",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 2095,
+    "name_cn": "掷骰狂人",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 2096,
+    "name_cn": "小小的额外帮助",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 2097,
+    "name_cn": "虚空冲刺",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 2098,
+    "name_cn": "吃过路兵",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 2099,
+    "name_cn": "飞升仪式",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 2100,
+    "name_cn": "急速之追求",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 2102,
+    "name_cn": "高压锅",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 2103,
+    "name_cn": "狙神飞星",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 2104,
+    "name_cn": "灵魄炸弹",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 2107,
+    "name_cn": "濒死悟道",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 2108,
+    "name_cn": "主玩辅助",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 2111,
+    "name_cn": "邦！",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 2115,
+    "name_cn": "软弹啪叽抓",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 2116,
+    "name_cn": "威能之追求",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 2118,
+    "name_cn": "大招工具人",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 2119,
+    "name_cn": "过量延伸者",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 2123,
+    "name_cn": "超负荷",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 2125,
+    "name_cn": "前进时间到",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 2127,
+    "name_cn": "大师铸就",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 2128,
+    "name_cn": "炽燃利息",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 2129,
+    "name_cn": "地形专家",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 2131,
+    "name_cn": "别停止引导",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 2132,
+    "name_cn": "术士果汁盒",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 2133,
+    "name_cn": "仁慈打击",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 2134,
+    "name_cn": "电涌力场",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 2135,
+    "name_cn": "针插垫",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 2136,
+    "name_cn": "可靠武器",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 2137,
+    "name_cn": "轻拍背部",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 2138,
+    "name_cn": "自适应防护",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 2139,
+    "name_cn": "豪猪",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 2140,
+    "name_cn": "升级：贪欲九头蛇",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 2141,
+    "name_cn": "终极九头蛇",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 2143,
+    "name_cn": "升级：焚天",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 2144,
+    "name_cn": "加固护盾",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 2148,
+    "name_cn": "双重打击",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 2157,
+    "name_cn": "升级：死亡之舞",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 3004,
+    "name_cn": "罪恶快感！",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 3016,
+    "name_cn": "伤不过三",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 3018,
+    "name_cn": "大腕",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 3025,
+    "name_cn": "音之屏障",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 3036,
+    "name_cn": "翻倍时间",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 3039,
+    "name_cn": "拯救",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 3048,
+    "name_cn": "弹跳蜜蜂",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 3049,
+    "name_cn": "装甲冲击",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 3051,
+    "name_cn": "蓝色屏障",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 3052,
+    "name_cn": "远射天资",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 3053,
+    "name_cn": "热舞怪兽",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 3055,
+    "name_cn": "终极循环往复",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 3058,
+    "name_cn": "嗡嗡怪兽",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 3059,
+    "name_cn": "没法力，没问题",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 3063,
+    "name_cn": "溺水之赠礼",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 3071,
+    "name_cn": "黄铜爆音",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 3075,
+    "name_cn": "反冲",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 3078,
+    "name_cn": "鼓声暴起 低音轰鸣",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 3079,
+    "name_cn": "死之舞",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 3081,
+    "name_cn": "命运之武器",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 3085,
+    "name_cn": "灵魂乐流",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 3086,
+    "name_cn": "小蜜蜂！！！",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 3088,
+    "name_cn": "深红钴蓝闪光",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 3094,
+    "name_cn": "巫妖大脑",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 3116,
+    "name_cn": "将他们放倒倒倒",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 3118,
+    "name_cn": "奥术公理",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 3121,
+    "name_cn": "水果化",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 3123,
+    "name_cn": "珠光手镯",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 3129,
+    "name_cn": "吸元秘术",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 3131,
+    "name_cn": "屹立不倒",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 3132,
+    "name_cn": "王冠之重",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 3134,
+    "name_cn": "孤勇者",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 3149,
+    "name_cn": "一起抱抱",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 3150,
+    "name_cn": "升级：风暴狂涌",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 3163,
+    "name_cn": "迷人蝴蝶",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 3170,
+    "name_cn": "重型",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 3171,
+    "name_cn": "力量",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 3172,
+    "name_cn": "鞭挞",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 3173,
+    "name_cn": "厄运",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 3176,
+    "name_cn": "GoH_PentakillAug_Generic_BlankName",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 7001,
+    "name_cn": "升级：兹若特传送门",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 7002,
+    "name_cn": "黑切联盟",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 7003,
+    "name_cn": "或杀或死",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 7004,
+    "name_cn": "一饮而尽",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 7005,
+    "name_cn": "欲速则不达",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 7006,
+    "name_cn": "又快又狠",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 7007,
+    "name_cn": "升级：冥火之拥",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 7008,
+    "name_cn": "多兰的最铁粉丝",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 7009,
+    "name_cn": "升级：激发之匣",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 7010,
+    "name_cn": "时光发条：心之钢",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 7011,
+    "name_cn": "真正的永恒",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 7012,
+    "name_cn": "海克斯核心",
+    "level": "kPrismatic"
+  },
+  {
+    "augmentID": 7013,
+    "name_cn": "主玩打野之精魄",
+    "level": "kGold"
+  },
+  {
+    "augmentID": 7014,
+    "name_cn": "拱火诱饵",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 7015,
+    "name_cn": "召唤师的游猎",
+    "level": "kSilver"
+  },
+  {
+    "augmentID": 12317,
+    "name_cn": "潘朵拉的盒子",
+    "level": "kPrismatic"
+  }
+]

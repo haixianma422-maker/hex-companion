@@ -6,6 +6,8 @@ import sys
 import tempfile
 import time
 import traceback
+import hashlib
+from types import SimpleNamespace
 from pathlib import Path
 from unittest.mock import patch
 
@@ -15,6 +17,10 @@ def run(report_path):
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report = {'status': 'failed', 'frozen': bool(getattr(sys, 'frozen', False)),
               'live_game_tested': False, 'network_allowed': False}
+    if report['frozen']:
+        report['executable']=str(Path(sys.executable).resolve())
+        with Path(sys.executable).open('rb') as stream:
+            report['exe_sha256']=hashlib.file_digest(stream,'sha256').hexdigest()
     app = None
     try:
         import tkinter as tk
@@ -24,6 +30,8 @@ def run(report_path):
         from aram_demo.lcu import ClientState
         from aram_demo.models import Augment
         from aram_demo.recognition import Recognizer
+        from aram_demo.recognition import match_slots
+        from aram_demo.builds import recommended_items
         seed = Path(__file__).resolve().parents[1] / 'data'
         if os.name == 'nt':
             ctypes.windll.shcore.SetProcessDpiAwareness(1)
@@ -32,6 +40,15 @@ def run(report_path):
             store = DataStore(Path(directory) / 'data', seed_root=seed)
             assert store.read('settings.json') is None
             assert len(store.champions()) > 100
+            inventory=json.loads((seed/'visual-assets/resource-cache-manifest.json').read_text(encoding='utf-8'))
+            for asset in inventory['assets']:
+                assert asset['cached'], f'Missing cached resource: {asset["key"]}'
+                path=(seed/asset['path']).resolve()
+                path.relative_to(seed.resolve())
+                assert hashlib.sha256(path.read_bytes()).hexdigest()==asset['sha256'], f'Resource hash mismatch: {asset["key"]}'
+            report['verified_cached_resources']=len(inventory['assets'])
+            custom = {'scan': 'Ctrl+Alt+F10', 'refresh': 'Ctrl+Alt+F11', 'toggle': 'Ctrl+Alt+F12'}
+            store._write('settings.json',{'hotkeys':custom,'animations':False})
             data = store.hero(222)
             assert data['build_mode_verified'] and data['build_mode'] == 'aram-mayhem'
             names = ['暴击飞弹', '魔法飞弹', '双刀流']
@@ -46,25 +63,57 @@ def run(report_path):
             assert [m.augment_id for m in matches] == [1356, 1133, 1225], f'OCR mismatch: {report["ocr"]}'
             assert all(m.status == 'matched' for m in matches)
             root = tk.Tk()
+            callback_errors=[]
+            root.report_callback_exception=lambda kind,value,tb:callback_errors.append(''.join(traceback.format_exception(kind,value,tb)))
             app = CompanionApp(root, store, preview=True)
             deadline = time.monotonic() + 5
             while not app.tray.icon.visible and time.monotonic() < deadline:
                 root.update()
                 time.sleep(.05)
             assert app.tray.icon.visible
-            app.on_client_state(ClientState('InProgress', 222, queue_id=3270))
-            app.accept_matches(matches)
+            candidates=[hero.id for hero in store.champions()][:16]
+            app.on_client_state(ClientState('ChampSelect', 101, candidates, queue_id=3270))
+            root.update()
+            selection = app.panel.content_text()
+            assert '技能优先级' not in selection
+            assert '召唤师技能' in selection
+            spells=app.data['summoner_spells']
+            assert len(spells)==2 and all(app.panel.assets_shown.get(('spell',spell['id'])) for spell in spells)
+            assert app.panel.assets_shown.get(('splash',101))
+            assert app.panel.source_picker.winfo_ismapped()
+            app.panel.motion.enabled=True
+            app.panel._wheel(SimpleNamespace(x=100*app.panel.scale,y=340*app.panel.scale,delta=-120))
+            deadline=time.monotonic()+2
+            while 'candidate-scroll' in app.panel.motion.jobs and time.monotonic()<deadline:
+                root.update();time.sleep(.01)
+            assert app.panel.candidate_scroll==32
+            app.panel.set_motion(False)
+            report['smooth_candidate_scroll']=True
+            app.on_client_state(ClientState('InProgress', 101, queue_id=3270))
+            app.accept_matches(match_slots(['虚幻武器','巫师式思考','有始有终'],app.augments))
             root.update()
             assert app.panel.visible and root.state() == 'withdrawn'
-            assert len(app.panel.build_views) == 4
-            assert all(getattr(icon, 'picture', None) is not icon.placeholder for icon in app.panel.icon_views), 'Bundled item icons missing'
+            gameplay = app.panel.content_text()
+            priority=app.data['skill_priority']
+            assert f'主 {priority[0]} › 副 {priority[1]}' in gameplay and '召唤师技能' not in gameplay
+            assert all(app.panel.assets_shown.get(('skill',key)) for key in priority)
+            assert app.panel.source_picker.winfo_ismapped()
+            items=recommended_items(app.data)
+            assert len(items)==4 and all(app.panel.assets_shown.get(('item',item['id'])) for item in items), 'Bundled item icons missing'
+            for source in ('qq101','opgg','qq101'):
+                app.change_source(source);root.update()
+                assert app.data and app.data.get('source_id')==source
+                assert app.data.get('champion_id')==101
+                app.accept_matches(match_slots(['虚幻武器','巫师式思考','有始有终'],app.augments))
+                assert all(app.panel.assets_shown.get(('augment',aid)) for aid in (1029,1097,1038))
+            report['offline_source_switch']=True
+            report['reported_images_visible']=True
             app.hide()
             root.update()
             assert app.bubble.visible and not app.panel.visible
             app.expand()
             root.update()
             assert app.panel.visible and not app.bubble.visible
-            custom = {'scan': 'Ctrl+Alt+F10', 'refresh': 'Ctrl+Alt+F11', 'toggle': 'Ctrl+Alt+F12'}
             app.hotkeys.configure(custom)
             assert app.hotkeys.bindings == custom and len(app.hotkeys.registered) == 3
             ctypes.windll.user32.PostThreadMessageW(app.hotkeys.thread.native_id, 0x0312, 3, 0)
@@ -81,16 +130,25 @@ def run(report_path):
             assert app.panel.visible and not app.bubble.visible
             store._write('settings.json', {'auto_recognize': False, 'hotkeys': custom})
             assert store.read('settings.json')['hotkeys'] == custom
-            report.update(status='passed', champions=len(store.champions()),
+            assert not callback_errors, '\n'.join(callback_errors)
+            report.update(champions=len(store.champions()),
                           ocr=[{'text': m.text, 'augment_id': m.augment_id} for m in matches],
                           mayhem_build_verified=True, tray_visible=True,
                           hotkeys=app.hotkeys.status, native_hotkey_toggle=True, item_icons=4, source_build_slots=4, panel_bubble_toggle=True,
                           writable_cache_and_settings=True, tcl_version=root.tk.call('info', 'patchlevel'))
+            report['skill_priority_visible'] = True
+            report['skill_priority_game_only'] = True
+            report['summoner_spells_select_only'] = True
             app.close()
-            assert not app.tray.icon.visible
+            # pystray's Win32 backend removes the native icon/window at loop
+            # shutdown without resetting its cached `visible` property.
+            assert not app.tray.thread.is_alive(), 'Tray message loop still running'
+            assert not ctypes.windll.user32.IsWindow(app.tray.icon._hwnd), 'Tray window still exists'
             report['clean_exit'] = True
             app = None
+            report['status'] = 'passed'
     except Exception:
+        report['status'] = 'failed'
         report['error'] = traceback.format_exc()
     finally:
         if app is not None:

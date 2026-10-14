@@ -1445,5 +1445,21 @@
   "items_source": "https://op.gg/zh-cn/lol/modes/aram-mayhem/yone/items",
   "items_note": "",
   "patch": "16.20.1",
-  "fetched_at": "2026-10-11T13:06:35.234738+00:00"
+  "fetched_at": "2026-10-11T13:06:35.234738+00:00",
+  "skill_priority": [
+    "Q",
+    "E"
+  ],
+  "summoner_spells": [
+    {
+      "id": 4,
+      "name": "闪现"
+    },
+    {
+      "id": 32,
+      "name": "标记"
+    }
+  ],
+  "recommendation_source": "https://op.gg/zh-cn/lol/modes/aram-mayhem/yone/build",
+  "recommendation_fetched_at": "2026-10-14T03:29:45.586042+00:00"
 }

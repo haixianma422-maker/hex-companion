@@ -1448,5 +1448,21 @@
   "items_source": "https://op.gg/zh-cn/lol/modes/aram-mayhem/leblanc/items",
   "items_note": "",
   "patch": "16.20.1",
-  "fetched_at": "2026-10-11T13:06:34.813810+00:00"
+  "fetched_at": "2026-10-11T13:06:34.813810+00:00",
+  "skill_priority": [
+    "W",
+    "Q"
+  ],
+  "summoner_spells": [
+    {
+      "id": 4,
+      "name": "闪现"
+    },
+    {
+      "id": 32,
+      "name": "标记"
+    }
+  ],
+  "recommendation_source": "https://op.gg/zh-cn/lol/modes/aram-mayhem/leblanc/build",
+  "recommendation_fetched_at": "2026-10-14T03:29:43.779246+00:00"
 }

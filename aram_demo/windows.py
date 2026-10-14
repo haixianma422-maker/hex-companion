@@ -117,4 +117,11 @@ def single_instance():
     kernel.CreateMutexW.argtypes = [ctypes.c_void_p, wintypes.BOOL, wintypes.LPCWSTR]
     kernel.CreateMutexW.restype = wintypes.HANDLE
     handle = kernel.CreateMutexW(None, False, 'Local\\HexCompanionOPGG')
-    return handle if ctypes.get_last_error() != 183 else None
+    error = ctypes.get_last_error()
+    if not handle:
+        raise ctypes.WinError(error)
+    if error == 183:
+        kernel.CloseHandle.argtypes = [wintypes.HANDLE]
+        kernel.CloseHandle(handle)
+        return None
+    return handle

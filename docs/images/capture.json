@@ -1,0 +1,27 @@
+{
+  "real_game_tested": false,
+  "native_windows": true,
+  "client_state": "controlled offline inputs",
+  "network_requests": 0,
+  "selection_assets": {
+    "('splash', 101)": true,
+    "('spell', 4)": true,
+    "('spell', 13)": true,
+    "('portrait', 17)": true,
+    "('portrait', 222)": true,
+    "('portrait', 101)": true,
+    "('portrait', 99)": true
+  },
+  "game_assets": {
+    "('splash', 101)": true,
+    "('skill', 'Q')": true,
+    "('skill', 'E')": true,
+    "('augment', 1029)": true,
+    "('augment', 1097)": true,
+    "('augment', 1038)": true,
+    "('item', 2503)": true,
+    "('item', 6653)": true,
+    "('item', 3089)": true,
+    "('item', 3020)": true
+  }
+}

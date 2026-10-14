@@ -1,0 +1,505 @@
+{
+  "source": "https://op.gg/zh-cn/lol/modes/aram-mayhem/yuumi/build",
+  "patch": "16.20.1",
+  "rows": [
+    [
+      "$",
+      "tr",
+      null,
+      {
+        "children": [
+          [
+            "$",
+            "td",
+            null,
+            {
+              "children": [
+                "$",
+                "div",
+                null,
+                {
+                  "className": "flex h-[46px] items-center gap-1 md:h-12",
+                  "children": [
+                    [
+                      "$",
+                      "$L2f",
+                      "spell_0",
+                      {
+                        "metaId": 7,
+                        "metaType": "spell",
+                        "mode": "$undefined",
+                        "children": [
+                          "$",
+                          "$L30",
+                          null,
+                          {
+                            "className": "rounded",
+                            "src": "https://opgg-static.akamaized.net/meta/images/lol/16.20.1/spell/SummonerHeal.png",
+                            "width": 32,
+                            "height": 32,
+                            "alt": "治疗术"
+                          }
+                        ]
+                      }
+                    ],
+                    [
+                      "$",
+                      "$L2f",
+                      "spell_1",
+                      {
+                        "metaId": 14,
+                        "metaType": "spell",
+                        "mode": "$undefined",
+                        "children": [
+                          "$",
+                          "$L30",
+                          null,
+                          {
+                            "className": "rounded",
+                            "src": "https://opgg-static.akamaized.net/meta/images/lol/16.20.1/spell/SummonerDot.png",
+                            "width": 32,
+                            "height": 32,
+                            "alt": "引燃"
+                          }
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ],
+          false,
+          false
+        ]
+      }
+    ],
+    [
+      "$",
+      "tr",
+      null,
+      {
+        "children": [
+          [
+            "$",
+            "td",
+            null,
+            {
+              "children": [
+                "$",
+                "div",
+                null,
+                {
+                  "className": "flex h-[46px] items-center gap-1 md:h-12",
+                  "children": [
+                    [
+                      "$",
+                      "$L2f",
+                      "spell_0",
+                      {
+                        "metaId": 4,
+                        "metaType": "spell",
+                        "mode": "$undefined",
+                        "children": [
+                          "$",
+                          "$L30",
+                          null,
+                          {
+                            "className": "rounded",
+                            "src": "https://opgg-static.akamaized.net/meta/images/lol/16.20.1/spell/SummonerFlash.png",
+                            "width": 32,
+                            "height": 32,
+                            "alt": "闪现"
+                          }
+                        ]
+                      }
+                    ],
+                    [
+                      "$",
+                      "$L2f",
+                      "spell_1",
+                      {
+                        "metaId": 32,
+                        "metaType": "spell",
+                        "mode": "$undefined",
+                        "children": [
+                          "$",
+                          "$L30",
+                          null,
+                          {
+                            "className": "rounded",
+                            "src": "https://opgg-static.akamaized.net/meta/images/lol/16.20.1/spell/SummonerSnowball.png",
+                            "width": 32,
+                            "height": 32,
+                            "alt": "标记"
+                          }
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ],
+          false,
+          false
+        ]
+      }
+    ],
+    [
+      "$",
+      "tr",
+      null,
+      {
+        "children": [
+          [
+            "$",
+            "td",
+            null,
+            {
+              "children": [
+                "$",
+                "div",
+                null,
+                {
+                  "className": "flex-1",
+                  "children": [
+                    "$",
+                    "div",
+                    null,
+                    {
+                      "className": "inline-flex flex-col gap-2 pt-1 md:py-2",
+                      "children": [
+                        "$",
+                        "div",
+                        null,
+                        {
+                          "className": "inline-flex flex-col gap-2",
+                          "children": [
+                            [
+                              "$",
+                              "div",
+                              null,
+                              {
+                                "className": "flex flex-row flex-wrap justify-between gap-2",
+                                "children": [
+                                  [
+                                    "$",
+                                    "div",
+                                    null,
+                                    {
+                                      "className": "inline-flex flex-wrap items-center",
+                                      "children": [
+                                        [
+                                          "$",
+                                          "$1",
+                                          "skill_0",
+                                          {
+                                            "children": [
+                                              false,
+                                              [
+                                                "$",
+                                                "$L2f",
+                                                null,
+                                                {
+                                                  "metaType": "skill",
+                                                  "metaId": "yuumi",
+                                                  "extraData": "Q",
+                                                  "mode": "$undefined",
+                                                  "className": "* cursor-pointer",
+                                                  "children": [
+                                                    "$",
+                                                    "div",
+                                                    null,
+                                                    {
+                                                      "className": "relative cursor-pointer w-[32px]",
+                                                      "children": [
+                                                        [
+                                                          "$",
+                                                          "$L30",
+                                                          null,
+                                                          {
+                                                            "className": "rounded",
+                                                            "src": "https://opgg-static.akamaized.net/meta/images/lol/16.20.1/spell/YuumiQ.png",
+                                                            "alt": "摸鱼飞弹",
+                                                            "width": 32,
+                                                            "height": 32
+                                                          }
+                                                        ],
+                                                        [
+                                                          "$",
+                                                          "strong",
+                                                          null,
+                                                          {
+                                                            "translate": "no",
+                                                            "className": "absolute bottom-0 right-0 flex items-center justify-center rounded text-[11px] size-4 bg-[var(--color-gray-900)] text-[var(--color-blue-500)]",
+                                                            "children": "Q"
+                                                          }
+                                                        ]
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            ]
+                                          }
+                                        ],
+                                        [
+                                          "$",
+                                          "$1",
+                                          "skill_1",
+                                          {
+                                            "children": [
+                                              [
+                                                "$",
+                                                "svg",
+                                                null,
+                                                {
+                                                  "xmlns": "http://www.w3.org/2000/svg",
+                                                  "width": 24,
+                                                  "height": 24,
+                                                  "viewBox": "0 0 24 24",
+                                                  "className": "flex-shrink-0 text-gray-400 dark:text-[var(--color-darkpurple-400)]",
+                                                  "children": "$2e:props:children:props:children:1:props:children"
+                                                }
+                                              ],
+                                              [
+                                                "$",
+                                                "$L2f",
+                                                null,
+                                                {
+                                                  "metaType": "skill",
+                                                  "metaId": "yuumi",
+                                                  "extraData": "E",
+                                                  "mode": "$undefined",
+                                                  "className": "* cursor-pointer",
+                                                  "children": [
+                                                    "$",
+                                                    "div",
+                                                    null,
+                                                    {
+                                                      "className": "relative cursor-pointer w-[32px]",
+                                                      "children": [
+                                                        [
+                                                          "$",
+                                                          "$L30",
+                                                          null,
+                                                          {
+                                                            "className": "rounded",
+                                                            "src": "https://opgg-static.akamaized.net/meta/images/lol/16.20.1/spell/YuumiE.png",
+                                                            "alt": "旺盛精力",
+                                                            "width": 32,
+                                                            "height": 32
+                                                          }
+                                                        ],
+                                                        [
+                                                          "$",
+                                                          "strong",
+                                                          null,
+                                                          {
+                                                            "translate": "no",
+                                                            "className": "absolute bottom-0 right-0 flex items-center justify-center rounded text-[11px] size-4 bg-[var(--color-gray-900)] text-[var(--color-orange-500)]",
+                                                            "children": "E"
+                                                          }
+                                                        ]
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            ]
+                                          }
+                                        ],
+                                        [
+                                          "$",
+                                          "$1",
+                                          "skill_2",
+                                          {
+                                            "children": [
+                                              [
+                                                "$",
+                                                "svg",
+                                                null,
+                                                {
+                                                  "xmlns": "http://www.w3.org/2000/svg",
+                                                  "width": 24,
+                                                  "height": 24,
+                                                  "viewBox": "0 0 24 24",
+                                                  "className": "flex-shrink-0 text-gray-400 dark:text-[var(--color-darkpurple-400)]",
+                                                  "children": "$2e:props:children:props:children:1:props:children"
+                                                }
+                                              ],
+                                              [
+                                                "$",
+                                                "$L2f",
+                                                null,
+                                                {
+                                                  "metaType": "skill",
+                                                  "metaId": "yuumi",
+                                                  "extraData": "W",
+                                                  "mode": "$undefined",
+                                                  "className": "* cursor-pointer",
+                                                  "children": [
+                                                    "$",
+                                                    "div",
+                                                    null,
+                                                    {
+                                                      "className": "relative cursor-pointer w-[32px]",
+                                                      "children": [
+                                                        [
+                                                          "$",
+                                                          "$L30",
+                                                          null,
+                                                          {
+                                                            "className": "rounded",
+                                                            "src": "https://opgg-static.akamaized.net/meta/images/lol/16.20.1/spell/YuumiW.png",
+                                                            "alt": "悠米出动！",
+                                                            "width": 32,
+                                                            "height": 32
+                                                          }
+                                                        ],
+                                                        [
+                                                          "$",
+                                                          "strong",
+                                                          null,
+                                                          {
+                                                            "translate": "no",
+                                                            "className": "absolute bottom-0 right-0 flex items-center justify-center rounded text-[11px] size-4 bg-[var(--color-gray-900)] text-[var(--color-teal-400)]",
+                                                            "children": "W"
+                                                          }
+                                                        ]
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            ]
+                                          }
+                                        ]
+                                      ]
+                                    }
+                                  ],
+                                  false
+                                ]
+                              }
+                            ],
+                            [
+                              "$",
+                              "div",
+                              null,
+                              {
+                                "className": "inline-flex flex-wrap gap-0.5",
+                                "children": [
+                                  [
+                                    "$",
+                                    "span",
+                                    "0",
+                                    {
+                                      "className": "inline-flex flex-col items-center gap-0.5 text-[11px]",
+                                      "children": [
+                                        "$undefined",
+                                        [
+                                          "$",
+                                          "strong",
+                                          null,
+                                          {
+                                            "translate": "no",
+                                            "className": "inline-flex h-[18px] w-[18px] items-center justify-center rounded md:h-6 md:w-6 bg-[var(--color-gray-900)] text-[var(--color-blue-500)]",
+                                            "children": "Q"
+                                          }
+                                        ]
+                                      ]
+                                    }
+                                  ],
+                                  [
+                                    "$",
+                                    "span",
+                                    "1",
+                                    {
+                                      "className": "inline-flex flex-col items-center gap-0.5 text-[11px]",
+                                      "children": [
+                                        "$undefined",
+                                        [
+                                          "$",
+                                          "strong",
+                                          null,
+                                          {
+                                            "translate": "no",
+                                            "className": "inline-flex h-[18px] w-[18px] items-center justify-center rounded md:h-6 md:w-6 bg-[var(--color-gray-900)] text-[var(--color-orange-500)]",
+                                            "children": "E"
+                                          }
+                                        ]
+                                      ]
+                                    }
+                                  ],
+                                  [
+                                    "$",
+                                    "span",
+                                    "2",
+                                    {
+                                      "className": "inline-flex flex-col items-center gap-0.5 text-[11px]",
+                                      "children": [
+                                        "$undefined",
+                                        [
+                                          "$",
+                                          "strong",
+                                          null,
+                                          {
+                                            "translate": "no",
+                                            "className": "inline-flex h-[18px] w-[18px] items-center justify-center rounded md:h-6 md:w-6 bg-[var(--color-gray-900)] text-[var(--color-blue-500)]",
+                                            "children": "Q"
+                                          }
+                                        ]
+                                      ]
+                                    }
+                                  ],
+                                  [
+                                    "$",
+                                    "span",
+                                    "3",
+                                    {
+                                      "className": "inline-flex flex-col items-center gap-0.5 text-[11px]",
+                                      "children": [
+                                        "$undefined",
+                                        [
+                                          "$",
+                                          "strong",
+                                          null,
+                                          {
+                                            "translate": "no",
+                                            "className": "inline-flex h-[18px] w-[18px] items-center justify-center rounded md:h-6 md:w-6 bg-[var(--color-gray-900)] text-[var(--color-orange-500)]",
+                                            "children": "E"
+                                          }
+                                        ]
+                                      ]
+                                    }
+                                  ],
+                                  "$L45",
+                                  "$L46",
+                                  "$L47",
+                                  "$L48",
+                                  "$L49",
+                                  "$L4a",
+                                  "$L4b",
+                                  "$L4c",
+                                  "$L4d",
+                                  "$L4e",
+                                  "$L4f"
+                                ]
+                              }
+                            ]
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          false
+        ]
+      }
+    ]
+  ]
+}

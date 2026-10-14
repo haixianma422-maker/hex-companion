@@ -1,0 +1,24 @@
+{
+  "retrieved_date": "2026-10-14",
+  "hero_list.json": {
+    "source": "https://game.gtimg.cn/images/lol/act/img/js/heroList/hero_list.js",
+    "reduction": "heroId, name, alias, title, roles; top-level version and fileTime retained"
+  },
+  "augments.json": {
+    "source": "https://game.gtimg.cn/images/lol/act/img/js/kiwi/kiwi_augments.json",
+    "reduction": "augmentID, name_cn, level"
+  },
+  "hero86.json": {
+    "source": "https://game.gtimg.cn/images/lol/act/img/js/hero/86.js",
+    "reduction": "spells, version, fileTime"
+  },
+  "items.json": {
+    "source": "https://game.gtimg.cn/images/lol/act/img/js/items/items.js",
+    "reduction": "itemId, name; top-level version and fileTime retained"
+  },
+  "garen.json": {
+    "source": "https://mlol.qt.qq.com/go/battle_info/odp_proxy/fuwen_hero_rank?championid=86",
+    "stat_date": "20261013",
+    "reduction": "none; copied from parent research snapshot"
+  }
+}

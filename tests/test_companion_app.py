@@ -11,13 +11,18 @@ from aram_demo.lcu import ClientState
 from aram_demo.recognition import match_slots
 from aram_demo.models import Champion
 from aram_demo.windows import LeagueWindow
+from aram_demo.ui_widgets import PixelButton, PixelChoice
 
 
 class CompanionAppTests(unittest.TestCase):
     def setUp(self):
         cls = importlib.import_module('aram_demo.companion').CompanionApp
         self.root = tk.Tk()
-        self.app = cls(self.root, DataStore(Path(__file__).resolve().parents[1] / 'data'), preview=True, services=False)
+        self.root.design_scale = 1
+        self.tmp = tempfile.TemporaryDirectory(dir=Path(__file__).parent)
+        self.app = cls(self.root, DataStore(Path(self.tmp.name), Path(__file__).resolve().parents[1] / 'data', source='opgg'), preview=True, services=False)
+        self.app.panel.set_motion(False)
+        self.app.bubble.set_motion(False)
 
     def tearDown(self):
         if hasattr(self, 'app'):
@@ -26,6 +31,7 @@ class CompanionAppTests(unittest.TestCase):
                 if script in (self.root._tclCommands or []):
                     self.root.after_cancel(job)
             self.app.close()
+        self.tmp.cleanup()
 
     def test_root_is_hidden_and_small_panel_follows_mode_lifecycle(self):
         self.root.update()
@@ -35,7 +41,7 @@ class CompanionAppTests(unittest.TestCase):
         self.app.on_client_state(ClientState('ChampSelect', 222, [99, 86], queue_id=2400))
         self.root.update()
         self.assertTrue(self.app.panel.visible)
-        self.assertLessEqual(self.app.panel.window.winfo_width(), 320)
+        self.assertEqual(self.app.panel.window.winfo_width(), 360)
         self.app.on_client_state(ClientState('ChampSelect', 222, [99], queue_id=450))
         self.root.update()
         self.assertFalse(self.app.panel.visible)
@@ -55,8 +61,8 @@ class CompanionAppTests(unittest.TestCase):
         self.app.accept_matches(match_slots(['暴击飞弹', '魔法飞弹', '纯粹主义者 - 术师'], self.app.augments))
         self.root.update()
         labels = self.app.panel.content_text()
-        self.assertIn('推荐出装', labels)
-        self.assertIn('卢安娜的飓风', labels)
+        self.assertIn('核心出装', labels)
+        self.assertIn('卢安娜飓风', labels)
         self.assertIn('S', labels)
         self.assertIn('B', labels)
         self.assertIn('E', labels)
@@ -113,12 +119,12 @@ class CompanionAppTests(unittest.TestCase):
         with patch.object(self.app.store, 'champions', return_value=[updated]):
             jobs[0][1](result)
         self.assertEqual(self.app.champions[86].tier_label, 'T1')
-        self.assertIn('#1', self.app.panel.content_text())
+        self.assertIn('T1', self.app.panel.content_text())
 
     def test_unknown_candidate_id_remains_visible(self):
         self.app.on_client_state(ClientState('ChampSelect', 222, [99999], queue_id=2400))
         self.assertIn('99999', self.app.panel.content_text())
-        self.assertIn('未知档位', self.app.panel.content_text())
+        self.assertIn('—', self.app.panel.content_text())
 
     def settings_widgets(self):
         def visit(parent):
@@ -132,11 +138,12 @@ class CompanionAppTests(unittest.TestCase):
             self.app.store = DataStore(Path(directory) / 'cache')
             original = self.app.settings.get('install_path')
             self.app.show_settings()
-            with patch('aram_demo.companion.filedialog.askdirectory', return_value=directory):
-                next(w for w in self.settings_widgets() if isinstance(w, tk.Button) and w.cget('text') == '选择联盟安装目录').invoke()
-            with patch('aram_demo.companion.messagebox.showerror'):
-                next(w for w in self.settings_widgets() if isinstance(w, tk.Button) and w.cget('text') == '保存并应用').invoke()
+            with patch('aram_demo.settings_ui.filedialog.askdirectory', return_value=directory):
+                next(w for w in self.settings_widgets() if isinstance(w, PixelButton) and w.text == '选择安装目录').invoke()
+            with patch.object(self.app.store, '_write') as write:
+                next(w for w in self.settings_widgets() if isinstance(w, PixelButton) and w.text == '保存并应用').invoke()
             self.assertEqual(self.app.settings.get('install_path'), original)
+            write.assert_not_called()
             self.assertIsNone(self.app.store.read('settings.json'))
             self.assertTrue(self.app.dialog.winfo_exists())
 
@@ -157,7 +164,7 @@ class CompanionAppTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as directory:
             self.app.store = DataStore(Path(directory))
             self.app.show_settings()
-            next(w for w in self.settings_widgets() if isinstance(w, tk.Button) and w.cget('text') == '保存并应用').invoke()
+            next(w for w in self.settings_widgets() if isinstance(w, PixelButton) and w.text == '保存并应用').invoke()
             self.assertFalse(self.app.manual_override)
 
     def test_deliberately_clearing_all_three_choices_applies_manual_correction(self):
@@ -167,33 +174,34 @@ class CompanionAppTests(unittest.TestCase):
             self.app.store = DataStore(Path(directory))
             self.app.show_settings()
             for widget in self.settings_widgets():
-                if isinstance(widget, ttk.Combobox):
-                    widget.set('')
-            next(w for w in self.settings_widgets() if isinstance(w, tk.Button) and w.cget('text') == '保存并应用').invoke()
+                if isinstance(widget, PixelChoice):
+                    widget.variable.set('请选择')
+            next(w for w in self.settings_widgets() if isinstance(w, PixelButton) and w.text == '保存并应用').invoke()
             self.assertTrue(self.app.manual_override)
             self.assertTrue(all(m.augment_id is None for m in self.app.matches))
 
     def test_recognition_refresh_keeps_build_scroll_position_in_same_game(self):
-        self.app.locate = lambda: LeagueWindow(0, (200, 40, 1000, 540), (0, 0, 1400, 580), True)
+        self.app.locate = lambda: LeagueWindow(0, (200, 40, 1000, 540), (0, 0, 1400, 500), True)
         self.app.preview_next()
         self.app.preview_next()
         self.root.update()
-        self.app.panel.content.canvas.yview_moveto(1)
+        self.app.panel.canvas.event_generate('<MouseWheel>', x=20, y=300, delta=-120)
         self.root.update()
-        self.assertGreater(self.app.panel.content.canvas.yview()[0], 0)
-        self.app.scanning = True
+        scroll=self.app.panel.body_scroll
+        self.assertGreater(scroll,0)
+        self.app.scanning=True
         self.app.present()
         self.root.update()
-        self.assertGreater(self.app.panel.content.canvas.yview()[0], 0)
+        self.assertEqual(self.app.panel.body_scroll,scroll)
 
     def test_cancel_discards_selected_install_directory(self):
         with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as directory:
             self.app.store = DataStore(Path(directory))
             original = self.app.settings.get('install_path')
             self.app.show_settings()
-            with patch('aram_demo.companion.filedialog.askdirectory', return_value='D:/Fake-League'):
-                next(w for w in self.settings_widgets() if isinstance(w, tk.Button) and w.cget('text') == '选择联盟安装目录').invoke()
-            next(w for w in self.settings_widgets() if isinstance(w, tk.Button) and w.cget('text') == '取消').invoke()
+            with patch('aram_demo.settings_ui.filedialog.askdirectory', return_value='D:/Fake-League'):
+                next(w for w in self.settings_widgets() if isinstance(w, PixelButton) and w.text == '选择安装目录').invoke()
+            next(w for w in self.settings_widgets() if isinstance(w, PixelButton) and w.text == '取消').invoke()
             self.assertEqual(self.app.settings.get('install_path'), original)
             self.assertIsNone(self.app.store.read('settings.json'))
 
@@ -205,7 +213,7 @@ class CompanionAppTests(unittest.TestCase):
         self.app.locate = lambda: anchor
         self.app.present()
         self.root.update()
-        content = self.app.panel.content
+        content = self.app.panel.canvas
         pending = []
         self.app.background = lambda *args, **kwargs: pending.append(args)
         with patch('aram_demo.companion.find_league_window', return_value=anchor), \
@@ -214,11 +222,11 @@ class CompanionAppTests(unittest.TestCase):
             self.assertTrue(self.app.panel.visible)
             self.assertEqual(self.app.panel.window.state(), 'normal')
             self.root.update()
-        self.assertIs(self.app.panel.content, content)
+        self.assertIs(self.app.panel.canvas, content)
         self.assertTrue(pending)
         self.app.scanning = False
         self.app.accept_matches([])
-        self.assertIs(self.app.panel.content, content)
+        self.assertIs(self.app.panel.canvas, content)
 
     def test_collapse_leaves_clickable_bubble_and_drag_does_not_expand(self):
         self.app.on_client_state(ClientState('InProgress', 222, queue_id=3270))
@@ -300,14 +308,14 @@ class CompanionAppTests(unittest.TestCase):
         import copy
         self.app.on_client_state(ClientState('InProgress', 222, queue_id=3270))
         self.root.update()
-        content = self.app.panel.content
-        children = tuple(content.body.winfo_children())
+        content = self.app.panel.canvas
+        children = tuple(content.winfo_children())
         destroyed = []
         self.app.panel.window.bind('<Destroy>', lambda event: destroyed.append(event.widget), add='+')
         self.app.accept_matches(match_slots(['暴击飞弹', '魔法飞弹', '纯粹主义者 - 术师'], self.app.augments))
         self.root.update()
-        self.assertIs(self.app.panel.content, content)
-        self.assertEqual(tuple(content.body.winfo_children()), children)
+        self.assertIs(self.app.panel.canvas, content)
+        self.assertEqual(tuple(content.winfo_children()), children)
         self.assertFalse(destroyed)
         positions = [(child.winfo_y(), child.winfo_height()) for child in children]
         data = copy.deepcopy(self.app.data)
@@ -324,68 +332,73 @@ class CompanionAppTests(unittest.TestCase):
 
     def test_detection_keeps_scan_button_and_last_results_visually_stable(self):
         from PIL import Image
-        self.app.on_client_state(ClientState('InProgress', 222, queue_id=3270))
-        self.app.panel.on_preview = None
-        self.app.panel.context = None
-        self.app.preview = False
-        anchor = LeagueWindow(0, (100, 100, 1300, 900), (0, 0, 1920, 1040), True)
-        self.app.locate = lambda: anchor
-        self.app.accept_matches(match_slots(['暴击飞弹', '', ''], self.app.augments))
+        self.app.on_client_state(ClientState('InProgress',222,queue_id=3270))
+        self.app.preview=False
+        anchor=LeagueWindow(0,(100,100,1300,900),(0,0,1920,1040),True)
+        self.app.locate=lambda:anchor
+        self.app.accept_matches(match_slots(['暴击飞弹','',''],self.app.augments))
         self.root.update()
-        control = self.app.panel.scan_button
-        appearance = tuple(control.cget(key) for key in ('text', 'bg', 'fg', 'state'))
-        status = self.app.status
-        self.app.background = lambda *args, **kwargs: None
-        with patch('aram_demo.companion.find_league_window', return_value=anchor), \
-             patch('PIL.ImageGrab.grab', return_value=Image.new('RGB', (1200, 800))):
+        control=self.app.panel.scan_button
+        appearance=(control.logical_width,control.logical_height,control.winfo_x(),control.winfo_y())
+        status=self.app.status
+        self.app.background=lambda *a,**k:None
+        with patch('aram_demo.companion.find_league_window',return_value=anchor), patch('PIL.ImageGrab.grab',return_value=Image.new('RGB',(1200,800))):
             self.app.scan(force=False)
         self.root.update()
-        self.assertEqual(tuple(control.cget(key) for key in ('text', 'bg', 'fg', 'state')), appearance)
-        self.assertEqual(self.app.status, status)
-        self.assertIn('暴击飞弹', self.app.panel.content_text())
+        self.assertIs(self.app.panel.scan_button,control)
+        self.assertEqual((control.logical_width,control.logical_height,control.winfo_x(),control.winfo_y()),appearance)
+        self.assertEqual(control.text,'重新识别 F6')
+        self.assertNotEqual(control._state,'disabled')
+        self.assertEqual(self.app.status,status)
+        self.assertIn('暴击飞弹',self.app.panel.content_text())
+        # A manual click can adopt the pending automatic scan and gets explicit feedback.
+        self.app.scan(force=True)
+        self.root.update()
+        self.assertEqual(control.text,'识别中')
+        self.assertEqual(control._state,'disabled')
 
     def test_candidate_refresh_preserves_existing_rows_and_hero_surface(self):
         self.app.on_client_state(ClientState('ChampSelect', 222, [86], queue_id=3270))
         self.root.update()
-        content = self.app.panel.content
+        content = self.app.panel.canvas
         destroyed = []
         self.app.panel.window.bind('<Destroy>', lambda event: destroyed.append(event.widget), add='+')
         self.app.champions[86] = Champion(86, '德玛西亚之力', 'garen', 1, 1)
         self.app.on_client_state(ClientState('ChampSelect', 222, [86, 99], queue_id=3270))
         self.root.update()
-        self.assertIs(self.app.panel.content, content)
+        self.assertIs(self.app.panel.canvas, content)
         self.assertFalse(destroyed)
-        self.assertIn('#1', self.app.panel.content_text())
+        self.assertIn('T1', self.app.panel.content_text())
 
     def test_persistent_game_panel_recovers_height_after_small_work_area(self):
         self.app.on_client_state(ClientState('InProgress', 222, queue_id=3270))
         self.app.locate = lambda: LeagueWindow(0, (100, 40, 1000, 540), (0, 0, 1400, 580), True)
         self.app.present()
         self.root.update()
-        self.assertEqual(self.app.panel.window.winfo_height(), 556)
-        content = self.app.panel.content
+        self.assertEqual(self.app.panel.window.winfo_height(), 568)
+        content = self.app.panel.canvas
         self.app.locate = lambda: LeagueWindow(0, (100, 40, 1000, 900), (0, 0, 1920, 1040), True)
         self.app.present()
         self.root.update()
-        self.assertEqual(self.app.panel.window.winfo_height(), 780)
-        self.assertIs(self.app.panel.content, content)
+        self.assertEqual(self.app.panel.window.winfo_height(), 580)
+        self.assertIs(self.app.panel.canvas, content)
 
     def test_four_build_slots_reuse_widgets_when_data_becomes_incomplete(self):
         import copy
-        self.app.on_client_state(ClientState('InProgress', 222, queue_id=3270))
+        self.app.on_client_state(ClientState('InProgress',222,queue_id=3270))
         self.root.update()
-        views = tuple(self.app.panel.build_views)
-        self.assertEqual(len(views), 4)
-        self.assertNotIn('饮血剑', self.app.panel.content_text())
-        self.assertIn('三件核心＋鞋子', self.app.panel.content_text())
-        data = copy.deepcopy(self.app.data)
-        data['builds'] = []
-        self.app.data = data
-        self.app.present()
-        self.root.update()
-        self.assertEqual(tuple(self.app.panel.build_views), views)
-        self.assertEqual(sum(name.cget('text') == '等待装备数据' for _, name, _ in views), 4)
-        self.assertEqual(self.app.panel.build_heading.cget('text'), '0/4 已有数据')
+        canvas=self.app.panel.canvas
+        controls=tuple(canvas.winfo_children())
+        bitmap=self.app.panel.bitmap
+        self.assertEqual(len([k for k in self.app.panel.assets_shown if k[0]=='item']),4)
+        self.assertNotIn('饮血剑',self.app.panel.content_text())
+        data=copy.deepcopy(self.app.data);data['builds']=[]
+        self.app.data=data;self.app.present();self.root.update()
+        self.assertIs(self.app.panel.canvas,canvas)
+        self.assertEqual(tuple(canvas.winfo_children()),controls)
+        self.assertEqual(self.app.panel.bitmap,bitmap)
+        self.assertEqual(self.app.panel.content_text().count('暂无资料'),4)
+        self.assertEqual(len([k for k in self.app.panel.assets_shown if k[0]=='item']),0)
 
     def test_hotkey_toggle_can_restore_panel_after_collapse(self):
         self.app.on_client_state(ClientState('InProgress', 222, queue_id=2400))
@@ -406,10 +419,10 @@ class CompanionAppTests(unittest.TestCase):
             self.app.show_settings()
             self.app.hotkey_vars['scan'].set('Ctrl+Alt+J')
             self.app.hotkey_vars['toggle'].set('Ctrl+Alt+H')
-            next(w for w in self.settings_widgets() if isinstance(w, tk.Button) and w.cget('text') == '保存并应用').invoke()
+            next(w for w in self.settings_widgets() if isinstance(w, PixelButton) and w.text == '保存并应用').invoke()
             saved = self.app.store.read('settings.json')['hotkeys']
             self.assertEqual(saved['toggle'], 'Ctrl+Alt+H')
-            self.assertIn('Ctrl+Alt+J', self.app.panel.scan_button.cget('text'))
+            self.assertIn('Ctrl+Alt+J', self.app.panel.scan_button.text)
             from aram_demo.hotkeys import Hotkeys
             reloaded = Hotkeys(lambda: None, lambda: None, lambda: None, bindings=saved)
             self.assertEqual(reloaded.bindings, saved)
@@ -419,7 +432,7 @@ class CompanionAppTests(unittest.TestCase):
             self.app.store = DataStore(Path(directory))
             self.app.show_settings()
             self.app.hotkey_vars['toggle'].set('F6')
-            next(w for w in self.settings_widgets() if isinstance(w, tk.Button) and w.cget('text') == '保存并应用').invoke()
+            next(w for w in self.settings_widgets() if isinstance(w, PixelButton) and w.text == '保存并应用').invoke()
             self.assertTrue(self.app.dialog.winfo_exists())
             self.assertIsNone(self.app.store.read('settings.json'))
             self.assertEqual(self.app.hotkeys.bindings['toggle'], 'F8')

@@ -1,357 +1,542 @@
-"""Compact, glanceable surfaces for champion selection and gameplay."""
-import tkinter as tk
+"""SELECT/GAME calibrated to the numbered logical-pixel V2 handoff."""
 import os
-from PIL import Image, ImageTk
+import tkinter as tk
+from .tk_images import WidgetPhotoImage
+from .models import sort_champions, augment_label
 from .builds import recommended_items
-from .models import augment_label, sort_champions
-from .theme import (ACCENT, BG, GOLD, GRADES, GRADE_BACKGROUNDS, LINE, MUTED,
-                    SURFACE, TEXT, TIER_BG, NEUTRAL_BG, Card, ScrollArea, button, configure_styles, label)
-from .windows import panel_position, prepare_popup
+from .motion import Motion
+from .ui_drawing import (Artboard, ui_scale, position_window, Hint, measure, ellipsize,
+                         BG,SURFACE,RAISED,TEXT,MUTED,LILAC,ACCENT,INK,INK_MUTED,LINE,UNKNOWN,TRANSPARENT)
+from .ui_widgets import PixelButton, SourceSwitch
+from .windows import prepare_popup, panel_position
 
 
 class CompanionPanel:
-    def __init__(self, root, on_scan, on_settings, on_hide, on_preview=None):
-        configure_styles(root)
-        self.window = tk.Toplevel(root)
-        self.window.withdraw()
-        self.window.title('海克斯随行 · 伴随浮窗')
-        self.window.overrideredirect(True)
-        self.window.attributes('-topmost', True)
-        transparent = '#010203'
-        self.window.configure(bg=transparent)
-        if os.name == 'nt':
-            self.window.attributes('-transparentcolor', transparent)
-        self.visible, self.signature = False, None
-        self.context = None
-        self._scroll_job = None
-        self.window.bind('<Destroy>', lambda event: self._cancel_scroll() if event.widget == self.window else None)
-        self.offset = self.base = (0, 0)
-        self._geometry = None
-        self.width, self.height = 304, 480
-        self.on_scan, self.on_settings, self.on_hide = on_scan, on_settings, on_hide
-        self.on_preview = on_preview
-        self.hotkey_bindings = {'scan': 'F6', 'refresh': 'F7', 'toggle': 'F8'}
-        self.item_icons = None
-        self.icon_images = {}
-        self.shell = Card(self.window, color=BG, padding=8, radius=20)
-        self.shell.pack(fill='both', expand=True)
-        self.inner = self.shell.body
+    def __init__(self,root,on_scan,on_settings,on_hide,on_preview=None,on_source=None):
+        self.window=tk.Toplevel(root); self.window.withdraw()
+        self.window.title('海克斯随行 · 伴随浮窗'); self.window.overrideredirect(True)
+        self.window.attributes('-topmost',True); self.window.configure(bg=TRANSPARENT)
+        if os.name=='nt': self.window.attributes('-transparentcolor',TRANSPARENT)
+        self.scale=ui_scale(root); self.width=round(360*self.scale); self.height=round(540*self.scale)
+        self.canvas=tk.Canvas(self.window,bg=TRANSPARENT,bd=0,highlightthickness=0,takefocus=True)
+        self.canvas.pack(fill='both',expand=True); self.inner=self.canvas
+        self.bitmap=self.canvas.create_image(0,0,anchor='nw')
+        self.canvas.control_backdrop=self._control_backdrop
+        self.motion=Motion(self.window)
+        self.on_scan,self.on_settings,self.on_hide=on_scan,on_settings,on_hide
+        self.on_source,self.on_preview=on_source,on_preview
+        self.on_refresh=self.on_correct=None
+        self.visible=False; self.context=None; self.signature=None; self.stage=None
+        self.offset=self.base=(0,0); self._geometry=None; self._controls=[]
+        self.item_icons=self.advice_icons=self.visual_assets=None
+        self.source_name='OP.GG'; self.hotkey_bindings={'scan':'F6','refresh':'F7','toggle':'F8'}
+        self.data_loading=self.images_loading=False; self.network_error=''; self.images_error=''
+        self.manual_override=False; self.candidate_scroll=self.body_scroll=0
+        self._candidate_target=0
+        self.visible_height=540; self._regions=[]; self._strings=[]; self.assets_shown={}
+        self.tip=Hint(self.canvas,''); self._tip_identity=None
+        self.canvas.bind('<Motion>',self._hover)
+        self.canvas.bind('<Leave>',lambda _:self.tip.hide())
+        self.canvas.bind('<ButtonPress-1>',self._press)
+        self.canvas.bind('<B1-Motion>',self._drag)
+        self.canvas.bind('<ButtonRelease-1>',self._release)
+        self.canvas.bind('<MouseWheel>',self._wheel)
+        self.canvas.bind('<Escape>',lambda _:self.on_hide())
+        self.canvas.bind('<Double-Button-1>',self._preview_switch)
+        self._card_signatures=[]
+        self._drag_origin=None; self._last=None
         prepare_popup(self.window)
+        from .window_shadow import attach_shadow
+        self.shadow=attach_shadow(self.window,self.scale,14)
 
-    label = staticmethod(label)
+    def set_motion(self,enabled):
+        self.motion.set_enabled(enabled)
+        for control in self._controls:
+            control.set_motion(enabled)
+        self.window.attributes('-alpha',1.)
 
-    def set_hotkeys(self, bindings):
-        self.hotkey_bindings = dict(bindings)
-        if getattr(self, 'scan_button', None):
-            self._set(self.scan_button, text='识别海克斯  ' + bindings['scan'])
+    def set_hotkeys(self,bindings):
+        self.hotkey_bindings=dict(bindings); self.signature=None
+        if self._last: self.render(*self._last)
 
-    def _item_icon(self, item_id):
-        path = self.item_icons.path(item_id) if self.item_icons else None
-        if path is None:
-            return None
-        key = (item_id, str(path))
-        if key not in self.icon_images:
-            try:
-                with Image.open(path) as image:
-                    self.icon_images[key] = ImageTk.PhotoImage(image.convert('RGBA').resize((40, 40), Image.Resampling.LANCZOS), master=self.window)
-            except (OSError, ValueError):
-                return None
-        return self.icon_images[key]
+    def _text(self,art,box,text,size=14,bold=False,color=TEXT,**kwargs):
+        self._strings.append(str(text))
+        return art.text(box,str(text),size,bold,color,**kwargs)
 
-    def button(self, parent, text, command, gold=False):
-        return button(parent, text, command, primary=gold)
+    def _asset(self,kind,key):
+        return self.visual_assets.path(kind,key) if self.visual_assets and key else None
 
-    def section(self, parent, title, detail=''):
-        row = tk.Frame(parent, bg=BG)
-        row.pack(fill='x', pady=(10, 6))
-        label(row, title, GOLD, 10, True).pack(side='left')
-        caption = label(row, detail, MUTED, 9)
-        caption.pack(side='right')
-        return caption
+    def _region(self,box,text='',action=None):
+        self._regions.append((box,text,action))
 
-    def badge(self, parent, text, color=GOLD, background=TIER_BG, large=False, compact=False):
-        badge = Card(parent, color=background, padding=5 if compact else 6, radius=9)
-        badge.caption = label(badge.body, text, color, (18 if compact else 20) if large else 11, True,
-                              width=2 if large else 3)
-        badge.caption.pack()
-        return badge
+    def _header(self,art,stage,preview):
+        art.brand((16,10,20,20)); self._text(art,(45,8,190,24),'海克斯随行',17,True,line_height=24)
+        if stage=='select': art.line((12,38,348,38),LINE)
+        sy=55 if stage=='select' else 50
+        art.circle((16,sy,8,8),ACCENT)
+        self._text(art,(32,48 if stage=='select' else 43,100,22),
+                   '选人中' if stage=='select' else '对局中' if stage=='game' else '等待连接',13,True)
 
-    @staticmethod
-    def _set(widget, **values):
-        changed = {key: value for key, value in values.items() if str(widget.cget(key)) != str(value)}
-        if changed:
-            widget.configure(**changed)
+    def _hero(self,art,state,champions,game=False):
+        cid=state.champion_id; hero=champions.get(cid)
+        info=self.visual_assets.champion_info(cid) if self.visual_assets and cid else {}
+        name=info.get('name') or (hero.name if hero else '等待选择')
+        title=info.get('title','') if cid else ''
+        box=(4,68,352,138) if game else (6,75,348,106)
+        art.rect(box,LILAC,8)
+        image_box=(4,68,352,84) if game else box
+        focus=self.visual_assets.champion_focus(cid) if self.visual_assets and cid else (.72,.42)
+        path=self._asset('splash',cid)
+        shown=art.image_at(image_box,path,hero=True,focus=focus,radius=8,round_bottom=not game)
+        self.assets_shown[('splash',cid)]=shown
+        if game:
+            art.rect((4,152,352,54),LILAC,8)
+            art.rect((4,152,352,8),LILAC)
+        size=30 if game else 34
+        width=130 if game else 110
+        while size>24 and measure(name,size,True)>width: size-=1
+        long=measure(name,size,True)>width
+        self._text(art,(16,79,150 if long else 130,60 if long else 40) if game else (20,88 if long else 96,150 if long else 110,60 if long else 44),
+                   name,size,True,INK,lines=2 if long else 1,line_height=30 if long else 40 if game else 44)
+        self._text(art,(16,133 if long else 121,150,22) if game else (20,151 if long else 145,110 if long else 150,24),title,
+                   14 if game else 15,True,INK_MUTED,line_height=22 if game else 24)
+        if not game:
+            tier=hero.tier_label if hero and hero.tier is not None else '—'
+            pill=(134,155,30,22) if long else (134,110,30,22)
+            art.rect(pill,'#D2C0EF',11); self._text(art,pill,tier,14,True,INK,align='center',line_height=20)
+        if not shown and cid: self._region(image_box,'插画加载中' if self.images_loading else '暂无英雄插画，保留真实名称')
+        return name
 
-    def render(self, state, champions, data, matches, status, preview=False, scanning=False):
-        signature = (state.stage, state.champion_id, tuple(state.candidate_ids),
-                     (data or {}).get('fetched_at'),
-                     tuple((m.slot, m.augment_id, m.status, m.text if m.augment_id is None else '') for m in matches),
-                     preview)
-        if self.context and self.context[0] == state.stage:
-            if self.context[1] != state.champion_id:
-                self.content.canvas.yview_moveto(0)
-            self.context = (state.stage, state.champion_id)
-            self.signature = signature
-            self._set(self.mode_label, text='模拟预览' if preview else '海克斯大乱斗')
-            self._update_hero(champions.get(state.champion_id), state.champion_id)
-            if state.stage == 'game':
-                self._update_game(data, matches)
-            else:
-                self._update_candidates(state, champions)
-            self._activity(status, scanning)
+    def _advice(self,art,state,data,game=False):
+        if state.stage not in ('select','game'):
             return
-        self._cancel_scroll()
-        context = (state.stage, state.champion_id)
-        scroll_position = self.content.canvas.yview()[0] if hasattr(self, 'content') and self.context == context else 0
-        self.context = context
-        self.signature = signature
-        for child in self.inner.winfo_children():
-            child.destroy()
-        self.height = 780 if state.stage == 'game' else 480
-        self._header(state, preview)
-        self._hero(champions.get(state.champion_id), state.champion_id, compact=state.stage == 'game')
-        foot = tk.Frame(self.inner, bg=BG)
-        foot.pack(side='bottom', fill='x', padx=10, pady=(6, 4))
-        actions = tk.Frame(foot, bg=BG)
-        actions.pack(fill='x')
-        self.scan_button = None
-        if self.on_preview:
-            caption = '查看选人预览' if state.stage == 'game' else '查看局内预览'
-            button(actions, caption, self.on_preview, primary=True).pack(side='left')
-        elif state.stage == 'game':
-            self.scan_button = button(actions, '识别海克斯  ' + self.hotkey_bindings['scan'], self.on_scan, primary=True)
-            self.scan_button.pack(side='left')
+        valid=bool(data and data.get('champion_id')==state.champion_id and data.get('build_mode_verified') and data.get('build_mode')=='aram-mayhem')
+        data=data if valid else{}
+        if game:
+            self._text(art,(16,170,78,20),'技能优先级',13,True,INK,line_height=20)
+            keys=data.get('skill_priority',[])
+            valid=len(keys)==2 and all(k in ('Q','W','E') for k in keys) and len(set(keys))==2
+            if not valid:
+                self._text(art,(98,160,246,40),'暂无推荐',14,color=INK,align='center'); return
+            for i,key in enumerate(keys):
+                x=98+i*48; box=(x,160,40,40)
+                local_icons=self.visual_assets.champion_skill_icons(state.champion_id) if self.visual_assets else {}
+                path=(self.advice_icons.path(data.get('skill_icons',{}).get(key,''))
+                      or self.advice_icons.path(local_icons.get(key,''))) if self.advice_icons else None
+                art.rect(box,'#D2C0EF',6)
+                shown=art.image_at(box,path,radius=6,border='#CBBEE4')
+                self.assets_shown[('skill',key)]=shown
+                if not shown:art.icon('question',(x+8,166,24,24),INK)
+                art.rect((x+26,184,14,16),BG,3)
+                self._text(art,(x+26,184,14,16),key,11,True,TEXT,align='center',line_height=16)
+                self._region(box,key+' 技能'+(' · 图标暂缺' if not shown else''))
+            self._text(art,(198,170,146,20),f'主 {keys[0]} › 副 {keys[1]}',14,True,INK,line_height=20)
         else:
-            label(actions, '随客户端自动更新', MUTED, 9).pack(side='left', pady=8)
-        button(actions, '设置', self.on_settings).pack(side='right')
-        self.status_label = label(foot, '', MUTED, 9, wraplength=270, anchor='w', justify='left', height=2)
-        self.status_label.pack(fill='x', pady=(7, 0))
-        self.activity = None
-        self._activity(status, scanning)
-        self.content = ScrollArea(self.inner)
-        self.content.pack(fill='both', expand=True, padx=10)
-        if state.stage in ('select', 'lobby'):
-            self._candidates(self.content.body, state, champions)
-        elif state.stage == 'game':
-            self._game(self.content.body, data, matches)
-        self.content.bind_wheel()
-        content = self.content
-        def restore_scroll():
-            self._scroll_job = None
-            if content.winfo_exists():
-                content.canvas.yview_moveto(scroll_position)
-        self._scroll_job = self.window.after_idle(restore_scroll)
+            self._text(art,(16,201,80,22),'召唤师技能',14,True,line_height=22)
+            spells=data.get('summoner_spells',[])
+            if len(spells)!=2:
+                self._text(art,(102,195,151,32),'暂无推荐',12,align='center'); return
+            for i,spell in enumerate(spells):
+                x=102+i*86; box=(x,195,32,32)
+                path=self.advice_icons.path(spell.get('icon_url','')) if self.advice_icons else None
+                art.rect(box,SURFACE,6)
+                shown=art.image_at(box,path,radius=6,border='#645775')
+                self.assets_shown[('spell',spell.get('id'))]=shown
+                if not shown:art.icon('question',(x+6,201,20,20),MUTED)
+                self._text(art,(139+i*86,202,28,20),{6:'疾跑',11:'惩戒',12:'传送',13:'清晰',14:'点燃',21:'屏障'}.get(spell.get('id'),spell['name']),12,line_height=20)
+                self._region((x,191,66,40),spell['name']+(' · 图标暂缺' if not shown else''))
+            self._text(art,(170,202,12,20),'+',12,color=MUTED,align='center',line_height=20)
+            if data.get('source_id')=='qq101' and data.get('summoner_source')=='opgg':
+                self._text(art,(270,203,74,18),'OP.GG 补充',10,color=MUTED,align='right',line_height=18)
 
-    def _activity(self, status, scanning):
-        if (status, scanning) == self.activity:
-            return
-        self.activity = (status, scanning)
-        self._set(self.status_label, text=status)
-        # Background scans never blink the button or replace its caption.
-        # CompanionApp.scan already rejects a second concurrent request.
+    def _candidates(self,art,state,champions):
+        art.line((12,239,348,239),LINE)
+        self._text(art,(16,252,90,26),'可选英雄',18,True,line_height=26)
+        self._text(art,(108,257,150,20),'按梯队排序',12,color=MUTED,line_height=20)
+        ids=list(dict.fromkeys(state.candidate_ids))
+        ordered=[h.id for h in sort_champions([champions[i] for i in ids if i in champions])]+[i for i in ids if i not in champions]
+        grid=Artboard(336,max(188,((len(ordered)+1)//2)*64-4),self.scale,bg=BG)
+        self.candidate_scroll=max(0,min(self.candidate_scroll,max(0,grid.height-188)))
+        self._candidate_target=max(0,min(self._candidate_target,max(0,grid.height-188)))
+        self._candidate_rows=[]
+        if not ids: self._text(art,(16,284,328,60),'等待客户端返回候选英雄',14,color=MUTED,align='center')
+        for index,cid in enumerate(ordered):
+            x,y=(index%2)*170,(index//2)*64
+            selected=cid==state.champion_id; fill=LILAC if selected else SURFACE
+            fg=INK if selected else TEXT; secondary=INK if selected else MUTED
+            grid.rect((x,y,166,60),fill,10)
+            if selected:grid.circle((x+4,y+26,7,7),ACCENT,INK,1)
+            info=self.visual_assets.champion_info(cid) if self.visual_assets else{}
+            hero=champions.get(cid); name=info.get('name') or (hero.name if hero else f'英雄{cid}')
+            path=self._asset('portrait',cid); box=(x+14,y+9,42,42)
+            grid.rect(box,RAISED,6)
+            shown=grid.image_at(box,path,radius=6)
+            self.assets_shown[('portrait',cid)]=shown
+            if not shown:grid.text(box,name[:1],18,True,fg,align='center')
+            size=13 if len(name)==4 and measure(name,14,True)>72 else 14
+            self._text(grid,(x+66,y+16,72,26),name,size,True,fg,line_height=22)
+            self._text(grid,(x+138,y+16,24,26),hero.tier_label if hero and hero.tier is not None else'—',14,True,secondary,align='right',line_height=22)
+            self._candidate_rows.append((x,y,name+' · '+(info.get('title') or '暂无档位')))
+        self.candidate_content_height=grid.height
+        self._candidate_grid=grid
+        self._candidate_pixels=grid.finish()
+        self._candidate_thumb=None
+        if grid.height>188:
+            thumb=max(24,188*188/grid.height)
+            marker=Artboard(4,thumb,self.scale,bg=(0,0,0,0))
+            marker.rect((0,0,4,thumb),'#665974',2)
+            self._candidate_thumb=marker.finish()
+        self._candidate_hit_regions=self._candidate_regions()
+        self._regions.extend(self._candidate_hit_regions)
+        view=self._candidate_view()
+        art.image.alpha_composite(view.image,(round(12*art.factor),round(284*art.factor)))
 
-    def _cancel_scroll(self):
-        if self._scroll_job is not None:
-            self.window.after_cancel(self._scroll_job)
-            self._scroll_job = None
+    def _candidate_regions(self):
+        result=[]
+        for x,y,text in self._candidate_rows:
+            display_y=284+y-self.candidate_scroll
+            if display_y<472 and display_y+60>284:
+                result.append(((12+x,max(284,display_y),166,min(472,display_y+60)-max(284,display_y)),text,None))
+        return result
 
-    def _header(self, state, preview):
-        bar = tk.Frame(self.inner, bg=BG)
-        bar.pack(fill='x', padx=10, pady=(4, 4))
-        mark = tk.Canvas(bar, width=26, height=28, bg=BG, highlightthickness=0)
-        mark.create_polygon(13, 2, 24, 8, 24, 20, 13, 26, 2, 20, 2, 8,
-                            outline=GOLD, fill=BG, width=1.5)
-        mark.create_line(9, 9, 9, 19, 9, 14, 17, 14, 17, 9, 17, 19, fill=ACCENT, width=2)
-        mark.pack(side='left', padx=(0, 8))
-        title = label(bar, '海克斯随行', GOLD, 11, True)
-        title.pack(side='left')
-        button(bar, '收起', self.on_hide).pack(side='right')
-        origin = [0, 0]
-        def begin(event):
-            origin[:] = [event.x_root - self.window.winfo_x(), event.y_root - self.window.winfo_y()]
-        def drag(event):
-            x, y = event.x_root - origin[0], event.y_root - origin[1]
-            self.offset = (x - self.base[0], y - self.base[1])
-            self.window.geometry(f'{x:+d}{y:+d}')
-        for widget in (bar, mark, title):
-            widget.bind('<ButtonPress-1>', begin)
-            widget.bind('<B1-Motion>', drag)
-        meta = tk.Frame(self.inner, bg=BG)
-        meta.pack(fill='x', padx=10, pady=(0, 10))
-        phase = {'lobby': '等待选人', 'select': '选人阶段', 'game': '对局中'}.get(state.stage, '')
-        label(meta, phase, ACCENT, 9).pack(side='left')
-        self.mode_label = label(meta, '模拟预览' if preview else '海克斯大乱斗', MUTED, 9)
-        self.mode_label.pack(side='right')
+    def _candidate_view(self):
+        grid=self._candidate_grid; f=grid.factor
+        start=round(self.candidate_scroll*f)
+        view=Artboard(336,188,self.scale,bg=BG)
+        view.image.alpha_composite(grid.image.crop((0,start,round(336*f),start+round(188*f))))
+        if grid.height>188:
+            thumb=max(24,188*188/grid.height)
+            sy=(188-thumb)*self.candidate_scroll/(grid.height-188)
+            view.rect((332,sy,4,thumb),'#665974',2)
+        return view
 
-    def _hero(self, hero, champion_id, compact=False):
-        card = Card(self.inner, padding=12)
-        card.pack(fill='x', padx=10)
-        self.hero_badge = self.badge(card.body, '—', large=True)
-        self.hero_badge.pack(side='right', padx=(8, 0))
-        details = tk.Frame(card.body, bg=SURFACE)
-        details.pack(side='left', fill='x', expand=True)
-        if not compact:
-            label(details, '当前英雄', MUTED, 9, anchor='w').pack(fill='x')
-        self.hero_name = label(details, '', TEXT, 13, True, wraplength=180, justify='left', anchor='w')
-        self.hero_name.pack(fill='x', pady=(3, 3))
-        self.hero_meta = label(details, '', MUTED, 9, anchor='w')
-        self.hero_meta.pack(fill='x')
-        self._update_hero(hero, champion_id)
+    def _move_candidates(self,value):
+        limit=max(0,self.candidate_content_height-188)
+        self.candidate_scroll=max(0,min(value,limit))
+        start=round(self.candidate_scroll*self.scale)
+        view=self._candidate_pixels.crop((0,start,round(336*self.scale),start+round(188*self.scale)))
+        if self._candidate_thumb is not None:
+            sy=(188*self.scale-self._candidate_thumb.height)*self.candidate_scroll/limit
+            view.alpha_composite(self._candidate_thumb,(round(332*self.scale),round(sy)))
+        self._full_image.paste(view,(round(12*self.scale),round(284*self.scale)))
+        self._candidate_hit_regions=self._candidate_regions()
+        self._regions=self._candidate_fixed_regions+self._candidate_hit_regions
+        self._display_image()
 
-    def _update_hero(self, hero, champion_id):
-        unknown = f'英雄 ID {champion_id}' if champion_id else '等待读取英雄'
-        self._set(self.hero_name, text=hero.name if hero else unknown)
-        self._set(self.hero_badge.caption, text=hero.tier_label if hero and hero.tier is not None else '—')
-        meta = f'OP.GG  #{hero.rank}' if hero and hero.rank else '暂无排名'
-        if not hero or hero.tier is None:
-            meta = '暂无档位 · ' + meta
-        self._set(self.hero_meta, text=meta)
+    def _scroll_candidates(self,target):
+        self._candidate_target=max(0,min(target,max(0,self.candidate_content_height-188)))
+        self.motion.animate('candidate-scroll',self.candidate_scroll,self._candidate_target,
+                            self._move_candidates,140)
 
-    def _candidates(self, parent, state, champions):
-        self.candidate_count = self.section(parent, '可选英雄')
-        self.candidate_views = {}
-        self.candidate_order = None
-        self.candidate_empty = Card(parent)
-        label(self.candidate_empty.body, '等待候选英雄', TEXT, 10, True, anchor='w').pack(fill='x')
-        label(self.candidate_empty.body, '进入选人后，自动显示可选英雄的梯队。', MUTED, 9,
-              wraplength=240, anchor='w', justify='left').pack(fill='x', pady=(6, 0))
-        self._update_candidates(state, champions)
-
-    def _update_candidates(self, state, champions):
-        rows = sort_champions([champions[c] for c in state.candidate_ids if c in champions])
-        unknown_ids = [c for c in state.candidate_ids if c not in champions]
-        order = tuple([hero.id for hero in rows] + unknown_ids)
-        self._set(self.candidate_count, text=f'{len(order)} 位 · 按梯队排序')
-        for cid in order:
-            hero = champions.get(cid)
-            if cid not in self.candidate_views:
-                row = Card(self.content.body, padding=9)
-                badge = self.badge(row.body, '—')
-                badge.pack(side='left', padx=(0, 9))
-                rank = label(row.body, '', MUTED, 9)
-                rank.pack(side='right')
-                name = label(row.body, '', TEXT, 10, wraplength=144, anchor='w', justify='left')
-                name.pack(side='left', fill='x', expand=True)
-                self.candidate_views[cid] = (row, badge, rank, name)
-            row, badge, rank, name = self.candidate_views[cid]
-            self._set(name, text=hero.name if hero else f'英雄 ID {cid}')
-            self._set(badge.caption, text=hero.tier_label if hero and hero.tier is not None else '—',
-                      fg=GOLD if hero and hero.tier == 1 else TEXT)
-            badge.set_color(TIER_BG if hero and hero.tier == 1 else NEUTRAL_BG)
-            ranking = (f'#{hero.rank}' if hero.rank else '—') if hero and hero.tier is not None else ('暂无档位' if hero else '未知档位')
-            self._set(rank, text=ranking)
-        if order != self.candidate_order:
-            self.candidate_empty.pack_forget()
-            for row, *_ in self.candidate_views.values():
-                row.pack_forget()
-            for cid in order:
-                self.candidate_views[cid][0].pack(fill='x', pady=(0, 6))
-            if not order:
-                self.candidate_empty.pack(fill='x')
-            self.candidate_order = order
-            self.content.bind_wheel()
-
-    def _game(self, parent, data, matches):
-        self.section(parent, '海克斯推荐', '当前英雄适配评级')
-        self.augment_views = []
+    def _game(self,art,state,data,matches):
+        self._text(art,(14,217,170,26),'海克斯推荐',17,True,line_height=26)
+        index={a['id']:a for a in (data or{}).get('augments',[])}
+        recognized=0
+        colors={'S':ACCENT,'A':LILAC,'B':'#D6C8ED','C':'#C4B3DD','D':'#B3A3C9','E':'#A796BA'}
         for slot in range(3):
-            card = Card(parent, padding=5)
-            card.pack(fill='x', pady=(0, 4))
-            badge = self.badge(card.body, '—', MUTED, NEUTRAL_BG, large=True, compact=True)
-            badge.pack(side='left', padx=(0, 10))
-            detail = tk.Frame(card.body, bg=SURFACE)
-            detail.pack(side='left', fill='x', expand=True)
-            name = label(detail, '', TEXT, 10, True, wraplength=186, anchor='w', justify='left', height=2)
-            name.pack(fill='x')
-            hint = label(detail, '', MUTED, 9, anchor='w')
-            hint.pack(fill='x')
-            self.augment_views.append((card, badge, name, hint))
-        self.build_heading = self.section(parent, '推荐出装', '三件核心＋鞋子')
-        self.build_card = Card(parent, padding=0)
-        self.build_card.pack(fill='x')
-        self.build_views = []
-        self.icon_views = []
-        self.build_card.body.configure(bg=BG)
-        self.build_card.back.place_forget()
-        for index in range(4):
-            row = Card(self.build_card.body, padding=7, radius=14)
-            row.grid(row=index // 2, column=index % 2, sticky='nsew', padx=(0, 6) if index % 2 == 0 else (0, 0), pady=(0, 6))
-            number = label(row.body, f'{index + 1:02}', ACCENT, 8, anchor='w')
-            number.pack(fill='x')
-            icon = label(row.body, '◇', GOLD, 20, width=40, height=40)
-            # Pixel dimensions are fixed by an empty PhotoImage, including offline fallback.
-            icon.placeholder = tk.PhotoImage(master=self.window, width=40, height=40)
-            icon.configure(image=icon.placeholder, compound='center')
-            icon.pack(pady=(4, 5))
-            self.icon_views.append(icon)
-            name = label(row.body, '', TEXT, 9, anchor='center', justify='center', wraplength=108, height=2)
-            name.pack(fill='x', pady=(3, 0))
-            self.build_views.append((row, name, number))
-        for column in range(2):
-            self.build_card.body.columnconfigure(column, weight=1, uniform='items')
-        self.build_note = label(parent, '', MUTED, 9, wraplength=266, anchor='w', justify='left', height=2)
-        self.build_note.pack(fill='x', pady=(2, 4))
-        self._update_game(data, matches)
+            x=14+slot*112; match=next((m for m in matches if m.slot==slot),None)
+            augment=index.get(match.augment_id) if match else None
+            grade=augment_label(augment.get('tier'),(data or{}).get('tier_labels')) if augment else'—'
+            if grade not in colors:grade='—'
+            recognized+=bool(augment)
+            fill=colors.get(grade,UNKNOWN); art.rect((x,244,108,126),fill,10)
+            self._text(art,(x+6,250,96,18),('左侧','中间','右侧')[slot],11,color=INK,align='center',line_height=18)
+            self._text(art,(x+10,269,52,61),grade,52,True,INK,align='center',line_height=61,optical=True)
+            icon_box=(x+62,275,38,38); path=self._asset('augment',augment['id']) if augment else None
+            shown=art.image_at(icon_box,path,fit='contain',radius=0)
+            if augment:self.assets_shown[('augment',augment['id'])]=shown
+            if not shown:art.icon('question',icon_box,INK,1.6)
+            name=augment['name'] if augment else '待确认'
+            long=len(name)>5
+            self._text(art,(x+6,319 if long else 321,96,34 if long else 22),name,12 if long else 14,True,INK,
+                       align='center',lines=2 if long else 1,line_height=17 if long else 22)
+            hint='手动修正' if augment and self.manual_override else'已识别' if grade!='—' else'暂无评级' if augment else'点击修正' if match and match.text else'等待识别'
+            self._text(art,(x+6,353 if long else 348,96,16 if long else 18),hint,11,color=INK,align='center',line_height=16 if long else 18)
+            if grade=='S':art.icon('star',(x+90,251,10,12),INK,1)
+            self._region((x,244,108,126),name+(' · 图标暂缺' if augment and not shown else'')+' · 点击手动修正',
+                         lambda i=slot:self.on_correct(i) if self.on_correct else None)
+        self._text(art,(253,220,93,20),f'已识别 {recognized} / 3',12,color=MUTED,align='right',line_height=20)
+        art.line((14,382,346,382),LINE)
+        self._text(art,(14,389,96,24),'核心出装',17,True,line_height=24)
+        self._text(art,(117,392,180,20),'英雄 / 模式推荐',11,color=MUTED,line_height=20)
+        verified=data and data.get('champion_id')==state.champion_id and data.get('build_mode_verified') and data.get('build_mode')=='aram-mayhem'
+        items=recommended_items(data) if verified else[]
+        short={3085:'卢安娜飓风',3036:'多米尼克',3006:'狂战士胫甲'}
+        for i in range(4):
+            item=items[i] if i<len(items) else None; x=20+i*86
+            art.rect((x,416,62,62),SURFACE,6)
+            path=self.item_icons.path(item['id']) if self.item_icons and item else None
+            shown=art.image_at((x,416,62,62),path,radius=6,border='#645775')
+            if item:self.assets_shown[('item',item['id'])]=shown
+            if not shown:art.icon('question',(x+19,435,24,24),MUTED)
+            name=short.get(item['id'],item['name']) if item else'暂无资料'
+            self._text(art,(14+i*86,484,74,34),name,12,lines=2,line_height=17,align='center')
+            self._region((14+i*86,416,74,102),(item['name'] if item else'暂无装备推荐')+(' · 图标暂缺' if item and not shown else''))
 
-    def _update_game(self, data, matches):
-        augment_index = {a['id']: a for a in (data or {}).get('augments', [])}
-        for slot in range(3):
-            match = next((m for m in matches if m.slot == slot), None)
-            augment = augment_index.get(match.augment_id) if match else None
-            tier = augment.get('tier') if augment else None
-            grade = augment_label(tier, (data or {}).get('tier_labels')) if augment else '—'
-            known = isinstance(tier, int) and 0 <= tier < 6
-            if not known:
-                grade = '—'
-            color = GRADES[tier] if known else MUTED
-            backdrop = GRADE_BACKGROUNDS[tier] if known else NEUTRAL_BG
-            card, badge, name_label, hint_label = self.augment_views[slot]
-            self._set(badge.caption, text=grade, fg=color)
-            badge.set_color(backdrop)
-            name = augment['name'] if augment else (match.text if match and match.text else '等待海克斯选项')
-            self._set(name_label, text=name)
-            hint = ('已匹配' if known else '暂无评级') if augment else ('待确认' if match and match.text else '等待识别')
-            self._set(hint_label, text=('左侧', '中间', '右侧')[slot] + '  ·  ' + hint)
-        items = recommended_items(data)
-        for index, (_, name, number) in enumerate(self.build_views):
-            item = items[index] if index < len(items) else None
-            self._set(name, text=item['name'] if item else '等待装备数据', fg=TEXT if item else MUTED)
-            self._set(number, text=f'{index + 1:02}  {item["role"]}' if item else f'{index + 1:02}')
-            icon = self.icon_views[index]
-            picture = self._item_icon(item['id']) if item else None
-            desired = picture or icon.placeholder
-            if getattr(icon, 'picture', None) is not desired:
-                icon.configure(image=desired, text='' if picture else '◇')
-                icon.picture = desired
-        self._set(self.build_heading, text='三件核心＋鞋子' if len(items) == 4 else f'{len(items)}/4 已有数据')
-        mode_verified = (data or {}).get('build_mode_verified') and (data or {}).get('build_mode') == 'aram-mayhem'
-        self._set(self.build_note, text=('海克斯大乱斗 · OP.GG 模式出装\n保留来源前三件核心装备与鞋子' if mode_verified else
-                                       'OP.GG 装备参考\n模式尚未校验 · 请刷新资料'))
+    def _footer(self,art,game):
+        y=560 if game else 482
+        art.line((14 if game else 12,y,346 if game else 348,y),LINE)
+        caption=self.source_name+' · '+('加载中' if self.data_loading else'暂无资料' if not self._has_data else'缓存资料')
+        self._text(art,(14,565,246,14) if game else(16,491,230,20),caption,10 if game else 12,color=MUTED,line_height=14 if game else 20)
+        self._text(art,(280,565,66,14) if game else(145,520,90,18),self.hotkey_bindings['toggle']+' 收起',10 if game else 11,color=MUTED,
+                   align='right' if game else'center',line_height=14 if game else 18)
+        self._region((14,560,246,20) if game else(16,486,230,30),self._status+'\n'+self.network_error)
+        self._region((280,562,66,18) if game else(145,516,90,24),'收起海克斯随行',self.on_hide)
 
-    def show_at(self, anchor):
-        work = anchor.work_area
-        preferred_height = 780 if self.context and self.context[0] == 'game' else 480
-        self.height = min(preferred_height, work[3] - work[1] - 24)
-        self.base = panel_position(anchor.rect, work, self.width, self.height)
-        x = max(work[0], min(self.base[0] + self.offset[0], work[2] - self.width))
-        y = max(work[1], min(self.base[1] + self.offset[1], work[3] - self.height))
-        geometry = f'{self.width}x{self.height}{x:+d}{y:+d}'
-        if geometry != self._geometry:
-            self.window.geometry(geometry)
-            self._geometry = geometry
+    def _make_controls(self,stage):
+        for control in self._controls:control.destroy()
+        self._controls=[]
+        def btn(text,action,w,h,kind='ghost',icon=None):
+            control=PixelButton(self.canvas,text,action,w,h,kind=kind,icon=icon,scale=self.scale)
+            control.set_motion(self.motion.enabled); self._controls.append(control); return control
+        self.collapse_button=btn('',self.on_hide,28,28,icon='minus')
+        self.settings_button=btn('',self.on_settings,28,28,icon='settings')
+        self.collapse_button.configure(color=MUTED); self.settings_button.configure(color=MUTED)
+        Hint(self.collapse_button,'收起为浮标'); Hint(self.settings_button,'设置')
+        self.quick_source_var=tk.StringVar(value=self.source_name)
+        self.source_picker=SourceSwitch(self.canvas,self.quick_source_var,{'OP.GG':'OP.GG','101':'101 数据站'},
+                                        scale=self.scale,on_change=lambda value:self.on_source(value) if self.on_source else None)
+        self.source_picker.set_motion(self.motion.enabled); self._controls.append(self.source_picker)
+        self.scan_button=None
+        if stage=='game':
+            self.scan_button=btn('',self.on_scan,180,34,'primary','scan')
+            self.refresh_button=btn('',lambda:self.on_refresh() if self.on_refresh else None,36,34,'secondary','refresh')
+        else:self.refresh_button=btn('',lambda:self.on_refresh() if self.on_refresh else None,80,28,icon='refresh')
+        self.refresh_tip=Hint(self.refresh_button,'刷新资料')
+        self._position_controls()
+
+    def _position_controls(self):
+        game=self.stage=='game'; delta=self.visible_height-(580 if game else 540)
+        self.collapse_button.place_logical(287,4); self.settings_button.place_logical(321,4)
+        self.source_picker.place_logical(236,42 if game else 46)
+        refresh_key=self.hotkey_bindings['refresh']; self.refresh_tip.text='刷新资料（'+refresh_key+'）'
+        if game:
+            key=self.hotkey_bindings['scan']; long=len(key)>4
+            self.scan_button.set_size(220 if long else 180,34)
+            label='识别中' if self._scanning else '重新识别 '+key
+            group_width=measure(label,14,True)+24
+            group_x=(220-group_width)/2
+            self.scan_button.configure(text='识别中' if self._scanning else '重新识别 '+key, state='disabled' if self._scanning else 'normal', icon_box=(21 if not long else max(6,group_x),9,16,16), text_box=(45 if not long else max(30,group_x+24),6,114 if not long else 184,22))
+            self.scan_button.place_logical(32 if long else 60,522+delta)
+            if hasattr(self.scan_button,'set_size'):self.scan_button.set_size(220 if long else 180,34)
+            self.refresh_button.place_logical(264 if long else 250,522+delta)
+            self.refresh_button.configure(text=refresh_key if len(refresh_key)<=4 else '', font_size=10, bold=False, color=MUTED, icon_color=TEXT, icon_box=(11,5,14,14), text_box=(10,22,16,12))
+        else:
+            self.refresh_button.configure(text='刷新 '+refresh_key if len(refresh_key)<=4 else '刷新', font_size=12, bold=False, color=MUTED, icon_box=(0,6,16,16), text_box=(21,3,59,22))
+            self.refresh_button.place_logical(266,486+delta)
+
+    def render(self,state,champions,data,matches,status,preview=False,scanning=False):
+        self._last=(state,champions,data,matches,status,preview,scanning)
+        current=data or {}
+        matched_ids={match.augment_id for match in matches}
+        advice_key=(current.get('champion_id'),current.get('build_mode_verified'),current.get('build_mode'),
+                    tuple(current.get('skill_priority',[])),tuple(sorted(current.get('skill_icons',{}).items())),
+                    tuple((spell.get('id'),spell.get('name'),spell.get('icon_url')) for spell in current.get('summoner_spells',[])),
+                    current.get('source_id'),current.get('summoner_source'))
+        visible_data_key=(advice_key,
+                          tuple((a.get('id'),a.get('name'),a.get('tier')) for a in current.get('augments',[]) if a.get('id') in matched_ids),
+                          tuple((item.get('id'),item.get('name')) for item in recommended_items(current)),
+                          tuple(sorted(current.get('tier_labels',{}).items())))
+        key=(state.stage,state.champion_id,tuple(state.candidate_ids),(data or{}).get('fetched_at'),self.source_name,
+             tuple((m.slot,m.augment_id,m.status,m.text) for m in matches),status,scanning,self.data_loading,
+             self.images_loading,self.network_error,self.manual_override,tuple(self.hotkey_bindings.items()),self.visible_height,
+             visible_data_key)
+        if self.signature==key:return
+        resume_scroll='candidate-scroll' in self.motion.jobs
+        self.motion.cancel('candidate-scroll')
+        source_changed = bool(self.context and self.context[:2] == (state.stage,state.champion_id)
+                              and self.context[2] != self.source_name)
+        same_context = self.context == (state.stage,state.champion_id,self.source_name)
+        if self.context and not same_context:
+            self.tip.hide(); self.body_scroll=self.candidate_scroll=0
+            self._candidate_target=0; resume_scroll=False
+            self.motion.cancel('visibility', finish=self.visible)
+            self.motion.cancel_all()
+        changed_stage=self.stage!=state.stage
+        self.stage=state.stage; self.context=(state.stage,state.champion_id,self.source_name)
+        self._status=status; self._has_data=bool(data); self._scanning=scanning
+        if changed_stage:
+            self.visible_height=580 if state.stage=='game' else 540; self.body_scroll=0
+            self._make_controls(state.stage)
+        elif self.quick_source_var.get()!=self.source_name:
+            self.tip.hide(); self.quick_source_var.set(self.source_name)
+        self.signature=key; self._regions=[]; self._strings=[]; self.assets_shown={}
+        game=state.stage=='game'; height=580 if game else 540
+        art=Artboard(360,height,self.scale,bg=TRANSPARENT); art.rect((0,0,360,height),BG,14)
+        self._header(art,state.stage,preview); self._hero(art,state,champions,game); self._advice(art,state,data,game)
+        if game:self._game(art,state,data,matches)
+        else:self._candidates(art,state,champions)
+        self._footer(art,game)
+        if not game:
+            self._candidate_fixed_regions=[region for region in self._regions if region not in self._candidate_hit_regions]
+        previous=getattr(self,'_full_image',None); current=art.finish()
+        previous_cards=self._card_signatures
+        new_cards=[(m.slot,m.augment_id,m.status,m.text) for m in matches] if game else []
+        self.motion.cancel('cards')
+        self.motion.cancel('source', finish=True)
+        self._full_image=current
+        self._display_image(); self._position_controls()
+        self._card_signatures=new_cards
+        if source_changed:
+            self._source_transition(current,game)
+        elif resume_scroll and not game:
+            self._scroll_candidates(self._candidate_target)
+        if game and same_context and not changed_stage and previous is not None and previous.size==current.size and previous_cards!=new_cards:
+            from PIL import Image
+            old_by_slot={row[0]:row for row in previous_cards}; new_by_slot={row[0]:row for row in new_cards}
+            changed=[i for i in range(3) if old_by_slot.get(i)!=new_by_slot.get(i)]
+            def transition(t):
+                frame=current.copy()
+                for i in changed:
+                    box=tuple(round(v*self.scale) for v in (14+i*112,244,122+i*112,370))
+                    frame.paste(Image.blend(previous.crop(box),current.crop(box),t),box)
+                self._full_image=frame; self._display_image()
+            self.motion.animate('cards',0.,1.,transition,180)
+
+    def _source_transition(self,current,game):
+        from PIL import Image
+        sections=[((4,152,356,206),LILAC),((12,218,348,472),BG)] if game else [((6,187,354,235),BG),((12,254,348,470),BG)]
+        def update(progress):
+            frame=current.copy()
+            for bounds,color in sections:
+                box=tuple(round(value*self.scale) for value in bounds)
+                blank=Image.new('RGBA',(box[2]-box[0],box[3]-box[1]),color)
+                frame.paste(Image.blend(blank,current.crop(box).convert('RGBA'),progress),box)
+            self._full_image=frame; self._display_image()
+        # Fade only the new source's content; the native window, hero art and
+        # controls remain mapped and responsive during rapid source changes.
+        self.motion.animate('source',0.,1.,update,180)
+
+    def _display_image(self):
+        game=self.stage=='game'; base=580 if game else 540
+        full=self._full_image; s=self.scale; footer=522 if game else 482; top=68 if game else 75
+        target=round(self.visible_height*s)
+        if target!=full.height:
+            from PIL import Image
+            result=Image.new('RGBA',(full.width,target),TRANSPARENT)
+            hp=round(top*s); fh=round((base-footer)*s); mid=max(0,target-hp-fh)
+            result.paste(full.crop((0,0,full.width,hp)),(0,0))
+            start=round((top+self.body_scroll)*s)
+            result.paste(full.crop((0,start,full.width,start+mid)),(0,hp))
+            result.paste(full.crop((0,round(footer*s),full.width,full.height)),(0,target-fh))
+            from PIL import ImageDraw
+            available=base-top-(base-footer)
+            thumb=max(round(24*s),mid*mid/(available*s))
+            sy=hp+(mid-thumb)*self.body_scroll/max(1,base-self.visible_height)
+            ImageDraw.Draw(result).rounded_rectangle((round(350*s),round(sy),round(354*s)-1,round(sy+thumb)),radius=round(2*s),fill='#60576F')
+        else:result=full
+        self._visible_image=result
+        self.photo=WidgetPhotoImage(result,master=self.canvas)
+        self.canvas.itemconfigure(self.bitmap,image=self.photo)
+
+    def _control_backdrop(self,x,y,w,h):
+        image=getattr(self,'_visible_image',None)
+        if image is None:return None
+        return image.crop(tuple(round(v*self.scale) for v in (x,y,x+w,y+h)))
+
+    def _logical(self,event):
+        x,y=event.x/self.scale,event.y/self.scale
+        game=self.stage=='game'; base=580 if game else 540; footer=522 if game else 482; top=68 if game else 75
+        if self.visible_height<base:
+            visible_footer=self.visible_height-(base-footer)
+            if y>=visible_footer:y+=base-self.visible_height
+            elif y>=top:y+=self.body_scroll
+        return x,y
+
+    def _hit(self,event):
+        x,y=self._logical(event)
+        return next((r for r in reversed(self._regions) if r[0][0]<=x<r[0][0]+r[0][2] and r[0][1]<=y<r[0][1]+r[0][3]),None)
+
+    def _hover(self,event):
+        hit=self._hit(event); identity=hit[0] if hit else None
+        if identity!=self._tip_identity:
+            self.tip.text=hit[1] if hit else''; self._tip_identity=identity
+            if hit:self.tip._enter()
+        self.canvas.configure(cursor='hand2' if hit and hit[2] else'')
+
+    def _preview_switch(self,event):
+        if self.on_preview and event.y/self.scale<38:
+            self._drag_origin=None
+            self.on_preview()
+            return 'break'
+
+    def _press(self,event):
+        self.tip.hide()
+        if event.y/self.scale<38:self._drag_origin=(event.x_root,event.y_root,self.window.winfo_rootx(),self.window.winfo_rooty())
+
+    def _drag(self,event):
+        if self._drag_origin:
+            sx,sy,x,y=self._drag_origin
+            x+=event.x_root-sx; y+=event.y_root-sy
+            self.offset=(x-self.base[0],y-self.base[1]); position_window(self.window,x,y)
+
+    def _release(self,event):
+        if self._drag_origin:self._drag_origin=None; return
+        hit=self._hit(event)
+        if hit and hit[2]:hit[2]()
+
+    def _wheel(self,event):
+        if not event.delta:return 'break'
+        self.tip.hide(); x,y=self._logical(event); step=-32*event.delta/120
+        base=580 if self.stage=='game' else 540
+        if self.visible_height<base:self.body_scroll=max(0,min(base-self.visible_height,self.body_scroll+step))
+        elif self.stage!='game' and 284<=y<=472:
+            self.motion.cancel('source',finish=True)
+            if (self._candidate_target-self.candidate_scroll)*step<0:
+                self._candidate_target=self.candidate_scroll
+            self._scroll_candidates(self._candidate_target+step)
+            return 'break'
+        else:return
+        self.signature=None
+        if self._last:self.render(*self._last)
+        return 'break'
+
+    def show_at(self,anchor):
+        work=anchor.work_area; base_height=580 if self.stage=='game' else 540
+        height=min(round(base_height*self.scale),work[3]-work[1]-12)
+        logical=height/self.scale
+        if self.visible_height!=logical:
+            self.visible_height=logical; self.signature=None
+            if self._last:self.render(*self._last)
+        self.height=height
+        self.base=panel_position(anchor.rect,work,self.width,height)
+        x=max(work[0],min(self.base[0]+self.offset[0],work[2]-self.width))
+        y=max(work[1],min(self.base[1]+self.offset[1],work[3]-height))
+        geometry=(x,y,self.width,height)
+        if geometry!=self._geometry:
+            if self.visible:
+                self.motion.cancel('visibility')
+                self.window.attributes('-alpha',1.)
+            position_window(self.window,*geometry)
+            self._geometry=geometry
         if not self.visible:
+            self.visible=True; self.motion.cancel('visibility')
+            self.window.attributes('-alpha',0. if self.motion.enabled else 1.)
             self.window.deiconify()
-            self.visible = True
+            self.motion.animate('visibility',0.,1.,lambda t:self._reveal(t,x,y),180)
 
-    def hide(self):
+    def _reveal(self,t,x,y):
+        self.window.attributes('-alpha',t); position_window(self.window,x,y+round(4*(1-t)*self.scale))
+
+    def hide(self,animate=False,done=None):
+        self.tip.hide()
+        self._candidate_target=self.candidate_scroll
         if self.visible:
-            self.window.withdraw()
-            self.visible = False
+            self.visible=False; self.motion.cancel_all()
+            if animate and self.motion.enabled:
+                x,y=self.window.winfo_rootx(),self.window.winfo_rooty()
+                def step(t):
+                    self.window.attributes('-alpha',1-t); position_window(self.window,x,y+round(3*t*self.scale))
+                def finish():
+                    self.window.withdraw()
+                    if done:done()
+                self.motion.animate('visibility',0.,1.,step,140,done=finish)
+            else:
+                self.window.withdraw(); self.window.attributes('-alpha',1.)
+                if done:done()
+        elif not animate:
+            self.motion.cancel_all(); self.window.withdraw(); self.window.attributes('-alpha',1.)
+            if done:done()
+        elif 'visibility' not in self.motion.jobs and done:done()
 
-    def content_text(self):
-        def labels(widget):
-            result = [str(widget.cget('text'))] if isinstance(widget, (tk.Label, tk.Button)) else []
-            for child in widget.winfo_children():
-                result.extend(labels(child))
-            return result
-        return '\n'.join(labels(self.inner))
+    def content_text(self):return '\n'.join(self._strings)

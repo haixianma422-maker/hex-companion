@@ -1400,5 +1400,18 @@
   "items_source": "https://op.gg/zh-cn/lol/modes/aram-mayhem/viktor/items",
   "items_note": "",
   "patch": "16.20.1",
-  "fetched_at": "2026-10-11T13:06:31.896530+00:00"
+  "fetched_at": "2026-10-11T13:06:31.896530+00:00",
+  "skill_priority": [],
+  "summoner_spells": [
+    {
+      "id": 4,
+      "name": "闪现"
+    },
+    {
+      "id": 6,
+      "name": "幽灵疾步"
+    }
+  ],
+  "recommendation_source": "https://op.gg/zh-cn/lol/modes/aram-mayhem/viktor/build",
+  "recommendation_fetched_at": "2026-10-14T03:36:25.821508+00:00"
 }

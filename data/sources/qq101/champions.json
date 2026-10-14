@@ -1,0 +1,1222 @@
+{
+  "champions": [
+    {
+      "id": 4,
+      "name": "崔斯特",
+      "slug": "twistedfate",
+      "tier": 0,
+      "rank": 1
+    },
+    {
+      "id": 136,
+      "name": "奥瑞利安索尔",
+      "slug": "aurelionsol",
+      "tier": 0,
+      "rank": 2
+    },
+    {
+      "id": 120,
+      "name": "赫卡里姆",
+      "slug": "hecarim",
+      "tier": 0,
+      "rank": 3
+    },
+    {
+      "id": 17,
+      "name": "提莫",
+      "slug": "teemo",
+      "tier": 0,
+      "rank": 4
+    },
+    {
+      "id": 157,
+      "name": "亚索",
+      "slug": "yasuo",
+      "tier": 0,
+      "rank": 5
+    },
+    {
+      "id": 223,
+      "name": "塔姆",
+      "slug": "tahmkench",
+      "tier": 0,
+      "rank": 6
+    },
+    {
+      "id": 25,
+      "name": "莫甘娜",
+      "slug": "morgana",
+      "tier": 0,
+      "rank": 7
+    },
+    {
+      "id": 11,
+      "name": "易",
+      "slug": "masteryi",
+      "tier": 0,
+      "rank": 8
+    },
+    {
+      "id": 51,
+      "name": "凯特琳",
+      "slug": "caitlyn",
+      "tier": 1,
+      "rank": 9
+    },
+    {
+      "id": 876,
+      "name": "莉莉娅",
+      "slug": "lillia",
+      "tier": 1,
+      "rank": 10
+    },
+    {
+      "id": 63,
+      "name": "布兰德",
+      "slug": "brand",
+      "tier": 1,
+      "rank": 11
+    },
+    {
+      "id": 777,
+      "name": "永恩",
+      "slug": "yone",
+      "tier": 1,
+      "rank": 12
+    },
+    {
+      "id": 104,
+      "name": "格雷福斯",
+      "slug": "graves",
+      "tier": 1,
+      "rank": 13
+    },
+    {
+      "id": 67,
+      "name": "薇恩",
+      "slug": "vayne",
+      "tier": 1,
+      "rank": 14
+    },
+    {
+      "id": 13,
+      "name": "瑞兹",
+      "slug": "ryze",
+      "tier": 1,
+      "rank": 15
+    },
+    {
+      "id": 21,
+      "name": "厄运小姐",
+      "slug": "missfortune",
+      "tier": 1,
+      "rank": 16
+    },
+    {
+      "id": 875,
+      "name": "瑟提",
+      "slug": "sett",
+      "tier": 1,
+      "rank": 17
+    },
+    {
+      "id": 5,
+      "name": "赵信",
+      "slug": "xinzhao",
+      "tier": 1,
+      "rank": 18
+    },
+    {
+      "id": 141,
+      "name": "凯隐",
+      "slug": "kayn",
+      "tier": 1,
+      "rank": 19
+    },
+    {
+      "id": 901,
+      "name": "斯莫德",
+      "slug": "smolder",
+      "tier": 1,
+      "rank": 20
+    },
+    {
+      "id": 236,
+      "name": "卢锡安",
+      "slug": "lucian",
+      "tier": 1,
+      "rank": 21
+    },
+    {
+      "id": 10,
+      "name": "凯尔",
+      "slug": "kayle",
+      "tier": 1,
+      "rank": 22
+    },
+    {
+      "id": 245,
+      "name": "艾克",
+      "slug": "ekko",
+      "tier": 1,
+      "rank": 23
+    },
+    {
+      "id": 147,
+      "name": "萨勒芬妮",
+      "slug": "seraphine",
+      "tier": 1,
+      "rank": 24
+    },
+    {
+      "id": 27,
+      "name": "辛吉德",
+      "slug": "singed",
+      "tier": 1,
+      "rank": 25
+    },
+    {
+      "id": 48,
+      "name": "特朗德尔",
+      "slug": "trundle",
+      "tier": 1,
+      "rank": 26
+    },
+    {
+      "id": 50,
+      "name": "斯维因",
+      "slug": "swain",
+      "tier": 1,
+      "rank": 27
+    },
+    {
+      "id": 14,
+      "name": "赛恩",
+      "slug": "sion",
+      "tier": 1,
+      "rank": 28
+    },
+    {
+      "id": 910,
+      "name": "彗",
+      "slug": "hwei",
+      "tier": 1,
+      "rank": 29
+    },
+    {
+      "id": 222,
+      "name": "金克丝",
+      "slug": "jinx",
+      "tier": 2,
+      "rank": 30
+    },
+    {
+      "id": 41,
+      "name": "普朗克",
+      "slug": "gangplank",
+      "tier": 2,
+      "rank": 31
+    },
+    {
+      "id": 90,
+      "name": "玛尔扎哈",
+      "slug": "malzahar",
+      "tier": 2,
+      "rank": 32
+    },
+    {
+      "id": 114,
+      "name": "菲奥娜",
+      "slug": "fiora",
+      "tier": 2,
+      "rank": 33
+    },
+    {
+      "id": 36,
+      "name": "蒙多医生",
+      "slug": "drmundo",
+      "tier": 2,
+      "rank": 34
+    },
+    {
+      "id": 30,
+      "name": "卡尔萨斯",
+      "slug": "karthus",
+      "tier": 2,
+      "rank": 35
+    },
+    {
+      "id": 202,
+      "name": "烬",
+      "slug": "jhin",
+      "tier": 2,
+      "rank": 36
+    },
+    {
+      "id": 893,
+      "name": "阿萝拉",
+      "slug": "aurora",
+      "tier": 2,
+      "rank": 37
+    },
+    {
+      "id": 112,
+      "name": "维克托",
+      "slug": "viktor",
+      "tier": 2,
+      "rank": 38
+    },
+    {
+      "id": 42,
+      "name": "库奇",
+      "slug": "corki",
+      "tier": 2,
+      "rank": 39
+    },
+    {
+      "id": 45,
+      "name": "维迦",
+      "slug": "veigar",
+      "tier": 2,
+      "rank": 40
+    },
+    {
+      "id": 12,
+      "name": "阿利斯塔",
+      "slug": "alistar",
+      "tier": 2,
+      "rank": 41
+    },
+    {
+      "id": 200,
+      "name": "卑尔维斯",
+      "slug": "belveth",
+      "tier": 2,
+      "rank": 42
+    },
+    {
+      "id": 238,
+      "name": "劫",
+      "slug": "zed",
+      "tier": 2,
+      "rank": 43
+    },
+    {
+      "id": 57,
+      "name": "茂凯",
+      "slug": "maokai",
+      "tier": 2,
+      "rank": 44
+    },
+    {
+      "id": 18,
+      "name": "崔丝塔娜",
+      "slug": "tristana",
+      "tier": 2,
+      "rank": 45
+    },
+    {
+      "id": 3,
+      "name": "加里奥",
+      "slug": "galio",
+      "tier": 2,
+      "rank": 46
+    },
+    {
+      "id": 103,
+      "name": "阿狸",
+      "slug": "ahri",
+      "tier": 2,
+      "rank": 47
+    },
+    {
+      "id": 526,
+      "name": "芮尔",
+      "slug": "rell",
+      "tier": 2,
+      "rank": 48
+    },
+    {
+      "id": 887,
+      "name": "格温",
+      "slug": "gwen",
+      "tier": 2,
+      "rank": 49
+    },
+    {
+      "id": 161,
+      "name": "维克兹",
+      "slug": "velkoz",
+      "tier": 2,
+      "rank": 50
+    },
+    {
+      "id": 26,
+      "name": "基兰",
+      "slug": "zilean",
+      "tier": 2,
+      "rank": 51
+    },
+    {
+      "id": 23,
+      "name": "泰达米尔",
+      "slug": "tryndamere",
+      "tier": 2,
+      "rank": 52
+    },
+    {
+      "id": 105,
+      "name": "菲兹",
+      "slug": "fizz",
+      "tier": 2,
+      "rank": 53
+    },
+    {
+      "id": 24,
+      "name": "贾克斯",
+      "slug": "jax",
+      "tier": 2,
+      "rank": 54
+    },
+    {
+      "id": 98,
+      "name": "慎",
+      "slug": "shen",
+      "tier": 2,
+      "rank": 55
+    },
+    {
+      "id": 235,
+      "name": "赛娜",
+      "slug": "senna",
+      "tier": 2,
+      "rank": 56
+    },
+    {
+      "id": 412,
+      "name": "锤石",
+      "slug": "thresh",
+      "tier": 2,
+      "rank": 57
+    },
+    {
+      "id": 804,
+      "name": "芸阿娜",
+      "slug": "yunara",
+      "tier": 3,
+      "rank": 58
+    },
+    {
+      "id": 134,
+      "name": "辛德拉",
+      "slug": "syndra",
+      "tier": 3,
+      "rank": 59
+    },
+    {
+      "id": 55,
+      "name": "卡特琳娜",
+      "slug": "katarina",
+      "tier": 3,
+      "rank": 60
+    },
+    {
+      "id": 799,
+      "name": "安蓓萨",
+      "slug": "ambessa",
+      "tier": 3,
+      "rank": 61
+    },
+    {
+      "id": 29,
+      "name": "图奇",
+      "slug": "twitch",
+      "tier": 3,
+      "rank": 62
+    },
+    {
+      "id": 234,
+      "name": "佛耶戈",
+      "slug": "viego",
+      "tier": 3,
+      "rank": 63
+    },
+    {
+      "id": 68,
+      "name": "兰博",
+      "slug": "rumble",
+      "tier": 3,
+      "rank": 64
+    },
+    {
+      "id": 81,
+      "name": "伊泽瑞尔",
+      "slug": "ezreal",
+      "tier": 3,
+      "rank": 65
+    },
+    {
+      "id": 102,
+      "name": "希瓦娜",
+      "slug": "shyvana",
+      "tier": 3,
+      "rank": 66
+    },
+    {
+      "id": 37,
+      "name": "娑娜",
+      "slug": "sona",
+      "tier": 3,
+      "rank": 67
+    },
+    {
+      "id": 233,
+      "name": "贝蕾亚",
+      "slug": "briar",
+      "tier": 3,
+      "rank": 68
+    },
+    {
+      "id": 75,
+      "name": "内瑟斯",
+      "slug": "nasus",
+      "tier": 3,
+      "rank": 69
+    },
+    {
+      "id": 54,
+      "name": "墨菲特",
+      "slug": "malphite",
+      "tier": 3,
+      "rank": 70
+    },
+    {
+      "id": 101,
+      "name": "泽拉斯",
+      "slug": "xerath",
+      "tier": 3,
+      "rank": 71
+    },
+    {
+      "id": 143,
+      "name": "婕拉",
+      "slug": "zyra",
+      "tier": 3,
+      "rank": 72
+    },
+    {
+      "id": 31,
+      "name": "科加斯",
+      "slug": "chogath",
+      "tier": 3,
+      "rank": 73
+    },
+    {
+      "id": 800,
+      "name": "梅尔",
+      "slug": "mel",
+      "tier": 3,
+      "rank": 74
+    },
+    {
+      "id": 523,
+      "name": "厄斐琉斯",
+      "slug": "aphelios",
+      "tier": 4,
+      "rank": 75
+    },
+    {
+      "id": 119,
+      "name": "德莱文",
+      "slug": "draven",
+      "tier": 4,
+      "rank": 76
+    },
+    {
+      "id": 517,
+      "name": "塞拉斯",
+      "slug": "sylas",
+      "tier": 4,
+      "rank": 77
+    },
+    {
+      "id": 35,
+      "name": "萨科",
+      "slug": "shaco",
+      "tier": 4,
+      "rank": 78
+    },
+    {
+      "id": 145,
+      "name": "卡莎",
+      "slug": "kaisa",
+      "tier": 4,
+      "rank": 79
+    },
+    {
+      "id": 904,
+      "name": "亚恒",
+      "slug": "zaahen",
+      "tier": 4,
+      "rank": 80
+    },
+    {
+      "id": 77,
+      "name": "乌迪尔",
+      "slug": "udyr",
+      "tier": 4,
+      "rank": 81
+    },
+    {
+      "id": 22,
+      "name": "艾希",
+      "slug": "ashe",
+      "tier": 4,
+      "rank": 82
+    },
+    {
+      "id": 74,
+      "name": "黑默丁格",
+      "slug": "heimerdinger",
+      "tier": 4,
+      "rank": 83
+    },
+    {
+      "id": 122,
+      "name": "德莱厄斯",
+      "slug": "darius",
+      "tier": 4,
+      "rank": 84
+    },
+    {
+      "id": 80,
+      "name": "潘森",
+      "slug": "pantheon",
+      "tier": 4,
+      "rank": 85
+    },
+    {
+      "id": 40,
+      "name": "迦娜",
+      "slug": "janna",
+      "tier": 4,
+      "rank": 86
+    },
+    {
+      "id": 59,
+      "name": "嘉文四世",
+      "slug": "jarvaniv",
+      "tier": 4,
+      "rank": 87
+    },
+    {
+      "id": 99,
+      "name": "拉克丝",
+      "slug": "lux",
+      "tier": 4,
+      "rank": 88
+    },
+    {
+      "id": 91,
+      "name": "泰隆",
+      "slug": "talon",
+      "tier": 4,
+      "rank": 89
+    },
+    {
+      "id": 111,
+      "name": "诺提勒斯",
+      "slug": "nautilus",
+      "tier": 4,
+      "rank": 90
+    },
+    {
+      "id": 32,
+      "name": "阿木木",
+      "slug": "amumu",
+      "tier": 4,
+      "rank": 91
+    },
+    {
+      "id": 350,
+      "name": "悠米",
+      "slug": "yuumi",
+      "tier": 4,
+      "rank": 92
+    },
+    {
+      "id": 78,
+      "name": "波比",
+      "slug": "poppy",
+      "tier": 4,
+      "rank": 93
+    },
+    {
+      "id": 126,
+      "name": "杰斯",
+      "slug": "jayce",
+      "tier": 4,
+      "rank": 94
+    },
+    {
+      "id": 106,
+      "name": "沃利贝尔",
+      "slug": "volibear",
+      "tier": 4,
+      "rank": 95
+    },
+    {
+      "id": 89,
+      "name": "蕾欧娜",
+      "slug": "leona",
+      "tier": 4,
+      "rank": 96
+    },
+    {
+      "id": 82,
+      "name": "莫德凯撒",
+      "slug": "mordekaiser",
+      "tier": 4,
+      "rank": 97
+    },
+    {
+      "id": 498,
+      "name": "霞",
+      "slug": "xayah",
+      "tier": 4,
+      "rank": 98
+    },
+    {
+      "id": 107,
+      "name": "雷恩加尔",
+      "slug": "rengar",
+      "tier": 4,
+      "rank": 99
+    },
+    {
+      "id": 110,
+      "name": "韦鲁斯",
+      "slug": "varus",
+      "tier": 4,
+      "rank": 100
+    },
+    {
+      "id": 62,
+      "name": "孙悟空",
+      "slug": "monkeyking",
+      "tier": 4,
+      "rank": 101
+    },
+    {
+      "id": 8,
+      "name": "弗拉基米尔",
+      "slug": "vladimir",
+      "tier": 4,
+      "rank": 102
+    },
+    {
+      "id": 96,
+      "name": "克格莫",
+      "slug": "kogmaw",
+      "tier": 4,
+      "rank": 103
+    },
+    {
+      "id": 115,
+      "name": "吉格斯",
+      "slug": "ziggs",
+      "tier": 4,
+      "rank": 104
+    },
+    {
+      "id": 16,
+      "name": "索拉卡",
+      "slug": "soraka",
+      "tier": 4,
+      "rank": 105
+    },
+    {
+      "id": 38,
+      "name": "卡萨丁",
+      "slug": "kassadin",
+      "tier": 4,
+      "rank": 106
+    },
+    {
+      "id": 121,
+      "name": "卡兹克",
+      "slug": "khazix",
+      "tier": 4,
+      "rank": 107
+    },
+    {
+      "id": 516,
+      "name": "奥恩",
+      "slug": "ornn",
+      "tier": 4,
+      "rank": 108
+    },
+    {
+      "id": 53,
+      "name": "布里茨",
+      "slug": "blitzcrank",
+      "tier": 4,
+      "rank": 109
+    },
+    {
+      "id": 76,
+      "name": "奈德丽",
+      "slug": "nidalee",
+      "tier": 4,
+      "rank": 110
+    },
+    {
+      "id": 360,
+      "name": "莎弥拉",
+      "slug": "samira",
+      "tier": 4,
+      "rank": 111
+    },
+    {
+      "id": 79,
+      "name": "古拉加斯",
+      "slug": "gragas",
+      "tier": 4,
+      "rank": 112
+    },
+    {
+      "id": 86,
+      "name": "盖伦",
+      "slug": "garen",
+      "tier": 4,
+      "rank": 113
+    },
+    {
+      "id": 9,
+      "name": "费德提克",
+      "slug": "fiddlesticks",
+      "tier": 4,
+      "rank": 114
+    },
+    {
+      "id": 15,
+      "name": "希维尔",
+      "slug": "sivir",
+      "tier": 4,
+      "rank": 115
+    },
+    {
+      "id": 429,
+      "name": "卡莉丝塔",
+      "slug": "kalista",
+      "tier": 4,
+      "rank": 116
+    },
+    {
+      "id": 902,
+      "name": "米利欧",
+      "slug": "milio",
+      "tier": 4,
+      "rank": 117
+    },
+    {
+      "id": 888,
+      "name": "烈娜塔 · 戈拉斯克",
+      "slug": "renata",
+      "tier": 4,
+      "rank": 118
+    },
+    {
+      "id": 420,
+      "name": "俄洛伊",
+      "slug": "illaoi",
+      "tier": 4,
+      "rank": 119
+    },
+    {
+      "id": 113,
+      "name": "瑟庄妮",
+      "slug": "sejuani",
+      "tier": 4,
+      "rank": 120
+    },
+    {
+      "id": 56,
+      "name": "魔腾",
+      "slug": "nocturne",
+      "tier": 4,
+      "rank": 121
+    },
+    {
+      "id": 43,
+      "name": "卡尔玛",
+      "slug": "karma",
+      "tier": 4,
+      "rank": 122
+    },
+    {
+      "id": 64,
+      "name": "李青",
+      "slug": "leesin",
+      "tier": 4,
+      "rank": 123
+    },
+    {
+      "id": 711,
+      "name": "薇古丝",
+      "slug": "vex",
+      "tier": 4,
+      "rank": 124
+    },
+    {
+      "id": 266,
+      "name": "亚托克斯",
+      "slug": "aatrox",
+      "tier": 4,
+      "rank": 125
+    },
+    {
+      "id": 895,
+      "name": "尼菈",
+      "slug": "nilah",
+      "tier": 4,
+      "rank": 126
+    },
+    {
+      "id": 555,
+      "name": "派克",
+      "slug": "pyke",
+      "tier": 4,
+      "rank": 127
+    },
+    {
+      "id": 203,
+      "name": "千珏",
+      "slug": "kindred",
+      "tier": 4,
+      "rank": 128
+    },
+    {
+      "id": 267,
+      "name": "娜美",
+      "slug": "nami",
+      "tier": 4,
+      "rank": 129
+    },
+    {
+      "id": 427,
+      "name": "艾翁",
+      "slug": "ivern",
+      "tier": 4,
+      "rank": 130
+    },
+    {
+      "id": 1,
+      "name": "安妮",
+      "slug": "annie",
+      "tier": 4,
+      "rank": 131
+    },
+    {
+      "id": 131,
+      "name": "黛安娜",
+      "slug": "diana",
+      "tier": 4,
+      "rank": 132
+    },
+    {
+      "id": 421,
+      "name": "雷克塞",
+      "slug": "reksai",
+      "tier": 4,
+      "rank": 133
+    },
+    {
+      "id": 61,
+      "name": "奥莉安娜",
+      "slug": "orianna",
+      "tier": 4,
+      "rank": 134
+    },
+    {
+      "id": 44,
+      "name": "塔里克",
+      "slug": "taric",
+      "tier": 4,
+      "rank": 135
+    },
+    {
+      "id": 117,
+      "name": "璐璐",
+      "slug": "lulu",
+      "tier": 4,
+      "rank": 136
+    },
+    {
+      "id": 150,
+      "name": "纳尔",
+      "slug": "gnar",
+      "tier": 4,
+      "rank": 137
+    },
+    {
+      "id": 6,
+      "name": "厄加特",
+      "slug": "urgot",
+      "tier": 4,
+      "rank": 138
+    },
+    {
+      "id": 268,
+      "name": "阿兹尔",
+      "slug": "azir",
+      "tier": 4,
+      "rank": 139
+    },
+    {
+      "id": 163,
+      "name": "塔莉垭",
+      "slug": "taliyah",
+      "tier": 4,
+      "rank": 140
+    },
+    {
+      "id": 133,
+      "name": "奎因",
+      "slug": "quinn",
+      "tier": 4,
+      "rank": 141
+    },
+    {
+      "id": 246,
+      "name": "奇亚娜",
+      "slug": "qiyana",
+      "tier": 4,
+      "rank": 142
+    },
+    {
+      "id": 221,
+      "name": "泽丽",
+      "slug": "zeri",
+      "tier": 4,
+      "rank": 143
+    },
+    {
+      "id": 72,
+      "name": "斯卡纳",
+      "slug": "skarner",
+      "tier": 4,
+      "rank": 144
+    },
+    {
+      "id": 166,
+      "name": "阿克尚",
+      "slug": "akshan",
+      "tier": 4,
+      "rank": 145
+    },
+    {
+      "id": 142,
+      "name": "佐伊",
+      "slug": "zoe",
+      "tier": 4,
+      "rank": 146
+    },
+    {
+      "id": 240,
+      "name": "克烈",
+      "slug": "kled",
+      "tier": 4,
+      "rank": 147
+    },
+    {
+      "id": 92,
+      "name": "锐雯",
+      "slug": "riven",
+      "tier": 4,
+      "rank": 148
+    },
+    {
+      "id": 19,
+      "name": "沃里克",
+      "slug": "warwick",
+      "tier": 4,
+      "rank": 149
+    },
+    {
+      "id": 254,
+      "name": "蔚",
+      "slug": "vi",
+      "tier": 4,
+      "rank": 150
+    },
+    {
+      "id": 20,
+      "name": "努努和威朗普",
+      "slug": "nunu",
+      "tier": 4,
+      "rank": 151
+    },
+    {
+      "id": 28,
+      "name": "伊芙琳",
+      "slug": "evelynn",
+      "tier": 4,
+      "rank": 152
+    },
+    {
+      "id": 7,
+      "name": "乐芙兰",
+      "slug": "leblanc",
+      "tier": 4,
+      "rank": 153
+    },
+    {
+      "id": 34,
+      "name": "艾尼维亚",
+      "slug": "anivia",
+      "tier": 4,
+      "rank": 154
+    },
+    {
+      "id": 518,
+      "name": "妮蔻",
+      "slug": "neeko",
+      "tier": 4,
+      "rank": 155
+    },
+    {
+      "id": 950,
+      "name": "纳亚菲利",
+      "slug": "naafiri",
+      "tier": 4,
+      "rank": 156
+    },
+    {
+      "id": 127,
+      "name": "丽桑卓",
+      "slug": "lissandra",
+      "tier": 4,
+      "rank": 157
+    },
+    {
+      "id": 60,
+      "name": "伊莉丝",
+      "slug": "elise",
+      "tier": 4,
+      "rank": 158
+    },
+    {
+      "id": 69,
+      "name": "卡西奥佩娅",
+      "slug": "cassiopeia",
+      "tier": 4,
+      "rank": 159
+    },
+    {
+      "id": 39,
+      "name": "艾瑞莉娅",
+      "slug": "irelia",
+      "tier": 4,
+      "rank": 160
+    },
+    {
+      "id": 805,
+      "name": "洛克",
+      "slug": "locke",
+      "tier": 4,
+      "rank": 161
+    },
+    {
+      "id": 2,
+      "name": "奥拉夫",
+      "slug": "olaf",
+      "tier": 4,
+      "rank": 162
+    },
+    {
+      "id": 497,
+      "name": "洛",
+      "slug": "rakan",
+      "tier": 4,
+      "rank": 163
+    },
+    {
+      "id": 84,
+      "name": "阿卡丽",
+      "slug": "akali",
+      "tier": 4,
+      "rank": 164
+    },
+    {
+      "id": 154,
+      "name": "扎克",
+      "slug": "zac",
+      "tier": 4,
+      "rank": 165
+    },
+    {
+      "id": 58,
+      "name": "雷克顿",
+      "slug": "renekton",
+      "tier": 4,
+      "rank": 166
+    },
+    {
+      "id": 85,
+      "name": "凯南",
+      "slug": "kennen",
+      "tier": 4,
+      "rank": 167
+    },
+    {
+      "id": 164,
+      "name": "卡蜜尔",
+      "slug": "camille",
+      "tier": 4,
+      "rank": 168
+    },
+    {
+      "id": 201,
+      "name": "布隆",
+      "slug": "braum",
+      "tier": 4,
+      "rank": 169
+    },
+    {
+      "id": 33,
+      "name": "拉莫斯",
+      "slug": "rammus",
+      "tier": 4,
+      "rank": 170
+    },
+    {
+      "id": 432,
+      "name": "巴德",
+      "slug": "bard",
+      "tier": 4,
+      "rank": 171
+    },
+    {
+      "id": 897,
+      "name": "奎桑提",
+      "slug": "ksante",
+      "tier": 4,
+      "rank": 172
+    },
+    {
+      "id": 83,
+      "name": "约里克",
+      "slug": "yorick",
+      "tier": 4,
+      "rank": 173
+    }
+  ],
+  "source_id": "qq101",
+  "source_name": "101 数据站",
+  "source": "https://mlol.qt.qq.com/go/battle_info/odp_proxy/fuwen_aram_hero_rank_v2?dtstatdate=20261013",
+  "patch": "16.20",
+  "stat_date": "20261013",
+  "fetched_at": "2026-10-14T12:46:16.923107Z",
+  "tier_verification": "101 E0/Ya: best role tier, rounded 4/15/30/40% boundaries; source order within roles"
+}
