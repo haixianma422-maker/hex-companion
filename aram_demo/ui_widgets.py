@@ -6,18 +6,19 @@ Editing remains native Tk; rounded surfaces, labels and icons share Artboard.
 """
 import ctypes
 import os
+import math
 import tkinter as tk
 from ctypes import wintypes
 
-from .motion import Motion, blend
+from .motion import Motion, blend, system_motion_enabled
 from .theme import BG, SURFACE, RAISED, TEXT, MUTED, ACCENT, LILAC, INK, LINE, FONT
 from .ui_drawing import Artboard, ui_scale, measure, font as drawing_font, SS
 
 ERROR = '#FFB7BE'
 INK_MUTED = '#55476C'
 DISABLED_FILL = '#C7BED5'
-ACCENT_HOVER = '#E8FFAA'
-ACCENT_PRESSED = '#CBE96E'
+ACCENT_HOVER = '#EAFFAD'
+ACCENT_PRESSED = '#B9D85E'
 SURFACE_HOVER = '#342D43'
 SURFACE_PRESSED = '#40364F'
 GUTTER = 4
@@ -189,6 +190,8 @@ class PixelButton(_PixelCanvas):
         self._auto_radius = radius is None
         self.radius = height / 2 if radius is None else radius
         self._hover = self._pressed = False
+        self.task_active = False
+        self._activity = 0.
         self._fill = self._normal_color(background)
         super().__init__(parent, width, height, scale, background)
         self.configure(cursor='hand2')
@@ -238,7 +241,27 @@ class PixelButton(_PixelCanvas):
 
     def _leave(self, _):
         self._hover = self._pressed = False
-        self._tint()
+        self._tint(immediate=True)
+
+    def set_task_active(self, active):
+        active = bool(active)
+        if self.task_active == active:
+            return
+        self.task_active = active
+        self.motion.cancel('activity')
+        if active:
+            self.motion.activity('activity', self._task_frame)
+        self._paint()
+
+    def _task_frame(self, progress):
+        self._activity = progress
+        self._paint()
+
+    def set_motion(self, enabled):
+        super().set_motion(enabled)
+        if self.task_active:
+            self.motion.activity('activity', self._task_frame)
+        self._paint()
 
     def _press(self, event):
         if self._state != 'disabled' and self._inside(event):
@@ -313,7 +336,12 @@ class PixelButton(_PixelCanvas):
             icon_box = ((self.icon_box[0] + 4, self.icon_box[1] + 4,
                          self.icon_box[2], self.icon_box[3]) if self.icon_box is not None else
                         (left, 4 + (self.logical_height - 16) / 2, 16, 16))
-            board.icon(self.icon, icon_box,
+            if self.task_active and self.motion.enabled and system_motion_enabled():
+                cx,cy=icon_box[0]+icon_box[2]/2,icon_box[1]+icon_box[3]/2
+                bounds=board.box((cx-6,cy-6,12,12))
+                board.draw.arc(bounds,start=math.degrees(self._activity*5*math.pi),
+                    end=math.degrees(self._activity*5*math.pi)+270,fill=INK,width=round(2*board.factor))
+            else: board.icon(self.icon, icon_box,
                        color=MUTED if self._state == 'disabled' else self.icon_color or foreground,
                        stroke=1.4 if icon_box[2] <= 14 else 1.6)
             left += 24
@@ -431,7 +459,7 @@ class PixelToggle(_PixelCanvas):
     def __init__(self, parent, variable, scale=None):
         self.variable = variable
         self.position = 1.0 if variable.get() else 0.0
-        super().__init__(parent, 54, 32, scale)
+        super().__init__(parent, 54, 30, scale)
         self.configure(cursor='hand2')
         self._trace = variable.trace_add('write', self._changed)
         self.bind('<Button-1>', self._toggle)
@@ -471,9 +499,9 @@ class PixelToggle(_PixelCanvas):
         if not hasattr(self, 'motion'):
             return
         board = self._board()
-        board.rect((4, 4, 54, 32), blend(RAISED, ACCENT, self.position)
-                   if self._state != 'disabled' else RAISED, 16)
-        board.rect((8 + 22 * self.position, 8, 24, 24), TEXT, 12)
+        board.rect((4, 4, 54, 30), (ACCENT if self.position > .5 else RAISED)
+                   if self._state != 'disabled' else RAISED, 15)
+        board.rect((7 + 24 * self.position, 7, 24, 24), TEXT, 12)
         self._focus_ring(board, 16)
         self._show(board)
 
@@ -613,7 +641,8 @@ class SourceSwitch(_PixelCanvas):
                 if self._state == 'disabled':
                     color = RAISED
                 board.rect(box, color, h / 2)
-            color = INK if i == selected and self._state != 'disabled' else MUTED
+            active = selected if self.separate else min(len(boxes)-1,int(self.position+.5))
+            color = INK if i == active and self._state != 'disabled' else MUTED
             board.text((x, y, w, h), name, size=16 if self.separate else 12,
                        bold=True, color=color, align='center')
         if self.separate and self._focused and self._keyboard_focus:

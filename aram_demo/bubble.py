@@ -44,16 +44,16 @@ class CompanionBubble:
         l,t,r,b=self.work_area
         self.position=(max(l,min(round(x),r-self.size)),max(t,min(round(y),b-self.size)))
         position_window(self.window,*self.position,self.size,self.size)
-    def show_at(self,anchor,rectangle=None):
+    def show_at(self,anchor,rectangle=None,animate=True):
         self.work_area=anchor.work_area
         if not self._user_position and rectangle:
             x,y,w,h=rectangle; self.position=(x+w-self.size-12*self.scale,y+h-self.size-12*self.scale)
         x,y=self.position or (self.work_area[2]-self.size-16,self.work_area[1]+16)
         self._place(x,y)
         if not self.visible:
-            self.motion.cancel('visibility'); self.visible=True
+            self.motion.cancel('visibility',finish=True); self.visible=True
             self.window.attributes('-alpha',0. if self.motion.enabled else 1.); self.window.deiconify(); self._place(*self.position)
-            self.motion.animate('visibility',0.,1.,lambda v:self.window.attributes('-alpha',v),180)
+            self.motion.animate('visibility',0.,1.,lambda v:self.window.attributes('-alpha',v),160 if animate else 0)
     def _begin(self,event):
         self.tip.hide(); self.origin=(event.x_root,event.y_root,*self.position); self.dragged=False; self._pressed=True; self._paint()
     def _drag(self,event):
@@ -68,7 +68,10 @@ class CompanionBubble:
     def hide(self,animate=False):
         self.tip.hide()
         if self.visible:
+            self.motion.cancel('visibility',finish=True)
             self.visible=False; self.motion.cancel_all()
-            if animate and self.motion.enabled:self.motion.animate('visibility',1.,0.,lambda v:self.window.attributes('-alpha',v),140,done=self.window.withdraw)
+            def finish():
+                self.window.withdraw(); self.window.attributes('-alpha',1.)
+            if animate and self.motion.enabled:self.motion.animate('visibility',1.,0.,lambda v:self.window.attributes('-alpha',v),220,done=finish)
             else:self.window.withdraw(); self.window.attributes('-alpha',1.)
         elif not animate:self.motion.cancel_all(); self.window.withdraw(); self.window.attributes('-alpha',1.)

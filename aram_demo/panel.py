@@ -5,6 +5,8 @@ from .tk_images import WidgetPhotoImage
 from .models import sort_champions, augment_label
 from .builds import recommended_items
 from .motion import Motion
+from .motion_images import RegionTransition, dim_regions, visibility_image
+from .ui_snapshot import snapshot
 from .ui_drawing import (Artboard, ui_scale, position_window, Hint, measure, ellipsize,
                          BG,SURFACE,RAISED,TEXT,MUTED,LILAC,ACCENT,INK,INK_MUTED,LINE,UNKNOWN,TRANSPARENT)
 from .ui_widgets import PixelButton, SourceSwitch
@@ -18,6 +20,9 @@ class CompanionPanel:
         self.window.attributes('-topmost',True); self.window.configure(bg=TRANSPARENT)
         if os.name=='nt': self.window.attributes('-transparentcolor',TRANSPARENT)
         self.scale=ui_scale(root); self.width=round(360*self.scale); self.height=round(540*self.scale)
+        self.dpi_scale=self.scale; self.zoom=1.; self.on_resize=None
+        self._anchor=None; self._resize_origin=None; self._visibility_layer=None
+        self._source_pending=False; self._source_old=None
         self.canvas=tk.Canvas(self.window,bg=TRANSPARENT,bd=0,highlightthickness=0,takefocus=True)
         self.canvas.pack(fill='both',expand=True); self.inner=self.canvas
         self.bitmap=self.canvas.create_image(0,0,anchor='nw')
@@ -54,6 +59,36 @@ class CompanionPanel:
         for control in self._controls:
             control.set_motion(enabled)
         self.window.attributes('-alpha',1.)
+
+    def set_zoom(self, zoom):
+        """Keep the logical layout, images and hit regions on a single scale."""
+        import math
+        try: zoom=float(zoom)
+        except (TypeError,ValueError): zoom=1.
+        if not math.isfinite(zoom): zoom=1.
+        height=580 if self.stage=='game' else 540
+        maximum=2.5
+        if self._anchor:
+            l,t,r,b=self._anchor.work_area
+            maximum=min(maximum,(r-l-12)/(360*self.dpi_scale),(b-t-12)/(height*self.dpi_scale))
+        zoom=min(maximum,max(min(.65,maximum),zoom))
+        if abs(zoom-self.zoom)<.001:return
+        self.motion.cancel_all(finish=True)
+        old_position=(self.window.winfo_rootx(),self.window.winfo_rooty()) if self._geometry else None
+        self.zoom=zoom; self.scale=self.dpi_scale*zoom
+        self.width=round(360*self.scale); self.height=round(height*self.scale)
+        self.visible_height=height; self.body_scroll=self.candidate_scroll=0
+        self._candidate_target=0; self._card_signatures=[]
+        self._full_image=None; self._source_old=None; self._source_pending=False
+        self.context=None; self.signature=None; self._geometry=None
+        self.shadow.scale=self.scale
+        if self.stage is not None:self._make_controls(self.stage)
+        if self._last:self.render(*self._last)
+        if self._anchor:
+            if old_position:
+                new_base=panel_position(self._anchor.rect,self._anchor.work_area,self.width,self.height)
+                self.offset=(old_position[0]-new_base[0],old_position[1]-new_base[1])
+            self.show_at(self._anchor)
 
     def set_hotkeys(self,bindings):
         self.hotkey_bindings=dict(bindings); self.signature=None
@@ -239,7 +274,7 @@ class CompanionPanel:
             grade=augment_label(augment.get('tier'),(data or{}).get('tier_labels')) if augment else'—'
             if grade not in colors:grade='—'
             recognized+=bool(augment)
-            fill=colors.get(grade,UNKNOWN); art.rect((x,244,108,126),fill,10)
+            fill=colors.get(grade,'#B3A3C9'); art.rect((x,244,108,126),fill,10)
             self._text(art,(x+6,250,96,18),('左侧','中间','右侧')[slot],11,color=INK,align='center',line_height=18)
             self._text(art,(x+10,269,52,61),grade,52,True,INK,align='center',line_height=61,optical=True)
             icon_box=(x+62,275,38,38); path=self._asset('augment',augment['id']) if augment else None
@@ -256,6 +291,12 @@ class CompanionPanel:
             self._region((x,244,108,126),name+(' · 图标暂缺' if augment and not shown else'')+' · 点击手动修正',
                          lambda i=slot:self.on_correct(i) if self.on_correct else None)
         self._text(art,(253,220,93,20),f'已识别 {recognized} / 3',12,color=MUTED,align='right',line_height=20)
+        if self._source_pending:
+            art.rect((174,218,175,23),BG)
+            self._text(art,(174,218,171,23),'正在切换来源…',12,color=MUTED,align='right')
+        elif not self._scanning and ('未能确认' in self._status or '截图失败' in self._status or '识别失败' in self._status):
+            art.rect((14,218,335,23),BG)
+            self._text(art,(14,218,335,23),self._status,12,color=MUTED)
         art.line((14,382,346,382),LINE)
         self._text(art,(14,389,96,24),'核心出装',17,True,line_height=24)
         self._text(art,(117,392,180,20),'英雄 / 模式推荐',11,color=MUTED,line_height=20)
@@ -313,10 +354,11 @@ class CompanionPanel:
         if game:
             key=self.hotkey_bindings['scan']; long=len(key)>4
             self.scan_button.set_size(220 if long else 180,34)
-            label='识别中' if self._scanning else '重新识别 '+key
+            label='识别中…' if self._scanning else '重新识别 '+key
             group_width=measure(label,14,True)+24
             group_x=(220-group_width)/2
-            self.scan_button.configure(text='识别中' if self._scanning else '重新识别 '+key, state='disabled' if self._scanning else 'normal', icon_box=(21 if not long else max(6,group_x),9,16,16), text_box=(45 if not long else max(30,group_x+24),6,114 if not long else 184,22))
+            self.scan_button.configure(text=label, state='normal', icon_box=(13 if not long else max(6,group_x),9,16,16), text_box=(40 if not long else max(30,group_x+24),6,114 if not long else 184,22))
+            self.scan_button.set_task_active(self._scanning and self.visible)
             self.scan_button.place_logical(32 if long else 60,522+delta)
             if hasattr(self.scan_button,'set_size'):self.scan_button.set_size(220 if long else 180,34)
             self.refresh_button.place_logical(264 if long else 250,522+delta)
@@ -342,11 +384,27 @@ class CompanionPanel:
              self.images_loading,self.network_error,self.manual_override,tuple(self.hotkey_bindings.items()),self.visible_height,
              visible_data_key)
         if self.signature==key:return
+        self.motion.cancel('hero',finish=True)
+        self.motion.cancel('cards',finish=True)
+        self.motion.cancel('source',finish=True)
+        if 'visibility' in self.motion.jobs:self.motion.cancel('visibility',finish=True)
+        previous=getattr(self,'_full_image',None)
+        old_context=self.context
         resume_scroll='candidate-scroll' in self.motion.jobs
         self.motion.cancel('candidate-scroll')
         source_changed = bool(self.context and self.context[:2] == (state.stage,state.champion_id)
                               and self.context[2] != self.source_name)
         same_context = self.context == (state.stage,state.champion_id,self.source_name)
+        hero_changed=bool(old_context and old_context[0]==state.stage=='select' and old_context[1]!=state.champion_id)
+        if source_changed:
+            self._source_old=previous
+            self._source_pending=True
+        elif old_context and old_context[:2]!=(state.stage,state.champion_id):
+            self._source_old=None; self._source_pending=False
+        source_ready=self._source_pending and not self.data_loading and not self.network_error and bool(data)
+        if source_ready:self._source_pending=False
+        if self._source_pending and self.network_error and not self.data_loading:
+            self._source_pending=False; self._source_old=None
         if self.context and not same_context:
             self.tip.hide(); self.body_scroll=self.candidate_scroll=0
             self._candidate_target=0; resume_scroll=False
@@ -369,43 +427,45 @@ class CompanionPanel:
         self._footer(art,game)
         if not game:
             self._candidate_fixed_regions=[region for region in self._regions if region not in self._candidate_hit_regions]
-        previous=getattr(self,'_full_image',None); current=art.finish()
+        current=art.finish()
         previous_cards=self._card_signatures
         new_cards=[(m.slot,m.augment_id,m.status,m.text) for m in matches] if game else []
-        self.motion.cancel('cards')
-        self.motion.cancel('source', finish=True)
         self._full_image=current
         self._display_image(); self._position_controls()
         self._card_signatures=new_cards
-        if source_changed:
+        if (source_changed or self._source_pending or source_ready) and self._source_old is not None and self._source_old.size==current.size:
+            regions=self._source_regions(game)
+            waiting=dim_regions(self._source_old,current,regions,self.scale)
+            if self._source_pending:
+                self._full_image=waiting; self._display_image()
+            else:
+                self._image_transition('source',waiting,current,regions,160)
+                self._source_old=None
+        elif source_changed:
             self._source_transition(current,game)
+        elif hero_changed and previous is not None and previous.size==current.size:
+            self._image_transition('hero',previous,current,[(6,75,348,106),(12,284,336,124)],180,shift=3)
         elif resume_scroll and not game:
             self._scroll_candidates(self._candidate_target)
         if game and same_context and not changed_stage and previous is not None and previous.size==current.size and previous_cards!=new_cards:
-            from PIL import Image
             old_by_slot={row[0]:row for row in previous_cards}; new_by_slot={row[0]:row for row in new_cards}
             changed=[i for i in range(3) if old_by_slot.get(i)!=new_by_slot.get(i)]
-            def transition(t):
-                frame=current.copy()
-                for i in changed:
-                    box=tuple(round(v*self.scale) for v in (14+i*112,244,122+i*112,370))
-                    frame.paste(Image.blend(previous.crop(box),current.crop(box),t),box)
-                self._full_image=frame; self._display_image()
-            self.motion.animate('cards',0.,1.,transition,180)
+            if not self._source_pending and not source_ready:
+                self._image_transition('cards',previous,current,[(14+i*112,244,108,126) for i in changed],
+                    180,shift=4,base='old',radius=10)
+
+    def _image_transition(self,name,previous,current,regions,duration,**kwargs):
+        transition=RegionTransition(previous,current,regions,self.scale,**kwargs)
+        def update(progress):
+            self._full_image=transition.frame(progress); self._display_image()
+        self.motion.animate(name,0.,1.,update,duration)
+
+    def _source_regions(self,game):
+        return [(4,152,352,54),(12,244,336,276)] if game else [(6,187,348,48),(12,284,336,188)]
 
     def _source_transition(self,current,game):
-        from PIL import Image
-        sections=[((4,152,356,206),LILAC),((12,218,348,472),BG)] if game else [((6,187,354,235),BG),((12,254,348,470),BG)]
-        def update(progress):
-            frame=current.copy()
-            for bounds,color in sections:
-                box=tuple(round(value*self.scale) for value in bounds)
-                blank=Image.new('RGBA',(box[2]-box[0],box[3]-box[1]),color)
-                frame.paste(Image.blend(blank,current.crop(box).convert('RGBA'),progress),box)
-            self._full_image=frame; self._display_image()
-        # Fade only the new source's content; the native window, hero art and
-        # controls remain mapped and responsive during rapid source changes.
-        self.motion.animate('source',0.,1.,update,180)
+        waiting=dim_regions(current,current,self._source_regions(game),self.scale)
+        self._image_transition('source',waiting,current,self._source_regions(game),160)
 
     def _display_image(self):
         game=self.stage=='game'; base=580 if game else 540
@@ -448,6 +508,8 @@ class CompanionPanel:
         return next((r for r in reversed(self._regions) if r[0][0]<=x<r[0][0]+r[0][2] and r[0][1]<=y<r[0][1]+r[0][3]),None)
 
     def _hover(self,event):
+        if self._resize_hit(event):
+            self.tip.hide(); self.canvas.configure(cursor='size_nw_se'); return
         hit=self._hit(event); identity=hit[0] if hit else None
         if identity!=self._tip_identity:
             self.tip.text=hit[1] if hit else''; self._tip_identity=identity
@@ -462,18 +524,39 @@ class CompanionPanel:
 
     def _press(self,event):
         self.tip.hide()
+        if self._resize_hit(event):
+            self.motion.cancel_all(finish=True)
+            self._resize_origin=(event.x_root,event.y_root,self.zoom)
+            self._drag_origin=None; return
         if event.y/self.scale<38:self._drag_origin=(event.x_root,event.y_root,self.window.winfo_rootx(),self.window.winfo_rooty())
 
     def _drag(self,event):
+        if self._resize_origin:
+            sx,sy,zoom=self._resize_origin
+            height=580 if self.stage=='game' else 540
+            dx,dy=event.x_root-sx,event.y_root-sy
+            growth=(dx*360+dy*height)/(360**2+height**2)/self.dpi_scale
+            self.set_zoom(zoom+growth); return
         if self._drag_origin:
             sx,sy,x,y=self._drag_origin
             x+=event.x_root-sx; y+=event.y_root-sy
+            if self._anchor:
+                l,t,r,b=self._anchor.work_area
+                x=max(l,min(x,r-self.width)); y=max(t,min(y,b-self.height))
             self.offset=(x-self.base[0],y-self.base[1]); position_window(self.window,x,y)
+            self._geometry=(x,y,self.width,self.height)
 
     def _release(self,event):
+        if self._resize_origin:
+            self._drag(event); self._resize_origin=None
+            if self.on_resize:self.on_resize(self.zoom)
+            return
         if self._drag_origin:self._drag_origin=None; return
         hit=self._hit(event)
         if hit and hit[2]:hit[2]()
+
+    def _resize_hit(self,event):
+        return event.x>=self.width-14*self.scale and event.y>=self.height-14*self.scale
 
     def _wheel(self,event):
         if not event.delta:return 'break'
@@ -492,7 +575,15 @@ class CompanionPanel:
         return 'break'
 
     def show_at(self,anchor):
+        self._anchor=anchor
         work=anchor.work_area; base_height=580 if self.stage=='game' else 540
+        maximum=min(2.5,(work[2]-work[0]-12)/(360*self.dpi_scale),
+            (work[3]-work[1]-12)/(base_height*self.dpi_scale))
+        # Retain the default-size middle scrollbar on short work areas, while
+        # user-scaled windows and narrow monitors fit the whole surface.
+        if self.zoom>maximum+.001 and (abs(self.zoom-1.)>.001 or self.width>work[2]-work[0]-12):
+            self.set_zoom(maximum)
+            return
         height=min(round(base_height*self.scale),work[3]-work[1]-12)
         logical=height/self.scale
         if self.visible_height!=logical:
@@ -505,37 +596,63 @@ class CompanionPanel:
         geometry=(x,y,self.width,height)
         if geometry!=self._geometry:
             if self.visible:
-                self.motion.cancel('visibility')
+                self.motion.cancel('visibility',finish=True)
                 self.window.attributes('-alpha',1.)
             position_window(self.window,*geometry)
             self._geometry=geometry
         if not self.visible:
-            self.visible=True; self.motion.cancel('visibility')
+            self.motion.cancel('visibility',finish=True); self.visible=True
             self.window.attributes('-alpha',0. if self.motion.enabled else 1.)
             self.window.deiconify()
-            self.motion.animate('visibility',0.,1.,lambda t:self._reveal(t,x,y),180)
+            self.window.update_idletasks()
+            position_window(self.window,x,y,self.width,height)
+            self._position_controls()
+            self._visibility_transition(True)
 
-    def _reveal(self,t,x,y):
-        self.window.attributes('-alpha',t); position_window(self.window,x,y+round(4*(1-t)*self.scale))
+    def _visibility_transition(self,show,done=None):
+        picture=None
+        if self.motion.enabled:
+            picture=snapshot(self.window)
+        if picture is not None:
+            if self._visibility_layer is None:
+                self._visibility_layer=tk.Canvas(self.window,bd=0,highlightthickness=0,bg=TRANSPARENT)
+                self._visibility_bitmap=self._visibility_layer.create_image(0,0,anchor='nw')
+                self._visibility_layer.bind('<ButtonPress-1>',lambda _:self.motion.cancel('visibility',finish=True))
+            self._visibility_layer.place(x=0,y=0,width=self.width,height=self.height)
+            tk.Misc.lift(self._visibility_layer)
+        def update(progress):
+            amount=progress if show else 1-progress
+            self.window.attributes('-alpha',amount)
+            if picture is not None:
+                self._visibility_photo=WidgetPhotoImage(visibility_image(picture,amount,self.scale),master=self._visibility_layer)
+                self._visibility_layer.itemconfigure(self._visibility_bitmap,image=self._visibility_photo)
+        def finish():
+            if self._visibility_layer is not None:self._visibility_layer.place_forget()
+            if not show:self.window.withdraw()
+            self.window.attributes('-alpha',1.)
+            self._visibility_photo=None
+            if done:done()
+        self.motion.animate('visibility',0.,1.,update,220 if show else 160,done=finish)
 
     def hide(self,animate=False,done=None):
         self.tip.hide()
+        for name in ('hero','cards','source'):
+            self.motion.cancel(name,finish=True)
         self._candidate_target=self.candidate_scroll
         if self.visible:
+            self.motion.cancel('visibility',finish=True)
             self.visible=False; self.motion.cancel_all()
+            if getattr(self,'scan_button',None):self.scan_button.set_task_active(False)
             if animate and self.motion.enabled:
-                x,y=self.window.winfo_rootx(),self.window.winfo_rooty()
-                def step(t):
-                    self.window.attributes('-alpha',1-t); position_window(self.window,x,y+round(3*t*self.scale))
-                def finish():
-                    self.window.withdraw()
-                    if done:done()
-                self.motion.animate('visibility',0.,1.,step,140,done=finish)
+                self._visibility_transition(False,done)
             else:
+                if self._visibility_layer is not None:self._visibility_layer.place_forget()
                 self.window.withdraw(); self.window.attributes('-alpha',1.)
                 if done:done()
         elif not animate:
             self.motion.cancel_all(); self.window.withdraw(); self.window.attributes('-alpha',1.)
+            if self._visibility_layer is not None:self._visibility_layer.place_forget()
+            if getattr(self,'scan_button',None):self.scan_button.set_task_active(False)
             if done:done()
         elif 'visibility' not in self.motion.jobs and done:done()
 

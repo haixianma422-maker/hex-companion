@@ -7,6 +7,8 @@ from .cache import SOURCE_NAMES
 from .hotkeys import DEFAULT_HOTKEYS, normalize_bindings, parse_hotkey
 from .lcu import validate_install_path
 from .motion import Motion
+from .ui_snapshot import snapshot
+from .tk_images import WidgetPhotoImage
 from .recognition import DEFAULT_REGIONS, Recognizer
 from .theme import ACCENT, BG, INK, LILAC, LINE, MUTED, RAISED, SURFACE, TEXT
 from .ui_drawing import Artboard, Hint as Tooltip, position_window, ui_scale, work_area
@@ -132,6 +134,7 @@ class SettingsTabs(tk.Canvas):
         self.pages, self.scale = pages, scale
         self.current, self.position, self._photo = 0, 22., None
         self.motion = Motion(self, animations)
+        self._content_layer = None
         self.bind('<Button-1>', self._click)
         self.bind('<Left>', lambda _: self._step(-1))
         self.bind('<Right>', lambda _: self._step(1))
@@ -146,7 +149,11 @@ class SettingsTabs(tk.Canvas):
     def select(self, value=None):
         if value is None:
             return self.pages[self.current]
-        self.current = self.index(value)
+        target = self.index(value)
+        self.motion.cancel('content',finish=True)
+        self.motion.cancel('tab',finish=True)
+        before = snapshot(self.master) if target != self.current and self.motion.enabled else None
+        self.current = target
         for index, page in enumerate(self.pages):
             if index == self.current:
                 page.place(x=round(20 * self.scale), y=round(124 * self.scale),
@@ -155,8 +162,43 @@ class SettingsTabs(tk.Canvas):
             else:
                 page.place_forget()
                 page.scroll.place_forget()
+        if before is not None:
+            after = snapshot(self.master)
+            if after is not None:
+                self._fade_content(before,after)
         self.motion.animate('tab', self.position, 22 + self.current * 147, self._move, 140)
         self.event_generate('<<NotebookTabChanged>>')
+
+    def _fade_content(self, before, after):
+        from PIL import Image
+        height=round(self.pages[self.current].viewport_height*self.scale)
+        box=(0,round(124*self.scale),round(480*self.scale),round(124*self.scale)+height)
+        before,after=before.crop(box),after.crop(box)
+        if self._content_layer is None:
+            layer=self._content_layer=tk.Canvas(self.master,bg=BG,bd=0,highlightthickness=0)
+            self._content_bitmap=layer.create_image(0,0,anchor='nw')
+            layer.bind('<ButtonPress-1>',self._forward_click)
+            self.master.bind('<Unmap>',self._unmap,add='+')
+        self._content_layer.place(x=0,y=round(124*self.scale),width=round(480*self.scale),height=height)
+        tk.Misc.lift(self._content_layer)
+        def update(progress):
+            self._content_photo=WidgetPhotoImage(Image.blend(before,after,progress),master=self._content_layer)
+            self._content_layer.itemconfigure(self._content_bitmap,image=self._content_photo)
+        def finish():
+            self._content_layer.place_forget(); self._content_photo=None
+        self.motion.animate('content',0.,1.,update,160,done=finish)
+
+    def _forward_click(self,event):
+        self.motion.cancel('content',finish=True)
+        target=self.winfo_containing(event.x_root,event.y_root)
+        if target is not None and target is not self._content_layer:
+            target.event_generate('<ButtonPress-1>',x=event.x_root-target.winfo_rootx(),
+                y=event.y_root-target.winfo_rooty(),rootx=event.x_root,rooty=event.y_root)
+
+    def _unmap(self,event):
+        if event.widget is self.master:
+            self.motion.cancel_all()
+            if self._content_layer is not None:self._content_layer.place_forget()
 
     def _move(self, position):
         self.position = position
@@ -551,13 +593,13 @@ def show_settings(app, slot=None):
         if (not source_changed and app.store is opened_source and
                 selected_choices != opened_choices and opened_revision == app.state.revision):
             app.apply_manual(selected_choices)
-        dialog.destroy()
         if source_changed:
             app.change_source(selected_source)
         app.status = app.cache_status()
         app.present()
         if path_changed:
             app.refresh()
+        apply.configure(text='已应用')
 
     cancel = PixelButton(dialog, '取消', dialog.destroy, 184, 44, kind='outline',
                           font_size=16, bold=True, radius=22, scale=scale,

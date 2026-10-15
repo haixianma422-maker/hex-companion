@@ -354,8 +354,9 @@ class CompanionAppTests(unittest.TestCase):
         # A manual click can adopt the pending automatic scan and gets explicit feedback.
         self.app.scan(force=True)
         self.root.update()
-        self.assertEqual(control.text,'识别中')
-        self.assertEqual(control._state,'disabled')
+        self.assertEqual(control.text,'识别中…')
+        self.assertTrue(control.task_active)
+        self.assertEqual(control._state,'normal')
 
     def test_candidate_refresh_preserves_existing_rows_and_hero_surface(self):
         self.app.on_client_state(ClientState('ChampSelect', 222, [86], queue_id=3270))

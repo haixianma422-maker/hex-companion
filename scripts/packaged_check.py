@@ -108,12 +108,34 @@ def run(report_path):
                 assert all(app.panel.assets_shown.get(('augment',aid)) for aid in (1029,1097,1038))
             report['offline_source_switch']=True
             report['reported_images_visible']=True
+            app.panel.set_motion(True)
+            app.bubble.set_motion(True)
+            app.panel.set_zoom(1.1)
+            root.update()
+            assert app.panel.window.winfo_width()==round(360*app.panel.scale)
+            assert app.panel.scan_button.scale==app.panel.scale
+            app.panel.on_resize(app.panel.zoom)
+            assert store.read('settings.json')['panel_zoom']==app.panel.zoom
+            report['native_resize_and_persistence']=True
             app.hide()
             root.update()
             assert app.bubble.visible and not app.panel.visible
             app.expand()
-            root.update()
+            deadline=time.monotonic()+3
+            while (app.panel.motion.jobs or app.bubble.motion.jobs) and time.monotonic()<deadline:
+                root.update();time.sleep(.01)
             assert app.panel.visible and not app.bubble.visible
+            assert not app.panel.motion.jobs and not app.bubble.motion.jobs
+            assert float(app.panel.window.attributes('-alpha'))==1.
+            report['native_visibility_cleanup']=True
+            app.panel.set_motion(False);app.bubble.set_motion(False)
+            app.show_settings();root.update()
+            from aram_demo.ui_widgets import PixelButton
+            apply=next(w for w in app.dialog.winfo_children() if isinstance(w,PixelButton) and w.text=='保存并应用')
+            apply.invoke()
+            assert apply.text=='已应用' and app.dialog.winfo_exists()
+            app.dialog.destroy();root.update()
+            report['native_save_feedback']=True
             app.hotkeys.configure(custom)
             assert app.hotkeys.bindings == custom and len(app.hotkeys.registered) == 3
             ctypes.windll.user32.PostThreadMessageW(app.hotkeys.thread.native_id, 0x0312, 3, 0)

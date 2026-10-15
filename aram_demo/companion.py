@@ -93,6 +93,8 @@ class CompanionApp:
         self.panel.source_name = store.source_name
         self.panel.set_hotkeys(self.hotkeys.bindings)
         self.panel.set_motion(self.settings.get('animations', True))
+        self.panel.on_resize=self.save_panel_zoom
+        self.panel.set_zoom(self.settings.get('panel_zoom',1.))
         self.bubble.set_motion(self.settings.get('animations', True))
         self.bubble.set_hotkeys(self.hotkeys.bindings)
         self.root.protocol('WM_DELETE_WINDOW', self.close)
@@ -453,12 +455,9 @@ class CompanionApp:
             self.hotkeys.set_overlay_visible(False)
             return
         if self.collapsed:
-            anchor = self.anchor
             rectangle = (self.panel.window.winfo_rootx(), self.panel.window.winfo_rooty(), self.panel.width, self.panel.height)
-            def reveal_bubble():
-                if not self.closed and self.collapsed and self.anchor is not None:
-                    self.bubble.show_at(self.anchor, rectangle)
-            self.panel.hide(animate=True, done=reveal_bubble)
+            self.bubble.show_at(self.anchor,rectangle)
+            self.panel.hide(animate=True)
             self.hotkeys.set_overlay_visible(False)
             return
         self.bubble.hide(animate=True)
@@ -467,6 +466,16 @@ class CompanionApp:
                           self.preview, self.scanning and self.scan_feedback)
         self.panel.show_at(self.anchor)
         self.hotkeys.set_overlay_visible(True)
+
+    def save_panel_zoom(self, zoom):
+        settings=dict(self.settings,panel_zoom=zoom)
+        try:
+            self.store._write('settings.json',settings)
+        except OSError as exc:
+            self.status='浮窗已缩放，大小未能保存：'+str(exc)
+            self.present()
+            return
+        self.settings=settings
 
     def _tick(self):
         if self.closed:
@@ -588,7 +597,7 @@ class CompanionApp:
         elif recognized:
             self.status = ('模拟预览 · ' if self.preview else '') + f'已匹配 {recognized}/3 · 其余待确认 · {self.hotkeys.bindings["scan"]} 重试'
         else:
-            self.status = ('模拟预览 · ' if self.preview else '') + '等待海克斯选项 · 设置中可手动修正'
+            self.status = ('模拟预览 · ' if self.preview else '') + '未能确认选项，请重试或手动修正'
         self.refresh_visual_assets()
         self.present()
 
@@ -657,4 +666,6 @@ class CompanionApp:
         except Exception:
             logging.getLogger(__name__).exception('关闭后台服务失败')
         finally:
+            self.panel.hide()
+            self.bubble.hide()
             self.root.destroy()

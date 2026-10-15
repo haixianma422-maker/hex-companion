@@ -129,7 +129,10 @@ class RuntimeStabilityTests(unittest.TestCase):
         self.app.panel.motion.enabled=True
         with patch('aram_demo.motion.time.monotonic', return_value=100):
             self.app.change_source('qq101')
-            self.assertIn('source',self.app.panel.motion.jobs)
+            # This fixture has no 101 hero cache; retain a loading mask until
+            # real data arrives rather than animating a fictitious completion.
+            self.assertTrue(self.app.panel._source_pending)
+            self.assertNotIn('source',self.app.panel.motion.jobs)
             self.assertTrue(self.app.panel.visible)
             self.assertEqual(float(self.app.panel.window.attributes('-alpha')),1.)
             self.app.change_source('opgg')
@@ -170,7 +173,9 @@ class RuntimeStabilityTests(unittest.TestCase):
     def tearDown(self):
         if not self.app.closed:
             for timer in self.root.tk.call('after','info'):
-                self.root.after_cancel(timer)
+                script=self.root.tk.call('after','info',timer)[0]
+                if script in (self.root._tclCommands or []):
+                    self.root.after_cancel(timer)
         self.app.close();self.tmp.cleanup()
 
     def game(self):
