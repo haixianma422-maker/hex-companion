@@ -116,7 +116,8 @@ def main():
         click(hwnd, 12 + 168 + 80, 284 + 30, scale)   # second candidate card
         time.sleep(1.5)
         report['foreground_after_click'] = user.GetForegroundWindow() == foreground
-        text = log_path.read_text(encoding='utf-8', errors='replace')[log_mark:] if log_path.is_file() else ''
+        # log_mark is a byte offset; the log holds Chinese text, so slice bytes before decoding.
+        text = log_path.read_bytes()[log_mark:].decode('utf-8', 'replace') if log_path.is_file() else ''
         report['posted_click_reached_card'] = 'candidate clicked' in text
         first = [line for line in text.splitlines() if 'first frame' in line]
         report['first_frame_log'] = first[-1].split('INFO aram_demo.qml_spike ')[-1] if first else None

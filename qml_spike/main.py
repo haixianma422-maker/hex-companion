@@ -12,7 +12,7 @@ from pathlib import Path
 ROOT = Path(getattr(sys, '_MEIPASS', Path(__file__).resolve().parent.parent))
 sys.path.insert(0, str(ROOT))
 
-from PySide6.QtCore import QObject, Property, QTimer, QUrl, Signal
+from PySide6.QtCore import QObject, Property, QTimer, QUrl, Qt, Signal
 from PySide6.QtGui import QGuiApplication, QIcon
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtQuick import QQuickWindow
@@ -34,39 +34,77 @@ def gpu_percent(pid):
         return None
 
 
+FRAME_LOG_RULES = ('qt.scenegraph.time.renderer=false;qt.scenegraph.time.glyph=false;'
+                   'qt.scenegraph.time.texture=false;qt.scenegraph.time.compilation=false')
+
+
+def capture_frame_log(path):
+    """Route Qt's render-thread timing log to a file. Must run before QGuiApplication exists.
+
+    Frames are timed by Qt itself on the render thread. A Python slot on frameSwapped would run
+    on the render thread too and has deadlocked against the GUI thread over the GIL.
+    """
+    os.environ.update(QSG_RENDER_TIMING='1', QT_FORCE_STDERR_LOGGING='1',
+                      QT_MESSAGE_PATTERN='%{time process}|%{message}', QT_LOGGING_RULES=FRAME_LOG_RULES)
+    stream = open(path, 'wb')
+    os.dup2(stream.fileno(), 2)
+    if os.name == 'nt':
+        # A windowed (packaged) process has no standard error handle; point it at the file as well.
+        import ctypes
+        import msvcrt
+        ctypes.windll.kernel32.SetStdHandle(-12, msvcrt.get_osfhandle(2))   # STD_ERROR_HANDLE
+    return stream
+
+
 class Metrics(QObject):
-    """Counts presented frames; idle panels should present none."""
+    """Reads presented frames from Qt's timing log; idle panels should present none."""
     changed = Signal()
 
-    def __init__(self, path, bridge, gpu=False):
+    def __init__(self, path, bridge, frame_log, gpu=False):
         super().__init__()
         import psutil
         self.process, self.path, self.bridge, self.gpu = psutil.Process(), path, bridge, gpu
         self.process.cpu_percent(None)
-        self.window = None
-        self.frames = self.total = 0
+        self.frame_log, self.offset, self.window = frame_log, 0, None
         self.last = None
         self.gaps = []
+        self.frames = self.window_frames = 0
         self._text = ''
+        self.gpu_value = None
         self.second = QTimer(self); self.second.timeout.connect(self.tick); self.second.start(1000)
         self.minute = QTimer(self); self.minute.timeout.connect(self.write); self.minute.start(10000)
-        self.window_frames = 0
-        self.gpu_value = None
         if gpu:
             threading.Thread(target=self._gpu_loop, daemon=True).start()
 
     def attach(self, window):
-        window.frameSwapped.connect(self.swapped)
+        import shiboken6
+        self.window = f'[window {hex(shiboken6.getCppPointer(window)[0])}]'
 
-    def swapped(self):
-        now = time.perf_counter()
-        # Qt renders on demand: a pause between two animations is idle time, not a slow frame.
-        if self.last is not None and now - self.last < .1:
-            self.gaps.append((now - self.last) * 1000)
-        self.last = now
-        self.frames += 1; self.total += 1; self.window_frames += 1
+    def read_frames(self):
+        try:
+            with open(self.frame_log, 'rb') as stream:
+                stream.seek(self.offset)
+                chunk = stream.read()
+        except OSError:
+            return
+        complete = chunk.rfind(b'\n') + 1
+        self.offset += complete
+        for line in chunk[:complete].decode('utf-8', 'replace').splitlines():
+            stamp, _, message = line.partition('|')
+            if self.window not in message or 'frame rendered in' not in message:
+                continue
+            try:
+                now = float(stamp)
+            except ValueError:
+                continue
+            # Qt renders on demand: a pause between two animations is idle time, not a slow frame.
+            if self.last is not None and now - self.last < .1:
+                self.gaps.append((now - self.last) * 1000)
+            self.last = now
+            self.frames += 1; self.window_frames += 1
 
     def tick(self):
+        self.read_frames()
         self._text = f'{self.frames} fps · rss {self.process.memory_info().rss / 2**20:.0f}MB'
         self.frames = 0
         self.changed.emit()
@@ -77,6 +115,7 @@ class Metrics(QObject):
             time.sleep(15)
 
     def snapshot(self):
+        self.read_frames()
         gaps = sorted(self.gaps)
         median = gaps[len(gaps) // 2] if gaps else 0
         return {'time': time.strftime('%Y-%m-%d %H:%M:%S'), 'stage': self.bridge.state.stage,
@@ -88,8 +127,8 @@ class Metrics(QObject):
                 'gap_ms_p50': round(gaps[len(gaps) // 2], 2) if gaps else None,
                 'gap_ms_p99': round(gaps[int(len(gaps) * .99)], 2) if gaps else None,
                 'gap_ms_max': round(gaps[-1], 2) if gaps else None,
-                # A frame that took over 2.5× the median interval (and under the 100 ms idle cut-off).
-                'slow_frames': sum(gap > 2.5 * median for gap in gaps)}
+                # A frame that took over 2.5x the median interval (and under the 100 ms idle cut-off).
+                'slow_frames': sum(gap > max(2.5 * median, 12) for gap in gaps)}
 
     def write(self):
         row = self.snapshot()
@@ -112,9 +151,17 @@ def main():
     parser.add_argument('--gpu', action='store_true', help='指标中加入 GPU 占用（每 15 秒采样）')
     parser.add_argument('--grab', metavar='PNG', help='预览稳定后截取面板并退出')
     parser.add_argument('--quit-after', type=float, default=0)
+    parser.add_argument('--stall-ms', type=float, default=0,
+                        help='测试用：每 0.7 秒让 Python 占住主线程 N 毫秒，模拟同步的图片校验或数据处理')
     args = parser.parse_args()
 
     launched = time.perf_counter()
+    frame_log = None
+    if args.metrics or args.hud:
+        import tempfile
+        frame_log = Path(args.metrics).with_suffix('.frames.log') if args.metrics else Path(tempfile.gettempdir()) / 'hex-qml-frames.log'
+        frame_log.parent.mkdir(parents=True, exist_ok=True)
+        frame_stream = capture_frame_log(frame_log)
     if not args.preview and not single_instance():
         print('海克斯随行已在运行，请先退出 Tk 版本或另一个样例。')
         return 1
@@ -137,7 +184,7 @@ def main():
     if icon.is_file():
         app.setWindowIcon(QIcon(str(icon)))
     bridge = Bridge(store, preview=args.preview, services=not args.grab)
-    metrics = Metrics(args.metrics, bridge, gpu=args.gpu) if (args.metrics or args.hud) else None
+    metrics = Metrics(args.metrics, bridge, frame_log, gpu=args.gpu) if frame_log else None
     engine = QQmlApplicationEngine()
     engine.rootContext().setContextProperty('bridge', bridge)
     engine.rootContext().setContextProperty('hud', metrics if args.hud else None)
@@ -153,7 +200,8 @@ def main():
         if not first:
             first['s'] = time.perf_counter() - launched
             log.info('first frame %.3fs api=%s', first['s'], QQuickWindow.graphicsApi().name)
-    panel.frameSwapped.connect(first_frame)
+            panel.frameSwapped.disconnect(first_frame)
+    panel.frameSwapped.connect(first_frame, Qt.QueuedConnection)
     bridge.start()
     if not args.preview and not args.grab:
         import ctypes
@@ -163,6 +211,12 @@ def main():
             print('提示：当前不是管理员权限，可能读不到以管理员运行的联盟客户端。', flush=True)
     if args.preview and args.cycle:
         bridge.preview_timer.start(int(args.cycle * 1000))
+    if args.stall_ms:
+        def stall():
+            end = time.perf_counter() + args.stall_ms / 1000
+            while time.perf_counter() < end:   # busy work keeps the GIL, like PIL validation would
+                pass
+        staller = QTimer(); staller.timeout.connect(stall); staller.start(700)
     if args.grab:
         def grab():
             panel.grabWindow().save(args.grab)

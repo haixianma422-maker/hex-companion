@@ -20,13 +20,13 @@ Item {
         color: card.selected ? Theme.lilac : (hover.hovered ? Theme.hover : Theme.surface)
         scale: tap.pressed ? 0.97 : 1
         Behavior on color { ColorAnimation { duration: Theme.normal; easing.type: Easing.OutCubic } }
-        Behavior on scale { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+        Behavior on scale { ScaleAnimator { duration: 90; easing.type: Easing.OutCubic } }
 
         Rectangle {
             x: 4; y: 26; width: 7; height: 7; radius: 3.5
             color: Theme.accent; border.color: Theme.ink; border.width: 1
             scale: card.selected ? 1 : 0
-            Behavior on scale { SpringAnimation { spring: 6; damping: 0.4; epsilon: 0.02 } }
+            Behavior on scale { ScaleAnimator { duration: 260; easing.type: Easing.OutBack; easing.overshoot: 2.4 } }
         }
 
         Rectangle {
@@ -55,7 +55,7 @@ Item {
                 maskEnabled: true
                 maskSource: portraitMask
                 opacity: portraitImage.status === Image.Ready ? 1 : 0
-                Behavior on opacity { NumberAnimation { duration: Theme.normal } }
+                Behavior on opacity { OpacityAnimator { duration: Theme.normal } }
             }
             Item {
                 id: portraitMask

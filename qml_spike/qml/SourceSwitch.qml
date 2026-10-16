@@ -15,7 +15,7 @@ Rectangle {
         y: 2; width: root.width / 2 - 2; height: root.height - 4; radius: height / 2
         x: 2 + root.index * (root.width / 2 - 2)
         color: Theme.accent
-        Behavior on x { SpringAnimation { spring: 5; damping: 0.42; epsilon: 0.2 } }
+        Behavior on x { XAnimator { duration: 260; easing.type: Easing.OutBack; easing.overshoot: 1.4 } }
     }
     Row {
         anchors.fill: parent

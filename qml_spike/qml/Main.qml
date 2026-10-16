@@ -28,33 +28,39 @@ QtObject {
         onShownChanged: shown ? showPanel.restart() : hidePanel.restart()
         Component.onCompleted: if (shown) showPanel.restart()
 
+        // Animators run on the render thread, so a busy Python GUI thread cannot stall them.
+        // The shadow lives in another window and gets its own animators in the same group.
         SequentialAnimation {
             id: showPanel
             ScriptAction { script: { hidePanel.stop(); shadowWindow.visible = true; panelWindow.visible = true } }
             ParallelAnimation {
-                NumberAnimation { target: surface; property: "opacity"; to: 1; duration: 220; easing.type: Easing.OutCubic }
-                NumberAnimation { target: surface; property: "scale"; to: 1; duration: 320; easing.type: Easing.OutQuint }
-                NumberAnimation { target: surface; property: "translateY"; to: 0; duration: 320; easing.type: Easing.OutQuint }
+                OpacityAnimator { target: surface; to: 1; duration: 220; easing.type: Easing.OutCubic }
+                OpacityAnimator { target: shadowBody; to: 1; duration: 220; easing.type: Easing.OutCubic }
+                ScaleAnimator { target: surface; to: 1; duration: 320; easing.type: Easing.OutQuint }
+                ScaleAnimator { target: shadowBody; to: 1; duration: 320; easing.type: Easing.OutQuint }
+                YAnimator { target: surface; to: 0; duration: 320; easing.type: Easing.OutQuint }
+                YAnimator { target: shadowBody; to: app.margin; duration: 320; easing.type: Easing.OutQuint }
             }
         }
         SequentialAnimation {
             id: hidePanel
             ScriptAction { script: showPanel.stop() }
             ParallelAnimation {
-                NumberAnimation { target: surface; property: "opacity"; to: 0; duration: 180; easing.type: Easing.InCubic }
-                NumberAnimation { target: surface; property: "scale"; to: .86; duration: 200; easing.type: Easing.InCubic }
-                NumberAnimation { target: surface; property: "translateY"; to: 14; duration: 200; easing.type: Easing.InCubic }
+                OpacityAnimator { target: surface; to: 0; duration: 180; easing.type: Easing.InCubic }
+                OpacityAnimator { target: shadowBody; to: 0; duration: 180; easing.type: Easing.InCubic }
+                ScaleAnimator { target: surface; to: .86; duration: 200; easing.type: Easing.InCubic }
+                ScaleAnimator { target: shadowBody; to: .86; duration: 200; easing.type: Easing.InCubic }
+                YAnimator { target: surface; to: 14; duration: 200; easing.type: Easing.InCubic }
+                YAnimator { target: shadowBody; to: app.margin + 14; duration: 200; easing.type: Easing.InCubic }
             }
             ScriptAction { script: { panelWindow.visible = false; shadowWindow.visible = false } }
         }
 
         Item {
             id: surface
-            x: 0; y: 0; width: 360; height: 540
+            x: 0; y: 10; width: 360; height: 540
             opacity: 0; scale: .94
-            property real translateY: 10
             // Collapse heads for the bubble, which sits at the panel's bottom-right.
-            transform: Translate { y: surface.translateY }
             transformOrigin: Item.BottomRight
 
             Panel { id: panelContent }
@@ -103,10 +109,10 @@ QtObject {
         y: panelWindow.y - app.margin
         visible: false
         Item {
-            x: app.margin; y: app.margin; width: 360; height: 540
-            opacity: surface.opacity; scale: surface.scale
+            id: shadowBody
+            x: app.margin; y: app.margin + 10; width: 360; height: 540
+            opacity: 0; scale: .94
             transformOrigin: Item.BottomRight
-            transform: Translate { y: surface.translateY }
             RectangularShadow {
                 anchors.fill: parent
                 radius: 14; blur: 16; spread: 0; offset.y: 5
@@ -134,17 +140,17 @@ QtObject {
             ScriptAction { script: { hideBubble.stop(); bubbleWindow.visible = true } }
             PauseAnimation { duration: 120 }        // let the panel start folding first
             ParallelAnimation {
-                NumberAnimation { target: bubble; property: "opacity"; to: 1; duration: 180 }
-                SpringAnimation { target: bubble; property: "scale"; to: 1; spring: 5; damping: .35; epsilon: .005 }
-                NumberAnimation { target: bubble; property: "y"; to: 8; duration: 260; easing.type: Easing.OutCubic }
+                OpacityAnimator { target: bubble; to: 1; duration: 180 }
+                ScaleAnimator { target: bubble; to: 1; duration: 340; easing.type: Easing.OutBack; easing.overshoot: 2.2 }
+                YAnimator { target: bubble; to: 8; duration: 260; easing.type: Easing.OutCubic }
             }
         }
         SequentialAnimation {
             id: hideBubble
             ScriptAction { script: showBubble.stop() }
             ParallelAnimation {
-                NumberAnimation { target: bubble; property: "opacity"; to: 0; duration: 140 }
-                NumberAnimation { target: bubble; property: "scale"; to: .7; duration: 140 }
+                OpacityAnimator { target: bubble; to: 0; duration: 140 }
+                ScaleAnimator { target: bubble; to: .7; duration: 140 }
             }
             ScriptAction { script: { bubbleWindow.visible = false; bubble.y = 16 } }
         }

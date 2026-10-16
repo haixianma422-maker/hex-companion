@@ -25,8 +25,8 @@ Item {
     onSourceChanged: Qt.callLater(root.showCurrent)
     function showCurrent() { show(source, focusX, focusY) }
 
-    NumberAnimation { id: fadeIn; property: "opacity"; to: 1; duration: 280; easing.type: Easing.OutCubic }
-    NumberAnimation { id: fadeOut; property: "opacity"; to: 0; duration: 160 }
+    OpacityAnimator { id: fadeIn; to: 1; duration: 280; easing.type: Easing.OutCubic }
+    OpacityAnimator { id: fadeOut; to: 0; duration: 160 }
 
     component Art: Image {
         property real focusX: .72

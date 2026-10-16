@@ -111,6 +111,7 @@ class Bridge(QObject):
         self._geometry = {'x': 0, 'y': 0}
         self._offset = (0, 0)
         self._view = {}
+        self._urls, self._resolving, self._unresolved = {}, set(), []
         self.candidates = CandidateModel()
         self._deliver.connect(lambda callback, value: callback(value), Qt.QueuedConnection)
         self._call.connect(lambda callback: callback(), Qt.QueuedConnection)
@@ -211,26 +212,55 @@ class Bridge(QObject):
         self.background(lambda: store.refresh(self.champions[cid], on_ready=ready), loaded, done=finished)
 
     def refresh_visuals(self):
-        requests = []
-        for cid in [self.state.champion_id, *self.state.candidate_ids]:
-            if cid in self.champions:
-                requests.append(('portrait', cid))
+        wanted = [('portrait', cid) for cid in [self.state.champion_id, *self.state.candidate_ids] if cid in self.champions]
         if self.state.champion_id in self.champions:
-            requests.append(('splash', self.state.champion_id))
-        requests = [r for r in dict.fromkeys(requests) if self.visual.state(*r) != 'cached']
-        if not requests or not self.services or self.preview or tuple(requests) == self.visual_requested:
+            wanted.append(('splash', self.state.champion_id))
+        wanted = list(dict.fromkeys(wanted))
+        if not wanted or not self.services or self.preview or tuple(wanted) == self.visual_requested:
             return
-        self.visual_requested = tuple(requests)
+        self.visual_requested = tuple(wanted)
+        def job():   # cache checks decode images, so they stay off the GUI thread too
+            missing = [r for r in wanted if self.visual.state(*r) != 'cached']
+            return self.visual.ensure(missing) if missing else None
         self.images_loading = True; self._publish()
         def finished():
             self.images_loading = False
-        self.background(lambda: self.visual.ensure(requests), lambda _: self._publish(), done=finished)
+        self.background(job, lambda _: self._downloaded(), done=finished)
 
     def refresh_spell_icons(self):
         urls = [s.get('icon_url', '') for s in (self.data or {}).get('summoner_spells', [])]
-        urls = [u for u in urls if u and self.advice.path(u) is None]
+        urls = [u for u in urls if u]
         if urls and self.services and not self.preview:
-            self.background(lambda: self.advice.ensure(urls), lambda _: self._publish())
+            def job():
+                missing = [u for u in urls if self.advice.path(u) is None]
+                return self.advice.ensure(missing) if missing else None
+            self.background(job, lambda _: self._downloaded())
+
+    def _downloaded(self):
+        """New files may exist now: look again for anything that resolved to nothing."""
+        self._urls = {k: v for k, v in self._urls.items() if v}
+        self._publish()
+
+    def asset_url(self, kind, key):
+        """File URL validated on a worker; '' until known. Validation decodes images, so the GUI
+        thread only ever reads this cache and the picture fades in once the worker answers."""
+        if not key:
+            return ''
+        entry = (kind, key)
+        if entry not in self._urls and entry not in self._resolving:
+            self._resolving.add(entry); self._unresolved.append(entry)
+            if len(self._unresolved) == 1:
+                QTimer.singleShot(0, self._resolve)
+        return self._urls.get(entry, '')
+
+    def _resolve(self):
+        batch, self._unresolved = self._unresolved, []
+        def job():
+            return {entry: file_url(self.advice.path(entry[1]) if entry[0] == 'spell' else self.visual.path(*entry))
+                    for entry in batch}
+        def resolved(result):
+            self._urls.update(result); self._publish()
+        self.background(job, resolved, done=lambda: self._resolving.difference_update(batch))
 
     def _set_loading(self):
         self.loading = (id(self.store), self.state.champion_id) in self.fetching
@@ -246,7 +276,7 @@ class Bridge(QObject):
         spells = []
         for spell in data.get('summoner_spells', [])[:2]:
             spells.append({'name': SPELL_NAMES.get(spell.get('id'), spell.get('name', '')),
-                           'icon': file_url(self.advice.path(spell.get('icon_url', '')))})
+                           'icon': self.asset_url('spell', spell.get('icon_url', ''))})
         ids = list(dict.fromkeys(state.candidate_ids))
         ordered = [h.id for h in sort_champions([self.champions[i] for i in ids if i in self.champions])]
         ordered += [i for i in ids if i not in self.champions]
@@ -256,7 +286,7 @@ class Bridge(QObject):
             rows.append({'cid': i, 'name': row_info.get('name') or (row_hero.name if row_hero else f'英雄{i}'),
                          'title': row_info.get('title', ''),
                          'tier': row_hero.tier_label if row_hero and row_hero.tier is not None else '—',
-                         'portrait': file_url(self.visual.path('portrait', i)), 'selected': i == cid})
+                         'portrait': self.asset_url('portrait', i), 'selected': i == cid})
         self.candidates.update(rows)
         focus = self.visual.champion_focus(cid) if cid else (.72, .42)
         caption = self.store.source_name + ' · ' + ('加载中' if self.loading else '缓存资料' if self.data else '暂无资料')
@@ -265,7 +295,7 @@ class Bridge(QObject):
             'heroName': info.get('name') or (hero.name if hero else '等待选择'),
             'heroTitle': info.get('title', '') if cid else '',
             'heroTier': hero.tier_label if hero and hero.tier is not None else '—',
-            'splash': file_url(self.visual.path('splash', cid)) if cid else '',
+            'splash': self.asset_url('splash', cid) if cid else '',
             'focusX': focus[0], 'focusY': focus[1],
             'spells': spells, 'spellSupplement': data.get('source_id') == 'qq101' and data.get('summoner_source') == 'opgg',
             'source': self.store.source, 'caption': caption, 'loading': self.loading or self.images_loading,
@@ -349,6 +379,7 @@ class Bridge(QObject):
     @Slot()
     def refresh(self):
         self.visual_requested = None
+        self._urls.clear()
         self.refresh_visuals()
         if self.state.champion_id:
             self.fetch_hero(self.state.champion_id)

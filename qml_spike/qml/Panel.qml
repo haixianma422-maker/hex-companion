@@ -26,14 +26,14 @@ Rectangle {
     SequentialAnimation {
         id: heroSwap
         ParallelAnimation {
-            NumberAnimation { target: heroContent; property: "opacity"; to: 0; duration: 110; easing.type: Easing.InCubic }
-            NumberAnimation { target: heroContent; property: "x"; to: -8; duration: 110; easing.type: Easing.InCubic }
+            OpacityAnimator { target: heroContent; to: 0; duration: 110; easing.type: Easing.InCubic }
+            XAnimator { target: heroContent; to: -8; duration: 110; easing.type: Easing.InCubic }
         }
         ScriptAction { script: panel.adopt() }
         PropertyAction { target: heroContent; property: "x"; value: 12 }
         ParallelAnimation {
-            NumberAnimation { target: heroContent; property: "opacity"; to: 1; duration: 240; easing.type: Easing.OutCubic }
-            NumberAnimation { target: heroContent; property: "x"; to: 0; duration: 280; easing.type: Easing.OutQuint }
+            OpacityAnimator { target: heroContent; to: 1; duration: 240; easing.type: Easing.OutCubic }
+            XAnimator { target: heroContent; to: 0; duration: 280; easing.type: Easing.OutQuint }
         }
     }
 
@@ -60,11 +60,11 @@ Rectangle {
     Rectangle {
         id: statusDot
         x: 16; y: 55; width: 8; height: 8; radius: 4; color: Theme.accent
-        SequentialAnimation on opacity {
+        SequentialAnimation {
             running: panel.view.loading; loops: Animation.Infinite
             alwaysRunToEnd: true
-            NumberAnimation { to: .35; duration: 520; easing.type: Easing.InOutSine }
-            NumberAnimation { to: 1; duration: 520; easing.type: Easing.InOutSine }
+            OpacityAnimator { target: statusDot; to: .35; duration: 520; easing.type: Easing.InOutSine }
+            OpacityAnimator { target: statusDot; to: 1; duration: 520; easing.type: Easing.InOutSine }
         }
     }
     Text {
@@ -141,7 +141,7 @@ Rectangle {
         id: advice
         x: 0; y: 191; width: 360; height: 44
         opacity: panel.view.loading && panel.view.spells.length === 0 ? .45 : 1
-        Behavior on opacity { NumberAnimation { duration: Theme.normal } }
+        Behavior on opacity { OpacityAnimator { duration: Theme.normal } }
         Text {
             x: 16; y: 10; height: 22; verticalAlignment: Text.AlignVCenter; text: "召唤师技能"
             font.family: Theme.font; font.pixelSize: 14; font.bold: true; color: Theme.text
@@ -163,7 +163,7 @@ Rectangle {
                         anchors.fill: parent; anchors.margins: 1
                         source: modelData.icon; asynchronous: true; sourceSize: Qt.size(64, 64)
                         opacity: status === Image.Ready ? 1 : 0
-                        Behavior on opacity { NumberAnimation { duration: Theme.normal } }
+                        Behavior on opacity { OpacityAnimator { duration: Theme.normal } }
                     }
                 }
                 Text {
@@ -216,20 +216,22 @@ Rectangle {
             onPicked: id => bridge.pick(id)
         }
         add: Transition {
-            NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Theme.normal }
-            NumberAnimation { property: "scale"; from: .92; to: 1; duration: Theme.slow; easing.type: Easing.OutBack }
+            OpacityAnimator { from: 0; to: 1; duration: Theme.normal }
+            ScaleAnimator { from: .92; to: 1; duration: Theme.slow; easing.type: Easing.OutBack }
         }
         remove: Transition {
-            NumberAnimation { property: "opacity"; to: 0; duration: Theme.fast }
-            NumberAnimation { property: "scale"; to: .92; duration: Theme.fast }
+            OpacityAnimator { to: 0; duration: Theme.fast }
+            ScaleAnimator { to: .92; duration: Theme.fast }
         }
         displaced: Transition {
-            NumberAnimation { properties: "x,y"; duration: Theme.slow; easing.type: Easing.OutCubic }
-            NumberAnimation { property: "opacity"; to: 1; duration: Theme.fast }
-            NumberAnimation { property: "scale"; to: 1; duration: Theme.fast }
+            XAnimator { duration: Theme.slow; easing.type: Easing.OutCubic }
+            YAnimator { duration: Theme.slow; easing.type: Easing.OutCubic }
+            OpacityAnimator { to: 1; duration: Theme.fast }
+            ScaleAnimator { to: 1; duration: Theme.fast }
         }
         move: Transition {
-            NumberAnimation { properties: "x,y"; duration: Theme.slow; easing.type: Easing.OutCubic }
+            XAnimator { duration: Theme.slow; easing.type: Easing.OutCubic }
+            YAnimator { duration: Theme.slow; easing.type: Easing.OutCubic }
         }
         Rectangle {
             visible: grid.contentHeight > grid.height
@@ -237,7 +239,7 @@ Rectangle {
             y: grid.visibleArea.yPosition * grid.height
             height: Math.max(24, grid.visibleArea.heightRatio * grid.height)
             opacity: grid.moving ? 1 : .6
-            Behavior on opacity { NumberAnimation { duration: Theme.normal } }
+            Behavior on opacity { OpacityAnimator { duration: Theme.normal } }
         }
     }
 
@@ -256,7 +258,7 @@ Rectangle {
         Icon {
             id: refreshIcon
             x: 6; y: 6; width: 16; height: 16; name: "refresh"; color: Theme.muted
-            RotationAnimation on rotation {
+            RotationAnimator on rotation {
                 running: panel.view.loading; loops: Animation.Infinite
                 from: 0; to: 360; duration: 900; alwaysRunToEnd: true
             }
