@@ -177,6 +177,9 @@ class Bridge(QObject):
         self.state = self.tracker.update(raw)
         if (raw.phase, self.state.champion_id) != (old.phase, old.champion_id):
             log.info('client phase=%s stage=%s hero=%s queue=%s', raw.phase, self.state.stage, self.state.champion_id, self.state.queue_id)
+            if not self.preview:
+                print(f'客户端 {raw.phase} · 面板 {self.state.stage} · 英雄 {self.state.champion_id} · 队列 {self.state.queue_id}'
+                      + (f' · {raw.message}' if raw.message else ''), flush=True)
         if self.state.stage == 'hidden':
             self.collapsed = False
         if self.state.champion_id != old.champion_id or self.state.stage != old.stage:

@@ -155,6 +155,12 @@ def main():
             log.info('first frame %.3fs api=%s', first['s'], QQuickWindow.graphicsApi().name)
     panel.frameSwapped.connect(first_frame)
     bridge.start()
+    if not args.preview and not args.grab:
+        import ctypes
+        admin = os.name == 'nt' and bool(ctypes.windll.shell32.IsUserAnAdmin())
+        print('QML 样例已启动，等待海克斯大乱斗。关闭此终端或按 Ctrl+C 退出。', flush=True)
+        if not admin:
+            print('提示：当前不是管理员权限，可能读不到以管理员运行的联盟客户端。', flush=True)
     if args.preview and args.cycle:
         bridge.preview_timer.start(int(args.cycle * 1000))
     if args.grab:
@@ -165,6 +171,10 @@ def main():
     if args.quit_after:
         QTimer.singleShot(int(args.quit_after * 1000), app.quit)
     app.aboutToQuit.connect(bridge.stop)
+    # Qt's loop blocks Python signal handling; a short timer lets Ctrl+C reach the handler.
+    import signal
+    signal.signal(signal.SIGINT, lambda *_: app.quit())
+    wake = QTimer(); wake.timeout.connect(lambda: None); wake.start(250)
     if metrics and args.metrics:
         app.aboutToQuit.connect(metrics.write)
     code = app.exec()
