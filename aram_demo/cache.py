@@ -12,8 +12,18 @@ from .opgg import (BASE, fetch_html, page_patch, parse_augments, parse_builds,
                    parse_champions, parse_recommendations, verify_mayhem_page)
 
 SOURCE_NAMES = {'opgg': 'OP.GG', 'qq101': '101 数据站'}
+FRESH_SECONDS = 86400
 _ROOT_LOCKS = WeakValueDictionary()
 _ROOT_LOCK_GUARD = threading.Lock()
+
+
+def is_fresh(data, max_age=FRESH_SECONDS):
+    """A snapshot fetched within max_age seconds needs no automatic refetch."""
+    try:
+        age = (datetime.now(timezone.utc) - datetime.fromisoformat(data.get('fetched_at', ''))).total_seconds()
+    except (AttributeError, TypeError, ValueError):
+        return False
+    return 0 <= age < max_age
 
 
 def _root_lock(root):
@@ -71,11 +81,12 @@ class DataStore:
                 return
             path = self.root / self._relative(filename)
             path.parent.mkdir(parents=True, exist_ok=True)
-            with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', dir=path.parent,
-                                             prefix=path.stem + '-', suffix='.tmp', delete=False) as stream:
-                temporary = Path(stream.name)
-                json.dump(data, stream, ensure_ascii=False, indent=2)
+            stream = tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', dir=path.parent,
+                                                 prefix=path.stem + '-', suffix='.tmp', delete=False)
+            temporary = Path(stream.name)
             try:
+                with stream:
+                    json.dump(data, stream, ensure_ascii=False, indent=2)
                 os.replace(temporary, path)
             finally:
                 temporary.unlink(missing_ok=True)
@@ -171,11 +182,7 @@ class DataStore:
                        and all(isinstance(spell, dict) and isinstance(spell.get('id'), int)
                                and not isinstance(spell['id'], bool) and spell['id'] > 0
                                for spell in cached_spells))
-        try:
-            age = (datetime.now(timezone.utc) - datetime.fromisoformat(cached.get('fetched_at', ''))).total_seconds()
-            recent = valid_cache and 0 <= age < 86400
-        except (TypeError, ValueError):
-            recent = False
+        recent = valid_cache and is_fresh(cached)
         url = f'{BASE}/{champion.slug}/build'
         if cached_only:
             data.update(summoner_spells=cached_spells if valid_cache else [],

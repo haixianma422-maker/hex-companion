@@ -9,7 +9,7 @@ from unittest.mock import patch
 class ClientTests(unittest.TestCase):
     def test_replays_folder_is_rejected_but_install_root_and_client_folder_are_valid(self):
         module = self.module()
-        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as directory:
+        with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / 'Replays').mkdir()
             with self.assertRaises(ValueError):
@@ -33,18 +33,40 @@ class ClientTests(unittest.TestCase):
         module = self.module()
         responses = ['InProgress', {'gameData': {'gameId': 123, 'teamOne': [
             {'championId': 99}, {'championId': 222}]}}, {}]
-        with patch.object(module, 'discover', return_value=module.Credentials(4567, 'test')), \
+        with patch.object(module, 'client_processes', return_value=[]), \
+             patch.object(module, 'discover', return_value=module.Credentials(4567, 'test')), \
              patch.object(module, 'local_json', side_effect=responses):
             state = module.LCUClient().read_state()
         self.assertIsNone(state.champion_id)
 
     def test_secondary_lcu_failure_preserves_phase_for_live_fallback(self):
         module = self.module()
-        with patch.object(module, 'discover', return_value=module.Credentials(4567, 'test')), \
+        with patch.object(module, 'client_processes', return_value=[]), \
+             patch.object(module, 'discover', return_value=module.Credentials(4567, 'test')), \
              patch.object(module, 'local_json', side_effect=['InProgress', OSError('unavailable')]):
             state = module.LCUClient().read_state()
         self.assertEqual(state.phase, 'InProgress')
         self.assertIsNone(state.champion_id)
+
+    def test_credentials_are_reused_until_the_gameflow_request_fails(self):
+        module = self.module()
+        client = module.LCUClient()
+        with patch.object(module, 'client_processes', return_value=[]) as processes, \
+             patch.object(module, 'discover', return_value=module.Credentials(4567, 'test')) as discover, \
+             patch.object(module, 'local_json', side_effect=['None', 'None', OSError('refused'), 'None']):
+            client.read_state()
+            client.read_state()
+            self.assertEqual((processes.call_count, discover.call_count), (1, 1))
+            self.assertEqual(client.read_state().phase, 'Disconnected')
+            client.read_state()
+        self.assertEqual((processes.call_count, discover.call_count), (2, 2))
+
+    def test_missing_client_queries_processes_once_per_read(self):
+        module = self.module()
+        with patch.object(module, 'client_processes', return_value=[]) as processes:
+            state = module.LCUClient().read_state()
+        self.assertEqual(processes.call_count, 1)
+        self.assertIn('未发现客户端', state.message)
 
     def test_missing_live_identity_never_selects_player_without_name(self):
         module = self.module()

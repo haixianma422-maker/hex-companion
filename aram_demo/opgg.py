@@ -23,8 +23,13 @@ def verify_mayhem_page(html, url):
 
 
 def fetch_html(url):
-    with urllib.request.urlopen(url, timeout=18) as response:
-        return response.read(6_000_000).decode('utf-8')
+    request = urllib.request.Request(url, headers={'User-Agent': 'HexCompanion/1.0'})
+    with urllib.request.urlopen(request, timeout=18) as response:
+        raw = response.read(6_000_001)
+    # A truncated page could split a character or parse as partial data.
+    if len(raw) > 6_000_000:
+        raise ValueError('OP.GG 页面响应过大')
+    return raw.decode('utf-8')
 
 
 def flight_nodes(html):

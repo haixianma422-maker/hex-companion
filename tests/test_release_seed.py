@@ -6,7 +6,7 @@ from pathlib import Path
 class ReleaseSeedTests(unittest.TestCase):
     def test_both_verified_sources_and_images_are_frozen_without_local_files(self):
         from scripts.release_seed import snapshot_seed
-        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as directory:
+        with tempfile.TemporaryDirectory() as directory:
             root=Path(directory)/'data';target=Path(directory)/'seed'
             def put(relative,value):
                 path=root/relative;path.parent.mkdir(parents=True,exist_ok=True)

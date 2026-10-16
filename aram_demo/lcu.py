@@ -9,6 +9,8 @@ import urllib.request
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 
+from .companion_state import ACTIVE
+
 
 @dataclass(frozen=True)
 class ClientState:
@@ -74,14 +76,15 @@ def client_processes():
         return []
 
 
-def discovery_message():
-    if client_processes():
+def discovery_message(processes):
+    if processes:
         return '客户端已运行，但无法读取连接凭据。若联盟以管理员运行，请退出工具后使用 start_companion_admin.cmd。'
     return '未发现客户端；请启动联盟。安装目录应包含 LeagueClient.exe，不能选择录像目录。'
 
 
-def discover(install_path=None):
-    processes = client_processes()
+def discover(install_path=None, processes=None):
+    if processes is None:
+        processes = client_processes()
     for process in processes:
         cmd = process.get('CommandLine') or ''
         port = re.search(r'--app-port[= ](\d+)', cmd)
@@ -114,11 +117,16 @@ def local_json(url, headers=None):
 class LCUClient:
     def __init__(self, install_path=None):
         self.install_path = install_path
+        # Discovery starts PowerShell; reuse credentials until a request fails.
+        self.credentials = None
 
     def read_state(self):
-        credentials = discover(self.install_path)
-        if not credentials:
-            return ClientState(message=discovery_message())
+        if self.credentials is None:
+            processes = client_processes()
+            self.credentials = discover(self.install_path, processes)
+            if not self.credentials:
+                return ClientState(message=discovery_message(processes))
+        credentials = self.credentials
         auth = base64.b64encode(('riot:' + credentials.token).encode()).decode()
 
         def get(path):
@@ -134,8 +142,7 @@ class LCUClient:
                 return None
         try:
             phase = get('/lol-gameflow/v1/gameflow-phase')
-            active = ('Lobby', 'Matchmaking', 'ReadyCheck', 'ChampSelect', 'InProgress', 'GameStart', 'Reconnect')
-            session = optional('/lol-gameflow/v1/session') if phase in active else None
+            session = optional('/lol-gameflow/v1/session') if phase in ACTIVE else None
             game = session.get('gameData', {}) if isinstance(session, dict) else {}
             queue_info = game.get('queue') or {}
             queue_id = positive(queue_info.get('id')) or positive(game.get('queueId'))
@@ -157,6 +164,9 @@ class LCUClient:
                 return ClientState(phase, positive(player.get('championId')), message=message, match_id=match_id, queue_id=queue_id)
             return ClientState(str(phase), message='等待选人或对局开始', match_id=match_id, queue_id=queue_id)
         except (OSError, ValueError, TypeError, AttributeError):
+            if phase == 'Disconnected':
+                # The gameflow request itself failed: the client restarted or exited.
+                self.credentials = None
             return ClientState(str(phase), message='客户端接口暂不可用；请刷新或检查运行权限', match_id=match_id, queue_id=queue_id)
 
 

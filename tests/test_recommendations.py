@@ -62,7 +62,7 @@ class RecommendationDataTests(unittest.TestCase):
         augment = flight({'id': 1, 'name': '魔法飞弹', 'tier': 0, 'rarity': 4, 'performance': 95})
         build = '<title>海克斯大乱斗</title>' + flight({'isAramMayhem': True}) + page('garen') + flight(
             ['$', 'tr', 'core_items_0', {'children': {'metaType': 'item', 'metaId': 6631, 'children': {'alt': '挺进破坏者'}}}])
-        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as tmp:
+        with tempfile.TemporaryDirectory() as tmp:
             store = DataStore(Path(tmp))
             with patch('aram_demo.cache.fetch_html', side_effect=[augment, build]):
                 store.refresh(Champion(86, '德玛西亚之力', 'garen', 1, 1))
@@ -145,7 +145,7 @@ class RecommendationPanelTests(unittest.TestCase):
         stream = io.BytesIO()
         Image.new('RGB', (64, 64), '#9911ee').save(stream, format='PNG')
         url = 'https://game.gtimg.cn/images/lol/act/img/spell/GarenE.png'
-        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as tmp:
+        with tempfile.TemporaryDirectory() as tmp:
             cache = AdviceIconCache(tmp)
             with patch.object(cache, '_download', return_value=stream.getvalue()):
                 cache.ensure([url])

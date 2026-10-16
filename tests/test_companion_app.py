@@ -19,7 +19,7 @@ class CompanionAppTests(unittest.TestCase):
         cls = importlib.import_module('aram_demo.companion').CompanionApp
         self.root = tk.Tk()
         self.root.design_scale = 1
-        self.tmp = tempfile.TemporaryDirectory(dir=Path(__file__).parent)
+        self.tmp = tempfile.TemporaryDirectory()
         self.app = cls(self.root, DataStore(Path(self.tmp.name), Path(__file__).resolve().parents[1] / 'data', source='opgg'), preview=True, services=False)
         self.app.panel.set_motion(False)
         self.app.bubble.set_motion(False)
@@ -134,7 +134,7 @@ class CompanionAppTests(unittest.TestCase):
         return list(visit(self.app.dialog))
 
     def test_invalid_install_folder_cannot_be_saved(self):
-        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as directory:
+        with tempfile.TemporaryDirectory() as directory:
             self.app.store = DataStore(Path(directory) / 'cache')
             original = self.app.settings.get('install_path')
             self.app.show_settings()
@@ -161,7 +161,7 @@ class CompanionAppTests(unittest.TestCase):
     def test_saving_unchanged_cards_does_not_pause_automatic_recognition(self):
         self.app.preview_next()
         self.app.preview_next()
-        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as directory:
+        with tempfile.TemporaryDirectory() as directory:
             self.app.store = DataStore(Path(directory))
             self.app.show_settings()
             next(w for w in self.settings_widgets() if isinstance(w, PixelButton) and w.text == '保存并应用').invoke()
@@ -170,7 +170,7 @@ class CompanionAppTests(unittest.TestCase):
     def test_deliberately_clearing_all_three_choices_applies_manual_correction(self):
         self.app.preview_next()
         self.app.preview_next()
-        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as directory:
+        with tempfile.TemporaryDirectory() as directory:
             self.app.store = DataStore(Path(directory))
             self.app.show_settings()
             for widget in self.settings_widgets():
@@ -195,7 +195,7 @@ class CompanionAppTests(unittest.TestCase):
         self.assertEqual(self.app.panel.body_scroll,scroll)
 
     def test_cancel_discards_selected_install_directory(self):
-        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as directory:
+        with tempfile.TemporaryDirectory() as directory:
             self.app.store = DataStore(Path(directory))
             original = self.app.settings.get('install_path')
             self.app.show_settings()
@@ -467,6 +467,27 @@ class CompanionAppTests(unittest.TestCase):
         self.app.accept_matches(None)
         self.assertFalse(self.app.matches)
         self.assertEqual(self.app.scan_interval, 1.5)
+
+    def test_fresh_hero_cache_skips_automatic_fetch_but_refresh_forces_it(self):
+        from datetime import datetime, timedelta, timezone
+        from aram_demo.companion_state import PanelState
+        self.app.services, self.app.preview = True, False
+        self.app.state = PanelState('select', 'ChampSelect', 222, queue_id=2400)
+        hero = dict(self.app.store.hero(222), fetched_at=datetime.now(timezone.utc).isoformat())
+        with patch.object(self.app, 'fetch_hero') as fetch, \
+             patch.object(self.app, 'refresh_icons'), patch.object(self.app, 'refresh_visual_assets'), \
+             patch.object(self.app, 'refresh_index'), patch.object(self.app, 'background'):
+            with patch.object(self.app.store, 'hero', return_value=hero):
+                self.app.load_data()
+                fetch.assert_not_called()
+                self.app.refresh()
+                fetch.assert_called_once_with(222)
+            fetch.reset_mock()
+            stale = dict(hero, fetched_at=(datetime.now(timezone.utc) - timedelta(days=2)).isoformat())
+            with patch.object(self.app.store, 'hero', return_value=stale):
+                self.app.load_data()
+            fetch.assert_called_once_with(222)
+        self.app.services, self.app.preview = False, True
 
     def test_new_game_resets_fast_scan_policy_and_window_checks_are_throttled(self):
         self.app.on_client_state(ClientState('InProgress', 222, queue_id=3270, match_id=1))

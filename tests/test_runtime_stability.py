@@ -164,7 +164,7 @@ class RuntimeStabilityTests(unittest.TestCase):
         self.assertEqual(len(pending), 1)
 
     def setUp(self):
-        self.tmp=tempfile.TemporaryDirectory(dir=Path(__file__).parent)
+        self.tmp=tempfile.TemporaryDirectory()
         self.root=tk.Tk();self.root.design_scale=1
         self.app=CompanionApp(self.root,DataStore(Path(self.tmp.name),seed_root=Path(__file__).resolve().parents[1]/'data'),preview=False,services=False)
         self.app.locate=lambda:LeagueWindow(0,(100,100,1300,900),(0,0,1920,1040),True)

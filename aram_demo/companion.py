@@ -8,7 +8,7 @@ from dataclasses import replace
 from tkinter import messagebox
 
 from .companion_state import MAYHEM_QUEUES, PLAYING, SessionTracker
-from .cache import DataStore, SOURCE_NAMES
+from .cache import DataStore, SOURCE_NAMES, is_fresh
 from .advice_icons import AdviceIconCache
 from .bubble import CompanionBubble
 from .builds import recommended_items
@@ -27,6 +27,9 @@ AUTO_SCAN_INTERVAL = .25
 IDLE_SCAN_INTERVAL = 1.5
 WINDOW_CHECK_INTERVAL = .5
 UI_TICK_MS = 150
+POLL_MS = 2000
+# Each disconnected poll runs PowerShell process discovery.
+DISCONNECTED_POLL_MS = 6000
 
 
 class CompanionApp:
@@ -34,12 +37,13 @@ class CompanionApp:
         self.root, self.store, self.preview, self.services = root, store, preview, services
         root.withdraw()
         root.title('海克斯随行 · 后台')
-        self.closed = False
+        self.closed = self.startup_failed = False
         self.tracker = SessionTracker()
         self.state = self.tracker.state
         self.connection_text = tk.StringVar(value='等待客户端连接')
         self.champions = {c.id: c for c in store.champions()}
         self.settings = store.read('settings.json') or {}
+        self.client = LCUClient()
         try:
             self.recognizer = Recognizer(self.settings.get('regions'))
         except ValueError:
@@ -190,14 +194,20 @@ class CompanionApp:
             return
         if not self.poll_pending and not self.preview:
             self.poll_pending = True
-            install_path, champions, known_queue = self.settings.get('install_path'), list(self.champions.values()), self.state.queue_id
+            champions, known_queue = list(self.champions.values()), self.state.queue_id
             def read():
-                raw = LCUClient(install_path).read_state()
+                raw = self.read_client()
                 if not raw.champion_id and raw.phase in PLAYING and (raw.queue_id in MAYHEM_QUEUES or raw.queue_id is None and known_queue in MAYHEM_QUEUES):
                     raw = replace(raw, champion_id=live_champion_id(champions))
                 return raw
             self.background(read, self.on_client_state, done=lambda: setattr(self, 'poll_pending', False))
-        self.root.after(2000, self.poll)
+        self.root.after(DISCONNECTED_POLL_MS if self.state.phase == 'Disconnected' else POLL_MS, self.poll)
+
+    def read_client(self):
+        # Callers keep a single read in flight (poll_pending), so the shared
+        # client's cached credentials are never used by two threads at once.
+        self.client.install_path = self.settings.get('install_path')
+        return self.client.read_state()
 
     def on_client_state(self, raw):
         old = self.state
@@ -209,7 +219,8 @@ class CompanionApp:
         queue_label = str(self.state.queue_id) if self.state.queue_id is not None else '尚未读取'
         reason = raw.message
         if self.state.stage == 'hidden' and raw.phase != 'Disconnected':
-            reason = '浮窗隐藏：模式未匹配（当前识别队列 2400、3270）；其他自定义房间需核对实际模式字段。'
+            queues = '、'.join(map(str, sorted(MAYHEM_QUEUES)))
+            reason = f'浮窗隐藏：模式未匹配（当前识别队列 {queues}）；其他自定义房间需核对实际模式字段。'
         self.connection_text.set(f'{raw.phase} · 队列 {queue_label}\n{reason}')
         if self.state.revision != old.revision:
             self.matches = []
@@ -239,7 +250,8 @@ class CompanionApp:
         self.update_data_loading()
         self.refresh_icons()
         self.refresh_visual_assets()
-        if cid in self.champions and self.services and not self.preview:
+        # Champion changes are frequent in select; refresh() still forces a fetch.
+        if cid in self.champions and self.services and not self.preview and not is_fresh(self.data):
             self.fetch_hero(cid)
 
     def cache_status(self):
@@ -441,7 +453,7 @@ class CompanionApp:
         return find_league_window(self.state.stage)
 
     def present(self):
-        if self.closed or getattr(self, 'startup_failed', False):
+        if self.closed or self.startup_failed:
             return
         if self.state.stage == 'hidden':
             self.panel.hide()
@@ -544,24 +556,16 @@ class CompanionApp:
             self.present()
         ticket, augments, recognizer = self.ocr_ticket(), list(self.augments), self.recognizer
         # The game screenshot stays in memory; OCR reads the three title crops.
-        def capture():
-            if self.closed:
-                return
-            if ticket != self.ocr_ticket():
-                self.scanning = False
-                self.present()
-                return
-            from PIL import ImageGrab
-            try:
-                image = ImageGrab.grab(bbox=anchor.rect, all_screens=True)
-            except OSError as exc:
-                self.scanning = False
-                self.status = f'截图失败 · {exc}'
-                self.present()
-                return
-            self.background(lambda: recognizer.read_screen(image, augments, force=force, automatic=not force), self.accept_matches,
-                            ticket, self.scan_finished)
-        capture()
+        from PIL import ImageGrab
+        try:
+            image = ImageGrab.grab(bbox=anchor.rect, all_screens=True)
+        except OSError as exc:
+            self.scanning = False
+            self.status = f'截图失败 · {exc}'
+            self.present()
+            return
+        self.background(lambda: recognizer.read_screen(image, augments, force=force, automatic=not force), self.accept_matches,
+                        ticket, self.scan_finished)
 
     def scan_finished(self):
         show_completion = self.scan_feedback
@@ -637,7 +641,7 @@ class CompanionApp:
         if not self.preview and not self.poll_pending:
             # The scheduled poll remains the only repeating poll chain.
             self.poll_pending = True
-            self.background(lambda: LCUClient(self.settings.get('install_path')).read_state(), self.on_client_state,
+            self.background(self.read_client, self.on_client_state,
                             done=lambda: setattr(self, 'poll_pending', False))
 
     def preview_next(self):

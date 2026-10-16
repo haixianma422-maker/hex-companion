@@ -56,7 +56,8 @@ class CompanionTests(unittest.TestCase):
         from aram_demo import lcu
         responses = ['ChampSelect', {'gameData': {'queue': {'id': 2400}, 'gameId': 1}},
                      {'localPlayerCellId': 2, 'myTeam': [{'cellId': 2, 'championId': 222}]}]
-        with patch.object(lcu, 'discover', return_value=Credentials(4567, 'test')), \
+        with patch.object(lcu, 'client_processes', return_value=[]), \
+             patch.object(lcu, 'discover', return_value=Credentials(4567, 'test')), \
              patch.object(lcu, 'local_json', side_effect=responses):
             state = LCUClient().read_state()
         self.assertEqual((state.queue_id, state.champion_id), (2400, 222))
@@ -64,7 +65,8 @@ class CompanionTests(unittest.TestCase):
     def test_lcu_lobby_fallback_reads_game_config(self):
         from aram_demo import lcu
         responses = ['Lobby', {}, {'gameConfig': {'queueId': 2400}}]
-        with patch.object(lcu, 'discover', return_value=Credentials(4567, 'test')), \
+        with patch.object(lcu, 'client_processes', return_value=[]), \
+             patch.object(lcu, 'discover', return_value=Credentials(4567, 'test')), \
              patch.object(lcu, 'local_json', side_effect=responses):
             self.assertEqual(LCUClient().read_state().queue_id, 2400)
 

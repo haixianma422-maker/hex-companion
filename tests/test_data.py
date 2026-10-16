@@ -84,7 +84,7 @@ class DataTests(unittest.TestCase):
         items = mode + flight([
             ['$', 'section', None, {'children': [{'children': '核心装备'}, {'metaBuildItems': [{'id': 2, 'name': '另一组合'}]}]}],
             ['$', 'section', None, {'children': [{'children': '装备'}, {'metaItem': {'id': 3, 'name': '后续装备'}}]}]])
-        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as tmp:
+        with tempfile.TemporaryDirectory() as tmp:
             store = cache.DataStore(Path(tmp))
             with patch('aram_demo.cache.fetch_html', side_effect=[augment, build, items]) as fetch:
                 result = store.refresh(models.Champion(222, '暴走萝莉', 'jinx', 1, 1))
@@ -97,7 +97,7 @@ class DataTests(unittest.TestCase):
 
     def test_failed_refresh_preserves_cache_bytes(self):
         cache = self.module('cache')
-        with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parent) as tmp:
+        with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             old = {'fetched_at': '2026-10-10T00:00:00Z', 'source': 'https://op.gg', 'champions': [
                 {'id': 222, 'name': '暴走萝莉', 'slug': 'jinx', 'tier': 1, 'rank': 8}]}
@@ -112,9 +112,37 @@ class DataTests(unittest.TestCase):
             self.assertEqual(store.champions()[0].id, 222)
             self.assertIsNone(store.hero(999))
 
+    def test_failed_serialization_leaves_no_temporary_file(self):
+        cache = self.module('cache')
+        with tempfile.TemporaryDirectory() as tmp:
+            store = cache.DataStore(Path(tmp))
+            with self.assertRaises(TypeError):
+                store._write('champions.json', {'bad': object()})
+            self.assertEqual(list(Path(tmp).iterdir()), [])
+
+    def test_snapshot_freshness_requires_recent_aware_timestamp(self):
+        from datetime import datetime, timedelta, timezone
+        is_fresh = self.module('cache').is_fresh
+        now = datetime.now(timezone.utc)
+        self.assertTrue(is_fresh({'fetched_at': now.isoformat()}))
+        self.assertTrue(is_fresh({'fetched_at': now.isoformat().replace('+00:00', 'Z')}))
+        self.assertFalse(is_fresh({'fetched_at': (now - timedelta(days=2)).isoformat()}))
+        self.assertFalse(is_fresh({'fetched_at': '2026-10-16T00:00:00'}))
+        self.assertFalse(is_fresh({}))
+        self.assertFalse(is_fresh(None))
+
+    def test_oversized_page_is_rejected_instead_of_truncated(self):
+        opgg = self.module('opgg')
+        response = unittest.mock.MagicMock()
+        response.__enter__.return_value.read.return_value = b'a' * 6_000_001
+        with patch('aram_demo.opgg.urllib.request.urlopen', return_value=response) as urlopen:
+            with self.assertRaises(ValueError):
+                opgg.fetch_html(opgg.BASE)
+        self.assertEqual(urlopen.call_args[0][0].get_header('User-agent'), 'HexCompanion/1.0')
+
     def test_corrupt_cache_does_not_crash_startup(self):
         cache = self.module('cache')
-        with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parent) as tmp:
+        with tempfile.TemporaryDirectory() as tmp:
             (Path(tmp) / 'champions.json').write_text('{broken', encoding='utf-8')
             store = cache.DataStore(Path(tmp))
             self.assertEqual(store.champions(), [])

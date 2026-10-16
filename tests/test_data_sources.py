@@ -15,7 +15,7 @@ from aram_demo.models import Champion
 class SourceCacheTests(unittest.TestCase):
     def test_recent_verified_spells_do_not_wait_for_another_opgg_request(self):
         from datetime import datetime, timezone
-        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as folder:
+        with tempfile.TemporaryDirectory() as folder:
             op = DataStore(Path(folder), source='opgg')
             op._write('heroes/86.json', {'champion_id': 86, 'build_mode': 'aram-mayhem',
                       'build_mode_verified': True, 'fetched_at': datetime.now(timezone.utc).isoformat(),
@@ -29,7 +29,7 @@ class SourceCacheTests(unittest.TestCase):
             self.assertEqual(data['summoner_source'], 'opgg')
 
     def test_retired_store_cannot_overwrite_current_generation_cache(self):
-        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as folder:
+        with tempfile.TemporaryDirectory() as folder:
             old = DataStore(Path(folder))
             old.retire()
             current = DataStore(Path(folder))
@@ -45,7 +45,7 @@ class SourceCacheTests(unittest.TestCase):
             barrier.wait(timeout=5)
             for _ in range(5):
                 store._write('heroes/86.json', {'value': value})
-        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as folder:
+        with tempfile.TemporaryDirectory() as folder:
             stores = [DataStore(Path(folder)), DataStore(Path(folder))]
             with ThreadPoolExecutor(2) as pool:
                 futures = [pool.submit(write, store, value)
@@ -55,7 +55,7 @@ class SourceCacheTests(unittest.TestCase):
             self.assertIn(stores[0].hero(86), [{'value': 0}, {'value': 1}])
 
     def test_sources_have_separate_snapshots_and_shared_settings(self):
-        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as folder:
+        with tempfile.TemporaryDirectory() as folder:
             op = DataStore(Path(folder), source='opgg')
             qq = DataStore(Path(folder), source='qq101')
             op._write('heroes/86.json', {'source_id': 'opgg', 'skill_priority': ['E', 'Q']})
@@ -67,7 +67,7 @@ class SourceCacheTests(unittest.TestCase):
             self.assertEqual(op.read('settings.json')['data_source'], 'qq101')
 
     def test_101_cannot_fall_back_to_opgg_seed_under_101_label(self):
-        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as folder:
+        with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
             seed = DataStore(root / 'seed', source='opgg')
             seed._write('heroes/86.json', {'source_id': 'opgg'})
@@ -75,7 +75,7 @@ class SourceCacheTests(unittest.TestCase):
             self.assertIsNone(qq.hero(86))
 
     def test_failed_source_refresh_preserves_previous_cache(self):
-        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as folder:
+        with tempfile.TemporaryDirectory() as folder:
             qq = DataStore(Path(folder), source='qq101')
             qq._write('heroes/86.json', {'source_id': 'qq101', 'stat_date': '20261013'})
             before = qq.hero(86)
@@ -85,7 +85,7 @@ class SourceCacheTests(unittest.TestCase):
             self.assertEqual(qq.hero(86), before)
 
     def test_101_missing_spells_use_labeled_verified_opgg_cache_when_offline(self):
-        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as folder:
+        with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
             op = DataStore(root, source='opgg')
             op._write('heroes/86.json', {'champion_id': 86, 'build_mode': 'aram-mayhem',
@@ -115,7 +115,7 @@ class SourceSwitchTests(unittest.TestCase):
         self.assertIsNone(self.app.data)
 
     def setUp(self):
-        self.tmp = tempfile.TemporaryDirectory(dir=Path(__file__).parent)
+        self.tmp = tempfile.TemporaryDirectory()
         self.root = tk.Tk()
         self.root.design_scale = 1
         self.store = DataStore(Path(self.tmp.name))

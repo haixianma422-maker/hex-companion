@@ -37,7 +37,7 @@ class AdviceIconTests(unittest.TestCase):
                              'Advice icon cache is not implemented')
         from aram_demo.advice_icons import AdviceIconCache
         self.cache_class = AdviceIconCache
-        self.folder = tempfile.TemporaryDirectory(dir=Path(__file__).parent)
+        self.folder = tempfile.TemporaryDirectory()
         self.addCleanup(self.folder.cleanup)
         self.base = Path(self.folder.name)
 

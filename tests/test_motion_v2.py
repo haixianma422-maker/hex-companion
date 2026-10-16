@@ -71,7 +71,7 @@ class SchedulerTests(unittest.TestCase):
 class NativeMotionTests(unittest.TestCase):
     def setUp(self):
         self.root = tk.Tk(); self.root.design_scale = 1
-        self.tmp = tempfile.TemporaryDirectory(dir=Path(__file__).parent)
+        self.tmp = tempfile.TemporaryDirectory()
         self.app = CompanionApp(self.root, DataStore(Path(self.tmp.name),
             Path(__file__).resolve().parents[1] / 'data', source='opgg'), preview=True, services=False)
         self.app.locate = lambda: LeagueWindow(0, (100,100,1300,900), (0,0,1920,1040), True)

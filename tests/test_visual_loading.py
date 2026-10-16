@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 class VisualLoadingTests(unittest.TestCase):
     def test_splash_and_augment_can_use_validated_fallbacks_offline_after_restart(self):
-        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as folder:
+        with tempfile.TemporaryDirectory() as folder:
             cache = VisualAssetCache(Path(folder))
             catalog = {'champions': {'101': {'splash': 'https://game.gtimg.cn/slow.jpg',
                        'splash_fallback': 'https://ddragon.leagueoflegends.com/fast.jpg'}},
@@ -30,7 +30,7 @@ class VisualLoadingTests(unittest.TestCase):
                 self.assertEqual(restarted.ensure([('splash',101),('augment',1029)])['updated'],0)
 
     def test_fast_image_is_published_while_another_download_is_blocked(self):
-        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as folder:
+        with tempfile.TemporaryDirectory() as folder:
             cache = VisualAssetCache(Path(folder))
             cache._catalog = {'champions': {'1': {'portrait': 'https://game.gtimg.cn/1.png'},
                                             '2': {'portrait': 'https://game.gtimg.cn/2.png'}}, 'augments': {}}
@@ -62,7 +62,7 @@ class VisualLoadingTests(unittest.TestCase):
             self.assertEqual(reports[0]['updated'], 2)
 
     def test_bad_image_is_throttled_without_blocking_other_images(self):
-        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as folder:
+        with tempfile.TemporaryDirectory() as folder:
             cache = VisualAssetCache(Path(folder))
             cache._catalog = {'champions': {'1': {'portrait': 'https://game.gtimg.cn/1.png'}}, 'augments': {}}
             calls = []
