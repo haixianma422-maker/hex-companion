@@ -48,12 +48,18 @@ class CompanionBubble:
         self.work_area=anchor.work_area
         if not self._user_position and rectangle:
             x,y,w,h=rectangle; self.position=(x+w-self.size-12*self.scale,y+h-self.size-12*self.scale)
+        if self.visible and 'visibility' in self.motion.jobs:return  # the reveal places the window each frame
         x,y=self.position or (self.work_area[2]-self.size-16,self.work_area[1]+16)
         self._place(x,y)
         if not self.visible:
             self.motion.cancel('visibility',finish=True); self.visible=True
             self.window.attributes('-alpha',0. if self.motion.enabled else 1.); self.window.deiconify(); self._place(*self.position)
-            self.motion.animate('visibility',0.,1.,lambda v:self.window.attributes('-alpha',v),160 if animate else 0)
+            rise=12*self.scale
+            def update(v):
+                # Rise into place while fading in; the end frame is the resting position.
+                self.window.attributes('-alpha',v)
+                position_window(self.window,self.position[0],round(self.position[1]+rise*(1-v)),self.size,self.size)
+            self.motion.animate('visibility',0.,1.,update,280 if animate else 0)
     def _begin(self,event):
         self.tip.hide(); self.origin=(event.x_root,event.y_root,*self.position); self.dragged=False; self._pressed=True; self._paint()
     def _drag(self,event):

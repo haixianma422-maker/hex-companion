@@ -264,3 +264,52 @@ class NativeMotionTests(unittest.TestCase):
         self.app.expand(); self.root.update()
         self.assertFalse(self.app.bubble.visible)
         self.assertEqual(float(self.app.panel.window.attributes('-alpha')),1)
+
+    def test_repaint_during_hero_transition_retargets_instead_of_finishing(self):
+        self.app.on_client_state(ClientState('ChampSelect',101,[101,222],queue_id=3270))
+        self.root.update(); panel=self.app.panel; panel.motion.enabled=True
+        with patch('aram_demo.motion.time.monotonic',return_value=100):
+            self.app.on_client_state(ClientState('ChampSelect',222,[101,222],queue_id=3270))
+            transition=panel._transitions['hero']
+            panel.data_loading=True; self.app.present()
+            self.assertIn('hero',panel.motion.jobs)
+            self.assertIs(panel._transitions['hero'],transition)
+        panel.motion.cancel('hero',finish=True); finished=panel._full_image.copy()
+        panel.set_motion(False); panel.signature=None; self.app.present()
+        self.assertIn('加载中',panel.content_text())
+        self.assertIsNone(ImageChops.difference(finished.convert('RGB'),panel._full_image.convert('RGB')).getbbox())
+
+    def test_repaint_during_reveal_keeps_the_reveal_running(self):
+        panel=self.app.panel; panel.motion.enabled=True
+        with patch('aram_demo.motion.time.monotonic',return_value=100):
+            self.app.on_client_state(ClientState('InProgress',222,queue_id=3270))
+            self.assertIn('visibility',panel.motion.jobs)
+            self.app.status='重绘'; self.app.present()
+            self.assertIn('visibility',panel.motion.jobs)
+        panel.set_motion(False)
+        self.assertEqual(float(panel.window.attributes('-alpha')),1)
+
+    def test_bubble_rises_into_place_and_ends_at_rest(self):
+        self.game(); bubble=self.app.bubble; bubble.motion.enabled=True
+        with patch('aram_demo.motion.time.monotonic',return_value=100):
+            self.app.hide(); self.root.update()
+            rest=bubble.position[1]; start=bubble.window.winfo_rooty()
+            self.app.present(); self.root.update()
+            self.assertEqual(bubble.window.winfo_rooty(),start)
+        self.assertGreater(start,rest)
+        bubble.motion.cancel('visibility',finish=True); self.root.update()
+        self.assertEqual(bubble.window.winfo_rooty(),rest)
+
+
+class RegionTransitionTests(unittest.TestCase):
+    def test_retarget_keeps_progress_and_ends_on_new_picture(self):
+        from PIL import Image
+        from aram_demo.motion_images import RegionTransition
+        old=Image.new('RGBA',(20,20),'#000000'); first=Image.new('RGBA',(20,20),'#ff0000')
+        second=Image.new('RGBA',(20,20),'#0000ff')
+        transition=RegionTransition(old,first,[(0,0,20,20)])
+        transition.frame(.5); transition.retarget(second)
+        self.assertEqual(transition.progress,.5)
+        red,green,blue,_=transition.frame(.5).getpixel((5,5))
+        self.assertEqual((red,green),(0,0)); self.assertAlmostEqual(blue,128,delta=1)
+        self.assertIs(transition.frame(1),second)

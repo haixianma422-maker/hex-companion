@@ -16,8 +16,15 @@ class RegionTransition:
                 ImageDraw.Draw(mask).rounded_rectangle((0,0,before.width-1,before.height-1),
                     radius=round(radius*scale), fill=255)
             self.regions.append((box, before, after, mask))
+        self.progress = 0.
+
+    def retarget(self, new):
+        """Keep the current progress; later frames move toward the new picture."""
+        self.new = new
+        self.regions = [(box, before, new.crop(box), mask) for box, before, _, mask in self.regions]
 
     def frame(self, progress):
+        self.progress = progress
         if progress >= 1:
             return self.new
         frame = (self.old if self.base == 'old' else self.new).copy()
@@ -47,10 +54,10 @@ def dim_regions(old, new, regions, scale=1.):
 
 
 def visibility_image(image, amount, scale):
-    """Scale about (W-32,H-32), then translate Y by at most eight pixels."""
-    factor = .955 + .045 * amount
+    """Scale about (W-32,H-32), where the bubble sits, then translate Y by at most 14 pixels."""
+    factor = .86 + .14 * amount
     anchor_x, anchor_y = image.width-32*scale, image.height-32*scale
-    dx, dy = anchor_x*(1-factor), anchor_y*(1-factor)+8*scale*(1-amount)
+    dx, dy = anchor_x*(1-factor), anchor_y*(1-factor)+14*scale*(1-amount)
     return image.transform(image.size, Image.Transform.AFFINE,
         (1/factor,0,-dx/factor,0,1/factor,-dy/factor), Image.Resampling.BICUBIC,
         fillcolor=(1,2,3,255))

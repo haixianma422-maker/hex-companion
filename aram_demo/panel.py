@@ -22,7 +22,7 @@ class CompanionPanel:
         self.scale=ui_scale(root); self.width=round(360*self.scale); self.height=round(540*self.scale)
         self.dpi_scale=self.scale; self.zoom=1.; self.on_resize=None
         self._anchor=None; self._resize_origin=None; self._visibility_layer=None
-        self._source_pending=False; self._source_old=None
+        self._source_pending=False; self._source_old=None; self._transitions={}
         self.canvas=tk.Canvas(self.window,bg=TRANSPARENT,bd=0,highlightthickness=0,takefocus=True)
         self.canvas.pack(fill='both',expand=True); self.inner=self.canvas
         self.bitmap=self.canvas.create_image(0,0,anchor='nw')
@@ -384,17 +384,20 @@ class CompanionPanel:
              self.images_loading,self.network_error,self.manual_override,tuple(self.hotkey_bindings.items()),self.visible_height,
              visible_data_key)
         if self.signature==key:return
-        self.motion.cancel('hero',finish=True)
-        self.motion.cancel('cards',finish=True)
-        self.motion.cancel('source',finish=True)
-        if 'visibility' in self.motion.jobs:self.motion.cancel('visibility',finish=True)
+        same_context = self.context == (state.stage,state.champion_id,self.source_name)
+        # Repaints in the same context (an image or data load finishing) move a
+        # running transition to the new picture instead of cutting it to its end.
+        retarget={name:self._transitions[name] for name in ('hero','cards','source')
+                  if same_context and name in self.motion.jobs and name in self._transitions}
+        for name in ('hero','cards','source'):
+            if name not in retarget:self.motion.cancel(name,finish=True)
+        if 'visibility' in self.motion.jobs and not same_context:self.motion.cancel('visibility',finish=True)
         previous=getattr(self,'_full_image',None)
         old_context=self.context
         resume_scroll='candidate-scroll' in self.motion.jobs
         self.motion.cancel('candidate-scroll')
         source_changed = bool(self.context and self.context[:2] == (state.stage,state.champion_id)
                               and self.context[2] != self.source_name)
-        same_context = self.context == (state.stage,state.champion_id,self.source_name)
         hero_changed=bool(old_context and old_context[0]==state.stage=='select' and old_context[1]!=state.champion_id)
         if source_changed:
             self._source_old=previous
@@ -430,7 +433,11 @@ class CompanionPanel:
         current=art.finish()
         previous_cards=self._card_signatures
         new_cards=[(m.slot,m.augment_id,m.status,m.text) for m in matches] if game else []
-        self._full_image=current
+        for name,transition in list(retarget.items()):
+            if transition.old.size==current.size:transition.retarget(current)
+            else:
+                del retarget[name]; self.motion.cancel(name,finish=True)
+        self._full_image=next((t.frame(t.progress) for t in retarget.values()),current)
         self._display_image(); self._position_controls()
         self._card_signatures=new_cards
         if (source_changed or self._source_pending or source_ready) and self._source_old is not None and self._source_old.size==current.size:
@@ -456,6 +463,7 @@ class CompanionPanel:
 
     def _image_transition(self,name,previous,current,regions,duration,**kwargs):
         transition=RegionTransition(previous,current,regions,self.scale,**kwargs)
+        self._transitions[name]=transition
         def update(progress):
             self._full_image=transition.frame(progress); self._display_image()
         self.motion.animate(name,0.,1.,update,duration)
@@ -632,7 +640,7 @@ class CompanionPanel:
             self.window.attributes('-alpha',1.)
             self._visibility_photo=None
             if done:done()
-        self.motion.animate('visibility',0.,1.,update,220 if show else 160,done=finish)
+        self.motion.animate('visibility',0.,1.,update,320 if show else 260,done=finish)
 
     def hide(self,animate=False,done=None):
         self.tip.hide()
