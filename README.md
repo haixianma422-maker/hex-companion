@@ -4,11 +4,11 @@
 
 一款以轻量化、低资源占用为设计目标的 Windows 英雄联盟海克斯大乱斗浮窗助手。用一个紧凑浮窗，在选人时查看英雄梯队，在局内查看海克斯评级与模式出装参考。
 
-采用原生桌面界面，资料按需获取、图标本地缓存；OCR 只处理三张海克斯的标题区域，重复画面复用识别结果。平时驻留托盘，进入海克斯模式后显示，需要时可收起为小浮标，减少屏幕占用。
+界面使用 Qt Quick，动画由 GPU 合成并在独立渲染线程运行；资料按需获取、图标本地缓存；OCR 只处理三张海克斯的标题区域，重复画面复用识别结果。平时驻留托盘，进入海克斯模式后显示，需要时可收起为小浮标，减少屏幕占用。
 
 ## 界面预览
 
-以下为第二版程序原生窗口截图，使用模拟客户端状态和本地真实资料，截图过程禁用网络。
+以下为程序实际窗口截图（Qt 界面），使用模拟客户端状态和本地真实资料，截图过程禁用网络。
 
 <table>
   <tr><th>选人：英雄梯队</th><th>局内：海克斯与装备</th><th>设置：自定义快捷键</th></tr>
@@ -23,7 +23,7 @@
 
 ## 功能
 
-- **轻量化优先**：原生桌面浮窗、局部 OCR、重复画面复用与本地缓存，减少重复识别和网络请求。
+- **轻量化优先**：局部 OCR、重复画面复用与本地缓存，减少重复识别和网络请求；界面静止时不重绘。
 - **第二版界面**：墨紫底色、淡丁香英雄区域和酸柠黄强调色；选人双列候选、局内三列海克斯及四列装备。
 - **选人浮窗**：显示当前英雄原画与客户端返回的可选英雄头像，按所选来源的 T 档和排名排序；高亮表示客户端当前选择。
 - **数据来源切换**：在选人、局内浮窗顶部随时选择 OP.GG 或 101 数据站，选择会保存；设置中也可切换，两套资料分别缓存。
@@ -37,13 +37,13 @@
 - **后台运行**：系统托盘管理，切出联盟或离开海克斯模式时隐藏；支持对局已经开始后启动。
 - **本地识别与缓存**：只识别三个标题区域，重复画面复用结果，识别完成后原位更新卡片。
 - **真实图片与状态**：英雄、海克斯、技能和装备使用真实静态资源；加载或读取失败时显示状态，缺图时保留名称。点击局内海克斯卡片可打开对应位置的手动修正。
-- **界面动效**：英雄切换、来源更新、单卡识别、设置页签和展开收起采用局部过渡；图片或资料加载完成时，进行中的过渡会切换到新画面继续播放。收起时面板缩向浮标，浮标上浮淡入。识别活动反馈随实际任务结束，保存成功后按钮显示“已应用”。设置中可关闭动效，并读取 Windows 减少动画偏好。
+- **界面动效**：英雄切换先淡出旧名字再滑入新名字，原画在新图解码后叠加淡入；识别结果只重播变化的那张卡片；来源切换期间内容变暗，资料到达后恢复；收起时面板缩向浮标，浮标弹出。动画在渲染线程运行，后台处理资料时不卡顿。识别活动反馈随实际任务结束，保存成功后按钮显示“已应用”。设置中可关闭动效，并读取 Windows 减少动画偏好。
 
-本轮 194 项回归通过，[验证记录](docs/motion-v2-verification.md)包含原生动效、缩放和三档逻辑 DPI 检查。Windows 发布包附 `verification.json` 和校验文件，覆盖中文 OCR、两套来源快照、图片、托盘、快捷键及正常退出。内置 1,189 个基础图片资源。本版本使用离线客户端状态验收，尚未进行真实对局复核。
+本轮 185 项回归通过，[Qt 界面迁移验证](docs/qt-migration-verification.md)记录窗口行为、动效、打包体积与性能对比。Windows 发布包附 `verification.json` 和校验文件，覆盖中文 OCR、两套来源快照、图片、界面、托盘、快捷键及正常退出。内置 1,189 个基础图片资源。迁移后的完整版本使用离线客户端状态验收；真实对局只在迁移前的验证样例上测试过，见[样例记录](docs/qml-spike-verification.md)。
 
 ## 直接使用
 
-从本仓库的 [Releases](https://github.com/haixianma422-maker/hex-companion/releases) 下载 Windows x64 发布包，解压后运行 `HexCompanion.exe`。需要 Windows 10/11 x64，无需安装 Python。
+从本仓库的 [Releases](https://github.com/haixianma422-maker/hex-companion/releases) 下载 Windows x64 发布包，解压后打开 `HexCompanion` 文件夹运行 `HexCompanion.exe`。`_internal` 文件夹保存运行所需文件，需与 EXE 放在一起。需要 Windows 10/11 x64，无需安装 Python。
 
 1. 退出旧版工具，双击 EXE 并确认 Windows 管理员权限提示。
 2. 将游戏视频设置中的窗口模式设为 **无边框**。桌面浮窗可能被独占全屏遮住。
@@ -106,7 +106,7 @@ py -3.13 -m venv .venv
 .\preview_companion.cmd
 ```
 
-预览中双击浮窗标题或按 `Ctrl+Tab` 切换选人与游戏界面；点击齿轮打开设置，`F8` 收起/展开，`F10` 退出。源码预览的设置与缓存使用 `.build-cache` 下的独立目录；正常运行仍使用项目的 `data` 目录。
+预览中双击浮窗标题切换选人与游戏界面；点击齿轮打开设置，`F8` 收起/展开，从托盘退出。浮窗不接收键盘焦点，因此不提供窗口内快捷键。源码预览的设置与缓存使用 `.build-cache` 下的独立目录；正常运行仍使用项目的 `data` 目录。
 
 预览沿用正式版的浮窗、设置、托盘和单实例流程；模拟客户端状态仅用于提供选人与局内场景。浮窗不占任务栏，右下角系统托盘提供设置和退出入口。正常版或预览已在运行时，再次启动不会打开第二个实例。
 
@@ -114,32 +114,39 @@ py -3.13 -m venv .venv
 
 ## 测试与打包
 
-自动测试：
+自动测试（在不可见的独立桌面运行，不抢焦点）：
 
 ```powershell
-.\.venv\Scripts\python.exe -X utf8 -m unittest discover -s tests -v
+.\.venv\Scripts\python.exe scripts/run_native_tests.py
 ```
 
-构建单文件 EXE：
+窗口行为验收（置顶、不抢焦点、阴影可穿透点击、静止不重绘、三档缩放截图），可加 `--exe` 检查打包版：
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-build.txt
+.\.venv\Scripts\python.exe scripts/verify_overlay.py
+```
+
+构建程序文件夹：
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements-build.txt
 .\.venv\Scripts\python.exe scripts/build_exe.py
 ```
 
-成品位于 `dist/HexCompanion.exe`，包含 Python、OCR 模型、两套来源的已校验初始快照和本地图片。可用 `--dist-dir dist/版本目录` 单独输出新版，避免覆盖运行中的旧 EXE。正常启动会请求管理员权限。
+成品位于 `dist/HexCompanion/`，`HexCompanion.exe` 与 `_internal` 文件夹一起包含 Python、Qt、OCR 模型、两套来源的已校验初始快照和本地图片。采用文件夹形式是因为单文件 EXE 每次启动都要先解压 Qt，启动需 5–6 秒；文件夹形式约 1 秒。可用 `--dist-dir dist/版本目录` 单独输出新版，避免覆盖运行中的旧版本。正常启动会请求管理员权限。
 
 对实际 EXE 执行离线验收，并生成分享包：
 
 ```powershell
-$exePath = (Resolve-Path .\dist\HexCompanion.exe).Path
+$exePath = (Resolve-Path .\dist\HexCompanion\HexCompanion.exe).Path
 $reportPath = Join-Path (Get-Location) 'dist\verification.json'
 $checkProcess = Start-Process -FilePath $exePath -ArgumentList @('--self-test', ('"' + $reportPath + '"')) -Wait -PassThru
 if ($checkProcess.ExitCode -ne 0) { throw 'EXE 验收失败，请检查 verification.json' }
 .\.venv\Scripts\python.exe scripts/package_binary.py --exe $exePath --check $reportPath
 ```
 
-验收会短暂显示程序窗口，禁用网络并使用临时设置，不连接真实对局。打包脚本核对验收报告与 EXE 的 SHA-256，检查图片、两套来源、OCR 模型及个人文件排除情况。分享包 `HexCompanion-Windows-x64.zip`、`release_manifest.json` 和 EXE 校验文件输出在 EXE 所在目录，包内附使用说明、MIT 许可证、第三方依赖许可证和验收报告。
+验收会短暂显示程序窗口，禁用网络并使用临时设置，不连接真实对局；也可用 `scripts/check_frozen_hidden.py` 在不可见桌面运行。打包脚本核对验收报告与 EXE 的 SHA-256，检查图片、两套来源、OCR 模型、界面文件及个人文件排除情况。分享包 `HexCompanion-Windows-x64.zip`、`release_manifest.json` 和 EXE 校验文件输出在程序文件夹的上一级目录，包内附使用说明、MIT 许可证、第三方依赖许可证和验收报告。
 
 ## 常见问题
 
@@ -161,9 +168,9 @@ EXE 启动时确认管理员提示。源码版使用管理员入口，必要时�
 
 本次 EXE 内置 1,189 个基础资源，合计约 40 MB，覆盖 173 位英雄的基础原画与头像、290 个海克斯图标、553 个技能与召唤师技能图标。已有图片直接本地加载，缺失时才请求网络。缓存目录清单和文件 SHA-256 位于 `data/visual-assets/resource-cache-manifest.json`。
 
-来源切换时，推荐内容使用 180ms 淡入；设置中关闭动效后直接显示结果。窗口和操作按钮在过渡期间保持可用。
+来源切换时，推荐内容变暗直到新来源的资料到达，再用 200ms 恢复；设置中关闭动效后直接显示结果。窗口和操作按钮在过渡期间保持可用。
 
-可选英雄列表使用 140ms 平滑滚动，支持连续滚轮输入和小幅滚轮增量；反向滚动会取消原方向的剩余位移。滚动期间复用已绘制的列表图片，只刷新列表区域。关闭动效后直接滚动。
+可选英雄列表使用原生惯性滚动；列表增减或换位时卡片平移到新位置。资料刷新时复用已有卡片，悬停状态和滚动位置保持不变。
 
 自动扫描期间“重新识别”按钮保持稳定；手动点击或按 F6 后显示“识别中”。更新源码后需退出工具并重新启动，正在运行的进程不会自动载入新代码。
 
@@ -176,7 +183,7 @@ EXE 启动时确认管理员提示。源码版使用管理员入口，必要时�
 ## 目录
 
 ```text
-aram_demo/       客户端连接、OCR、数据处理和桌面浮窗
+aram_demo/       客户端连接、OCR、数据处理；qt_overlay.py、qt_settings.py 与 qml/ 为界面
 data/           可共享的数据快照；个人 settings.json 被忽略
 docs/images/    选人、局内、快捷键设置和浮标演示图片
 scripts/        数据更新、界面验证、EXE 构建与验收

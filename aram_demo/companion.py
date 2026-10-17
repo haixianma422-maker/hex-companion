@@ -2,26 +2,26 @@
 import queue
 import threading
 import time
-import tkinter as tk
 import logging
 from dataclasses import replace
-from tkinter import messagebox
+
+from PySide6.QtCore import QTimer
+from PySide6.QtGui import QGuiApplication
 
 from .companion_state import MAYHEM_QUEUES, PLAYING, SessionTracker
 from .cache import DataStore, SOURCE_NAMES, is_fresh
 from .advice_icons import AdviceIconCache
-from .bubble import CompanionBubble
 from .builds import recommended_items
 from .hotkeys import Hotkeys
 from .item_icons import ItemIconCache
 from .lcu import ClientState, LCUClient, live_champion_id
 from .models import Augment
-from .panel import CompanionPanel
-from .settings_ui import show_settings
+from .qt_overlay import CompanionBubble, CompanionPanel, Overlay
+from .qt_settings import show_settings
 from .visual_assets import VisualAssetCache
 from .runtime_log import health as log_health
 from .recognition import Recognizer, match_slots
-from .windows import LeagueWindow, find_league_window, foreground_is_ours
+from .windows import LeagueWindow, find_league_window, foreground_is_ours, message_box
 
 AUTO_SCAN_INTERVAL = .25
 IDLE_SCAN_INTERVAL = 1.5
@@ -33,14 +33,12 @@ DISCONNECTED_POLL_MS = 6000
 
 
 class CompanionApp:
-    def __init__(self, root, store, preview=False, services=True):
-        self.root, self.store, self.preview, self.services = root, store, preview, services
-        root.withdraw()
-        root.title('海克斯随行 · 后台')
+    def __init__(self, store, preview=False, services=True):
+        self.store, self.preview, self.services = store, preview, services
         self.closed = self.startup_failed = False
         self.tracker = SessionTracker()
         self.state = self.tracker.state
-        self.connection_text = tk.StringVar(value='等待客户端连接')
+        self.connection_text = '等待客户端连接'
         self.champions = {c.id: c for c in store.champions()}
         self.settings = store.read('settings.json') or {}
         self.client = LCUClient()
@@ -79,9 +77,10 @@ class CompanionApp:
         self.advice_retry_at = None
         self.icons_pending = False
         self.icons_requested = None
-        self.panel = CompanionPanel(root, self.scan, self.show_settings, self.hide,
+        self.panel = CompanionPanel(self.scan, self.show_settings, self.hide,
                                     self.preview_next if preview else None, on_source=self.select_source)
-        self.bubble = CompanionBubble(root, self.expand)
+        self.bubble = CompanionBubble(self.expand)
+        self.overlay = Overlay(self.panel, self.bubble)
         self.hotkeys = Hotkeys(lambda: self.dispatch(self.scan), lambda: self.dispatch(self.refresh),
                                lambda: self.dispatch(self.hide), on_toggle=lambda: self.dispatch(self.toggle),
                                bindings=self.settings.get('hotkeys'))
@@ -101,16 +100,15 @@ class CompanionApp:
         self.panel.set_zoom(self.settings.get('panel_zoom',1.))
         self.bubble.set_motion(self.settings.get('animations', True))
         self.bubble.set_hotkeys(self.hotkeys.bindings)
-        self.root.protocol('WM_DELETE_WINDOW', self.close)
         if services:
             from .tray import Tray
             self.tray = Tray(self.dispatch, self.toggle, self.show_settings, self.refresh, self.close, self.tray_failed)
             self.tray.start()
             self.hotkeys.start()
-            root.after(80, self._pump)
-            root.after(500, self._tick)
+            QTimer.singleShot(80, self._pump)
+            QTimer.singleShot(500, self._tick)
             if not preview:
-                root.after(100, self.poll)
+                QTimer.singleShot(100, self.poll)
 
     def dispatch(self, callback):
         self.events.put(('call', callback))
@@ -172,20 +170,20 @@ class CompanionApp:
         except queue.Empty:
             pass
         if not self.closed:
-            self.root.after(80, self._pump)
+            QTimer.singleShot(80, self._pump)
 
     def tray_failed(self, detail):
         if not self.closed:
             self.startup_failed = True
             # A fatal startup dialog must not leave an apparently usable
-            # companion running behind it, even inside Tk's modal event loop.
+            # companion running behind it, even inside the modal message loop.
             self.panel.hide()
             self.bubble.hide()
-            if self.dialog is not None and self.dialog.winfo_exists():
-                self.dialog.destroy()
+            if self.dialog is not None:
+                self.dialog.close()
             self.hotkeys.set_paused(True)
             try:
-                messagebox.showerror('海克斯随行', '系统托盘启动失败，程序将退出。\n' + detail, parent=self.root)
+                message_box('海克斯随行', '系统托盘启动失败，程序将退出。\n' + detail)
             finally:
                 self.close()
 
@@ -201,7 +199,7 @@ class CompanionApp:
                     raw = replace(raw, champion_id=live_champion_id(champions))
                 return raw
             self.background(read, self.on_client_state, done=lambda: setattr(self, 'poll_pending', False))
-        self.root.after(DISCONNECTED_POLL_MS if self.state.phase == 'Disconnected' else POLL_MS, self.poll)
+        QTimer.singleShot(DISCONNECTED_POLL_MS if self.state.phase == 'Disconnected' else POLL_MS, self.poll)
 
     def read_client(self):
         # Callers keep a single read in flight (poll_pending), so the shared
@@ -221,7 +219,9 @@ class CompanionApp:
         if self.state.stage == 'hidden' and raw.phase != 'Disconnected':
             queues = '、'.join(map(str, sorted(MAYHEM_QUEUES)))
             reason = f'浮窗隐藏：模式未匹配（当前识别队列 {queues}）；其他自定义房间需核对实际模式字段。'
-        self.connection_text.set(f'{raw.phase} · 队列 {queue_label}\n{reason}')
+        self.connection_text = f'{raw.phase} · 队列 {queue_label}\n{reason}'
+        if self.dialog is not None:
+            self.dialog.connection_changed()
         if self.state.revision != old.revision:
             self.matches = []
             self.manual_override = False
@@ -316,10 +316,8 @@ class CompanionApp:
             if result.get('failed'):
                 self.visual_retry_at = time.monotonic() + 60
             self.panel.signature = None
-            if self.dialog is not None and self.dialog.winfo_exists():
-                refresh = getattr(self, '_settings_refresh_icons', None)
-                if refresh:
-                    refresh()
+            if self.dialog is not None:
+                self.dialog.refresh_icons()
             self.present()
             if result.get('deferred'):
                 self.visual_requested = None
@@ -342,13 +340,13 @@ class CompanionApp:
         try:
             self.store._write('settings.json', settings)
         except OSError as exc:
+            # The quick picker shows the active store's source, so it stays on the old one.
             self.status = '来源未切换 · 设置未能保存：' + str(exc)
-            self.panel.quick_source_var.set(self.store.source_name)
             self.present()
             return
         self.settings = settings
-        if self.dialog is not None and self.dialog.winfo_exists():
-            self.source_var.set(source_name)
+        if self.dialog is not None:
+            self.dialog.set_source(source)
         self.change_source(source)
 
     def images_loaded(self):
@@ -448,7 +446,10 @@ class CompanionApp:
 
     def locate(self):
         if self.preview:
-            width, height = self.root.winfo_screenwidth(), self.root.winfo_screenheight()
+            # Win32 rectangles are physical pixels.
+            screen = QGuiApplication.primaryScreen()
+            width = round(screen.geometry().width() * screen.devicePixelRatio())
+            height = round(screen.geometry().height() * screen.devicePixelRatio())
             return LeagueWindow(0, (max(0, width - 1100), 100, width - 350, height - 120), (0, 0, width, height - 48), True)
         return find_league_window(self.state.stage)
 
@@ -467,8 +468,7 @@ class CompanionApp:
             self.hotkeys.set_overlay_visible(False)
             return
         if self.collapsed:
-            rectangle = (self.panel.window.winfo_rootx(), self.panel.window.winfo_rooty(), self.panel.width, self.panel.height)
-            self.bubble.show_at(self.anchor,rectangle)
+            self.bubble.show_at(self.anchor,self.panel.rect())
             self.panel.hide(animate=True)
             self.hotkeys.set_overlay_visible(False)
             return
@@ -511,7 +511,7 @@ class CompanionApp:
             self.refresh_advice_icons()
         if self.auto and not self.preview and self.state.stage == 'game' and self.panel.visible and now - self.last_scan >= self.scan_interval:
             self.scan(force=False)
-        self.root.after(UI_TICK_MS, self._tick)
+        QTimer.singleShot(UI_TICK_MS, self._tick)
 
     def scan(self, force=True):
         if self.state.stage != 'game' or not self.augments:
@@ -533,7 +533,6 @@ class CompanionApp:
             return
         # OCR consumes only title regions. Leave our windows mapped and check
         # for overlap rather than hiding them before every screenshot.
-        self.root.update_idletasks()
         left, top, right, bottom = anchor.rect
         titles = [(left + round(x1 * (right-left)), top + round(y1 * (bottom-top)),
                    left + round(x2 * (right-left)), top + round(y2 * (bottom-top)))
@@ -541,10 +540,9 @@ class CompanionApp:
         for overlay in (self.panel, self.bubble):
             if not overlay.visible:
                 continue
-            win = overlay.window
-            ox, oy = win.winfo_rootx(), win.winfo_rooty()
-            if any(ox < x2 and ox + win.winfo_width() > x1 and
-                   oy < y2 and oy + win.winfo_height() > y1 for x1, y1, x2, y2 in titles):
+            ox, oy, width, height = overlay.rect()
+            if any(ox < x2 and ox + width > x1 and
+                   oy < y2 and oy + height > y1 for x1, y1, x2, y2 in titles):
                 self.last_scan = time.monotonic()
                 self.matches = []
                 self.status = '浮窗遮挡标题 · 请拖开后识别'
@@ -672,4 +670,7 @@ class CompanionApp:
         finally:
             self.panel.hide()
             self.bubble.hide()
-            self.root.destroy()
+            if self.dialog is not None:
+                self.dialog.close()
+            self.overlay.close()
+            QGuiApplication.quit()

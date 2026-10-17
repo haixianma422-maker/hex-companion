@@ -1,4 +1,4 @@
-"""Create a local EXE share package bound to its actual acceptance report."""
+"""Create the share package for the folder build, bound to its actual acceptance report."""
 import argparse
 import hashlib
 import json
@@ -16,29 +16,35 @@ def package(exe,check_path):
     assert check['status']=='passed' and check['frozen'] and check['clean_exit']
     assert check['exe_sha256']==sha(exe),'Acceptance report belongs to another EXE'
     assert Path(check['executable']).resolve()==exe,'Acceptance executable path differs'
-    archive=CArchiveReader(str(exe))
-    names={name.replace('\\','/'):name for name in archive.toc}
-    assert not any('settings.json' in name or 'lockfile' in name or '/logs/' in name for name in names)
+    app_dir=exe.parent
+    internal=app_dir/'_internal'
+    names={path.relative_to(internal).as_posix():path for path in internal.rglob('*') if path.is_file()}
+    assert not any('settings.json' in name or 'lockfile' in name or name.startswith('data/logs/') for name in names)
+    assert not any(path.suffix in ('.log','.tmp') for path in app_dir.rglob('*')),'Runtime files inside the build folder'
     models=[name for name in names if name.endswith('.onnx')]
     assert len(models)==2
     for source,prefix in (('opgg','data/heroes/'),('qq101','data/sources/qq101/heroes/')):
         snapshots=[name for name in names if name.startswith(prefix) and name.endswith('.json')]
         assert snapshots,f'No verified seed for {source}'
         for name in snapshots:
-            row=json.loads(archive.extract(names[name]))
+            row=json.loads(names[name].read_text(encoding='utf-8'))
             assert row.get('build_mode_verified') is True and row.get('build_mode')=='aram-mayhem'
             assert row.get('source_id','opgg')==source
     assert 'data/sources/qq101/champions.json' in names
-    pyz=archive.open_embedded_archive('PYZ.pyz')
-    assert all(name in pyz.toc for name in ('aram_demo.qq101','aram_demo.opgg','aram_demo.tk_images'))
-    inventory=json.loads(archive.extract(names['data/visual-assets/resource-cache-manifest.json']))
+    assert {'aram_demo/qml/Overlay.qml','aram_demo/qml/Panel.qml','aram_demo/qml/Settings.qml'} <= set(names)
+    pyz=CArchiveReader(str(exe)).open_embedded_archive('PYZ.pyz')
+    assert all(name in pyz.toc for name in ('aram_demo.qq101','aram_demo.opgg','aram_demo.qt_overlay','aram_demo.qt_settings'))
+    assert 'tkinter' not in pyz.toc
+    inventory=json.loads(names['data/visual-assets/resource-cache-manifest.json'].read_text(encoding='utf-8'))
     for asset in inventory['assets']:
         name='data/'+Path(asset['path']).as_posix()
         assert name in names,f'Resource not bundled: {name}'
-        assert hashlib.sha256(archive.extract(names[name])).hexdigest()==asset['sha256']
-    output=exe.parent/'HexCompanion-Windows-x64.zip'
+        assert sha(names[name])==asset['sha256']
+    output=app_dir.parent/'HexCompanion-Windows-x64.zip'
     with zipfile.ZipFile(output,'w',zipfile.ZIP_DEFLATED,compresslevel=6) as bundle:
-        bundle.write(exe,'HexCompanion/HexCompanion.exe')
+        for path in sorted(app_dir.rglob('*')):
+            if path.is_file():
+                bundle.write(path,'HexCompanion/'+path.relative_to(app_dir).as_posix())
         bundle.write(ROOT/'LICENSE','HexCompanion/LICENSE')
         for name in ('使用说明.txt','THIRD_PARTY.txt'):
             bundle.write(ROOT/'packaging'/name,'HexCompanion/'+name)
@@ -49,12 +55,15 @@ def package(exe,check_path):
     with zipfile.ZipFile(output) as bundle:
         assert bundle.testzip() is None
         assert hashlib.sha256(bundle.read('HexCompanion/HexCompanion.exe')).hexdigest()==check['exe_sha256']
-    result={'status':'passed','exe':str(exe),'exe_sha256':check['exe_sha256'],'exe_bytes':exe.stat().st_size,
+    files=[path for path in app_dir.rglob('*') if path.is_file()]
+    result={'status':'passed','exe':str(exe),'exe_sha256':check['exe_sha256'],
+            'folder':str(app_dir),'folder_files':len(files),'folder_bytes':sum(path.stat().st_size for path in files),
             'zip':str(output),'zip_sha256':sha(output),'zip_bytes':output.stat().st_size,
             'ocr_models':models,'cached_resources':len(inventory['assets']),
             'private_files_excluded':True,'offline_acceptance':str(check_path),'live_game_tested':False}
-    (exe.parent/'HexCompanion.exe.sha256.txt').write_text(check['exe_sha256']+'  HexCompanion.exe\n',encoding='ascii')
-    (exe.parent/'release_manifest.json').write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')
+    # Written beside the app folder, so a later package never zips them.
+    (app_dir.parent/'HexCompanion.exe.sha256.txt').write_text(check['exe_sha256']+'  HexCompanion/HexCompanion.exe\n',encoding='ascii')
+    (app_dir.parent/'release_manifest.json').write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')
     print(json.dumps(result,ensure_ascii=False,indent=2))
     return result
 

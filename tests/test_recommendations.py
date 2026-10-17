@@ -1,6 +1,5 @@
 import json
 import tempfile
-import tkinter as tk
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -9,7 +8,8 @@ from aram_demo import opgg
 from aram_demo.cache import DataStore
 from aram_demo.companion_state import PanelState
 from aram_demo.models import Champion
-from aram_demo.panel import CompanionPanel
+from aram_demo.qt_overlay import CompanionPanel
+from tests.qt_support import pump, qt_app
 
 
 FIXTURES = Path(__file__).parent / 'fixtures/recommendations'
@@ -73,16 +73,12 @@ class RecommendationDataTests(unittest.TestCase):
 
 class RecommendationPanelTests(unittest.TestCase):
     def setUp(self):
-        self.root = tk.Tk()
-        self.root.withdraw()
-        self.panel = CompanionPanel(self.root, lambda: None, lambda: None, lambda: None)
+        qt_app()
+        self.panel = CompanionPanel(lambda: None, lambda: None, lambda: None)
         self.heroes = {86: Champion(86, '德玛西亚之力', 'garen', 1, 1)}
         self.data = {'champion_id': 86, 'build_mode_verified': True, 'build_mode': 'aram-mayhem',
                      'skill_priority': ['E', 'Q'],
                      'summoner_spells': [{'id': 4, 'name': '闪现'}, {'id': 32, 'name': '标记'}]}
-
-    def tearDown(self):
-        self.root.destroy()
 
     def render(self, stage, data=None, cid=86):
         self.panel.render(PanelState(stage=stage, champion_id=cid), self.heroes,
@@ -105,9 +101,10 @@ class RecommendationPanelTests(unittest.TestCase):
 
     def test_async_refresh_updates_text_without_rebuilding_panel(self):
         self.render('select', {})
-        content = self.panel.canvas
+        rebuilt = []
+        self.panel.candidates.modelReset.connect(lambda: rebuilt.append(True))
         text = self.render('select')
-        self.assertIs(self.panel.canvas, content)
+        self.assertFalse(rebuilt)
         self.assertNotIn('主 E › 副 Q', text)
         self.assertIn('闪现', text)
         self.assertIn('标记', text)
@@ -152,6 +149,7 @@ class RecommendationPanelTests(unittest.TestCase):
             self.panel.advice_icons = cache
             with patch('urllib.request.urlopen', side_effect=AssertionError('GUI attempted network')):
                 self.render('game', dict(self.data, skill_icons={'E': url}))
+                pump(until=lambda: not self.panel.assets.busy())
             self.assertTrue(self.panel.assets_shown[('skill','E')])
             self.render('game', dict(self.data, skill_priority=['Q', 'E']))
             self.render('game', self.data)

@@ -1,4 +1,4 @@
-"""Read League window geometry; only style this application's own windows."""
+"""Read League window geometry and other Win32 helpers that need no GUI toolkit."""
 import ctypes
 import os
 from ctypes import wintypes
@@ -96,17 +96,10 @@ def find_league_window(stage):
     return LeagueWindow(hwnd, rect, (work.left, work.top, work.right, work.bottom), hwnd == foreground)
 
 
-def prepare_popup(window):
-    if os.name != 'nt':
-        return
-    window.update_idletasks()
-    user = _user32()
-    hwnd = user.GetAncestor(window.winfo_id(), 2)
-    get_style = user.GetWindowLongPtrW
-    set_style = user.SetWindowLongPtrW
-    get_style.argtypes, get_style.restype = [wintypes.HWND, ctypes.c_int], ctypes.c_ssize_t
-    set_style.argtypes, set_style.restype = [wintypes.HWND, ctypes.c_int, ctypes.c_ssize_t], ctypes.c_ssize_t
-    set_style(hwnd, -20, get_style(hwnd, -20) | 0x08000000 | 0x00000080)
+def message_box(title, text):
+    """Blocking native error box; needs no GUI toolkit."""
+    if os.name == 'nt':
+        ctypes.windll.user32.MessageBoxW(None, text, title, 0x10 | 0x40000)   # MB_ICONERROR | MB_TOPMOST
 
 
 def single_instance():

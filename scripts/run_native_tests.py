@@ -14,8 +14,8 @@ sys.path.insert(0,str(ROOT))
 class NativeTestResult(unittest.TextTestResult):
     def stopTest(self, test):
         super().stopTest(test)
-        # Tk roots form cycles. Collect finished fixtures on their owning
-        # thread before a subsequent cache test starts a worker thread.
+        # Collect finished fixtures on their owning thread before a
+        # subsequent cache test starts a worker thread.
         gc.collect()
 
 if __name__=='__main__':
@@ -28,8 +28,6 @@ if __name__=='__main__':
         desktop=user.CreateDesktopW('HexMotionTests-'+str(os.getpid()),None,None,0,0x01FF,None)
         if not desktop or not user.SetThreadDesktop(desktop):
             raise ctypes.WinError(ctypes.get_last_error())
-        try:ctypes.windll.shcore.SetProcessDpiAwareness(1)
-        except OSError:pass
     faulthandler.dump_traceback_later(90,repeat=True)
     pattern=sys.argv[1] if len(sys.argv)>1 else 'test_*.py'
     suite=unittest.defaultTestLoader.discover(str(ROOT/'tests'),pattern=pattern)
