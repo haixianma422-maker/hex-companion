@@ -232,6 +232,19 @@ class CompanionAppTests(unittest.TestCase):
         self.assertTrue(self.app.panel.visible)
         self.assertFalse(bubble.visible)
 
+    def test_bubble_hint_names_the_toggle_key_and_hides_with_the_bubble(self):
+        from PySide6.QtCore import QMetaObject
+        self.app.bubble.set_hotkeys({'toggle': 'Ctrl+Alt+H'})
+        self.app.on_client_state(ClientState('InProgress', 222, queue_id=3270))
+        self.app.hide()
+        pump(until=lambda: self.window('bubbleWindow').isVisible())
+        root, tip = self.app.overlay.engine.rootObjects()[0], self.window('bubbleTipWindow')
+        QMetaObject.invokeMethod(root, 'showTip')
+        pump(until=tip.isVisible)
+        self.assertIn('Ctrl+Alt+H', self.app.bubble.state['tip'])
+        self.app.expand()
+        pump(until=lambda: not tip.isVisible())
+
     def test_collapsed_mode_hides_on_alt_tab_and_exit_and_preserves_choice(self):
         self.app.on_client_state(ClientState('InProgress', 222, queue_id=3270))
         self.app.hide()

@@ -1,6 +1,7 @@
 {
   "real_game_tested": false,
   "native_windows": true,
+  "toolkit": "Qt Quick",
   "client_state": "controlled offline inputs",
   "network_requests": 0,
   "selection_assets": {

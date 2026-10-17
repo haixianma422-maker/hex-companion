@@ -153,19 +153,56 @@ QtObject {
             opacity: 0; scale: .6
             Behavior on color { ColorAnimation { duration: Theme.ms(Theme.fast) } }
             Brand { anchors.centerIn: parent; width: parent.width * .55; height: parent.height * .55 }
-            HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
-            TapHandler { id: tap; onTapped: bubble.expand() }
+            HoverHandler {
+                id: hover
+                cursorShape: Qt.PointingHandCursor
+                onHoveredChanged: hovered ? overlay.showTip() : overlay.hideTip()
+            }
+            TapHandler { id: tap; onTapped: bubble.expand(); onPressedChanged: overlay.hideTip() }
             DragHandler {
                 target: null
-                onActiveChanged: if (active) bubbleWindow.startSystemMove()
+                onActiveChanged: if (active) { overlay.hideTip(); bubbleWindow.startSystemMove() }
             }
         }
+        onVisibleChanged: if (!visible) overlay.hideTip()
         onXChanged: bubbleSettle.restart()
         onYChanged: bubbleSettle.restart()
         property Timer bubbleSettle: Timer {
             interval: 250
             onTriggered: if (bubbleWindow.visible && (bubbleWindow.x !== bubble.state.x || bubbleWindow.y !== bubble.state.y))
                              bubble.moved(bubbleWindow.x, bubbleWindow.y)
+        }
+    }
+
+    // The bubble is too small to hold its hint, so the hint is its own click-through window.
+    function showTip() { tipDelay.restart() }
+    function hideTip() { tipDelay.stop(); tipWindow.visible = false }
+    property Timer tipDelay: Timer {
+        id: tipDelay
+        interval: 450
+        onTriggered: {
+            const left = bubbleWindow.x - tipWindow.width - 8
+            tipWindow.x = left >= bubbleWindow.screen.virtualX ? left : bubbleWindow.x + bubbleWindow.width + 8
+            tipWindow.y = bubbleWindow.y + (bubbleWindow.height - tipWindow.height) / 2
+            tipWindow.visible = true
+        }
+    }
+    property Window tipWindow: Window {
+        id: tipWindow
+        objectName: "bubbleTipWindow"
+        flags: overlay.flags | Qt.WindowTransparentForInput
+        color: "transparent"
+        width: tipText.implicitWidth + 18; height: tipText.implicitHeight + 12
+        visible: false
+        Rectangle {
+            anchors.fill: parent
+            radius: 8; color: Theme.surface; border.color: Theme.line
+            Text {
+                id: tipText
+                x: 9; y: 6
+                text: bubble.state.tip
+                font.family: Theme.font; font.pixelSize: 12; color: Theme.text
+            }
         }
     }
 }

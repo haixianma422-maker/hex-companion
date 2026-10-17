@@ -2,6 +2,8 @@
 
 日期：2026-10-17。分支：`spike/qml-select-panel`。
 
+样例代码（`qml_spike/`）只保留在该分支；正式迁移结果见 [Qt 界面迁移验证](qt-migration-verification.md)。下文的“本地重跑”命令需在样例分支上执行。
+
 用 PySide6 6.12 / QML 复刻 V2 选人面板，验证迁移的技术风险。数据、客户端读取、图片缓存、快捷键直接复用 `aram_demo` 现有模块；Tk 版本没有改动。
 
 ## 范围

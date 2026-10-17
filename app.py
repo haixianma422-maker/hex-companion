@@ -22,7 +22,7 @@ def main():
         return run(Path(args.self_test))
     if getattr(sys, 'frozen', False) and os.name == 'nt' and not (args.preview or args.inspector):
         if not ctypes.windll.shell32.IsUserAnAdmin():
-            # The elevated onefile process must own its extraction directory;
+            # The elevated copy starts with a clean PyInstaller environment;
             # the original launcher exits immediately after this request.
             os.environ['PYINSTALLER_RESET_ENVIRONMENT'] = '1'
             result = ctypes.windll.shell32.ShellExecuteW(

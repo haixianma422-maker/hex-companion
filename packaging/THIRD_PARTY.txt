@@ -5,18 +5,24 @@ License. See the project LICENSE file included with new release packages.
 Third-party components and resources retain their respective licenses and terms.
 
 Dependency versions and license texts are in licenses/.
-The executable includes Python, Tcl/Tk, Pillow, RapidOCR, ONNX Runtime,
-OpenCV, NumPy, pystray and their runtime dependencies.
+The application folder includes Python, Qt 6 with PySide6, Pillow, RapidOCR,
+ONNX Runtime, OpenCV, NumPy, pystray and their runtime dependencies.
 
 Upstream source:
 Python: https://www.python.org/downloads/source/
-Tcl/Tk: https://www.tcl.tk/software/tcltk/
+Qt: https://download.qt.io/official_releases/qt/
+PySide6 / Qt for Python: https://download.qt.io/official_releases/QtForPython/
 Pillow: https://github.com/python-pillow/Pillow
 RapidOCR: https://github.com/RapidAI/RapidOCR
 ONNX Runtime: https://github.com/microsoft/onnxruntime
 OpenCV Python: https://github.com/opencv/opencv-python
 NumPy: https://github.com/numpy/numpy
 pystray: https://github.com/moses-palmer/pystray
+
+Qt 6.12 and PySide6 6.12 are used under LGPL-3.0. They are shipped unmodified
+as separate shared libraries in _internal/PySide6 and _internal/shiboken6, and
+can be replaced with compatible builds. The LGPL-3.0 and GPL-3.0 texts are in
+licenses/LGPL-3.0.txt and licenses/GPL-3.0.txt.
 
 pystray 0.19.5 is distributed under LGPL-3.0.
 Its unmodified installed Python source is also included in licenses/pystray-source/.

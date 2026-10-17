@@ -37,6 +37,9 @@ for distribution in importlib.metadata.distributions():
             if path.is_file() and path.suffix.lower() not in ('.py', '.pyc', '.pyd'):
                 (licenses / f'{name}-{file.name}').write_bytes(path.read_bytes())
 (licenses / 'DEPENDENCIES.txt').write_text('\n'.join(sorted(manifest)), encoding='utf-8')
+# PySide6/Qt are used under LGPL-3.0 but their wheels ship no license text; pystray ships both texts.
+for source, target in (('pystray-COPYING.LGPL', 'LGPL-3.0.txt'), ('pystray-COPYING', 'GPL-3.0.txt')):
+    (licenses / target).write_bytes((licenses / source).read_bytes())
 python_license = Path(sys.base_prefix) / 'LICENSE.txt'
 if python_license.is_file():
     (licenses / 'Python-LICENSE.txt').write_bytes(python_license.read_bytes())
