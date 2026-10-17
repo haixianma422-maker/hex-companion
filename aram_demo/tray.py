@@ -1,7 +1,7 @@
-"""Background controls; callbacks are queued onto the Tk thread by the caller."""
+"""Background controls; callbacks are queued onto the GUI thread by the caller."""
 import threading
 import logging
-from .theme import brand_image
+from .brand import brand_image
 
 
 class Tray:

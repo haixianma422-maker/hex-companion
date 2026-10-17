@@ -5,7 +5,6 @@ import sys
 import subprocess
 import logging
 from pathlib import Path
-import tkinter as tk
 
 from aram_demo.cache import DataStore
 from aram_demo.companion import CompanionApp
@@ -36,12 +35,6 @@ def main():
     instance_handle = single_instance() if not args.inspector else True
     if not instance_handle:
         return
-    if os.name == 'nt':
-        try:
-            ctypes.windll.shcore.SetProcessDpiAwareness(1)
-        except OSError:
-            pass
-    root = tk.Tk()
     seed = Path(__file__).resolve().parent / 'data'
     if args.preview and not getattr(sys, 'frozen', False):
         preview_root = seed.parent / '.build-cache/strict-ui-preview'
@@ -59,24 +52,33 @@ def main():
     configure(store.root)
     logger = logging.getLogger('aram_demo.app')
     logger.info('startup pid=%s preview=%s source=%s', os.getpid(), args.preview, store.source)
-    def callback_error(kind, value, tb):
-        logger.error('Tk callback failed', exc_info=(kind, value, tb))
-    root.report_callback_exception = callback_error
     if args.inspector:
+        # The developer inspector is a separate Tk tool and is not part of the release.
+        import tkinter as tk
         from aram_demo.ui import DemoApp
+        if os.name == 'nt':
+            try:
+                ctypes.windll.shcore.SetProcessDpiAwareness(1)
+            except OSError:
+                pass
+        root = tk.Tk()
+        root.report_callback_exception = lambda kind, value, tb: logger.error('Tk callback failed', exc_info=(kind, value, tb))
         DemoApp(root, store)
-    else:
-        app = CompanionApp(root, store, preview=args.preview)
-        if args.preview:
-            app.preview_next()
-            def next_preview(_=None):
-                if app.dialog is None or not app.dialog.winfo_exists():
-                    app.collapsed = False
-                    app.preview_next()
-                return 'break'
-            root.bind_all('<Control-Tab>', next_preview)
-            root.bind_all('<F10>', lambda _: app.close())
-    root.mainloop()
+        root.mainloop()
+        return
+    from PySide6.QtGui import QGuiApplication, QIcon
+    # Python exceptions raised inside Qt slots reach sys.excepthook; a windowed EXE has no console.
+    sys.excepthook = lambda kind, value, tb: logger.error('callback failed', exc_info=(kind, value, tb))
+    qt = QGuiApplication(sys.argv)
+    qt.setQuitOnLastWindowClosed(False)
+    icon = Path(__file__).resolve().parent / 'packaging/hex-companion.ico'
+    if icon.is_file():
+        qt.setWindowIcon(QIcon(str(icon)))
+    app = CompanionApp(store, preview=args.preview)
+    if args.preview:
+        # Double-click the panel title to step through the preview states.
+        app.preview_next()
+    return qt.exec()
 
 
 if __name__ == '__main__':

@@ -1,13 +1,11 @@
 import json
 import tempfile
-import tkinter as tk
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
 from aram_demo.cache import DataStore
-from aram_demo.companion import CompanionApp
-from aram_demo.ui_widgets import PixelButton
+from tests.qt_support import close_companion, new_companion
 from aram_demo.lcu import ClientState
 from aram_demo.models import Champion
 
@@ -116,16 +114,14 @@ class SourceSwitchTests(unittest.TestCase):
 
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
-        self.root = tk.Tk()
-        self.root.design_scale = 1
         self.store = DataStore(Path(self.tmp.name))
         self.store._write('champions.json', {'champions': [
             {'id': 86, 'name': '德玛西亚之力', 'slug': 'garen', 'tier': 1, 'rank': 1}]})
-        self.app = CompanionApp(self.root, self.store, preview=True, services=False)
+        self.app = new_companion(self.store)
         self.app.on_client_state(ClientState('ChampSelect', 86, queue_id=3270))
 
     def tearDown(self):
-        self.app.close()
+        close_companion(self.app)
         self.tmp.cleanup()
 
     def test_old_source_hero_response_cannot_replace_new_source(self):
@@ -140,26 +136,17 @@ class SourceSwitchTests(unittest.TestCase):
 
     def test_failed_settings_write_does_not_apply_source_selection(self):
         self.app.show_settings()
-        self.app.source_var.set('101 数据站')
+        self.app.dialog.set_value('source', 'qq101')
         with patch.object(self.store, '_write', side_effect=OSError('read-only')):
-            def visit(parent):
-                for child in parent.winfo_children():
-                    yield child
-                    yield from visit(child)
-            next(w for w in visit(self.app.dialog) if isinstance(w, PixelButton)
-                 and w.text == '保存并应用').invoke()
+            self.assertFalse(self.app.dialog.save())
         self.assertEqual(self.app.store.source, 'opgg')
-        self.assertTrue(self.app.dialog.winfo_exists())
+        self.assertIsNotNone(self.app.dialog)
+        self.assertIn('设置未能保存', self.app.dialog.page_errors['common'])
 
     def test_settings_save_switches_source_and_persists_it_for_restart(self):
         self.app.show_settings()
-        self.app.source_var.set('101 数据站')
-        def visit(parent):
-            for child in parent.winfo_children():
-                yield child
-                yield from visit(child)
-        next(w for w in visit(self.app.dialog) if isinstance(w, PixelButton)
-             and w.text == '保存并应用').invoke()
+        self.app.dialog.set_value('source', 'qq101')
+        self.assertTrue(self.app.dialog.save())
         self.assertEqual(self.app.store.source, 'qq101')
         self.assertEqual(DataStore(Path(self.tmp.name)).source, 'qq101')
 
@@ -167,33 +154,30 @@ class SourceSwitchTests(unittest.TestCase):
         for phase, name, source in [('ChampSelect', '101 数据站', 'qq101'), ('InProgress', 'OP.GG', 'opgg')]:
             with self.subTest(phase=phase):
                 self.app.on_client_state(ClientState(phase, 86, queue_id=3270))
-                self.app.panel.source_picker._choose(0 if source=='opgg' else 1)
-                self.root.update()
+                self.app.panel.chooseSource(source)
                 self.assertEqual(self.app.store.source, source)
                 self.assertEqual(DataStore(Path(self.tmp.name)).source, source)
-                self.assertEqual(self.app.panel.quick_source_var.get(), name)
+                self.assertEqual(self.app.panel.view['source'], source)
+                self.assertIn(name, self.app.panel.content_text())
 
     def test_quick_source_save_failure_keeps_active_source_and_picker(self):
         with patch.object(self.store, '_write', side_effect=OSError('read-only')):
-            self.app.panel.source_picker._choose(1)
-            self.root.update()
+            self.app.panel.chooseSource('qq101')
         self.assertEqual(self.app.store.source, 'opgg')
-        self.assertEqual(self.app.panel.quick_source_var.get(), 'OP.GG')
+        self.assertEqual(self.app.panel.view['source'], 'opgg')
 
     def test_repeated_failed_source_save_restores_the_active_picker_each_time(self):
         with patch.object(self.store, '_write', side_effect=OSError('read-only')):
             for _ in range(2):
-                self.app.panel.source_picker._choose(1)
-                self.root.update()
+                self.app.panel.chooseSource('qq101')
                 self.assertEqual(self.app.store.source, 'opgg')
-                self.assertEqual(self.app.panel.quick_source_var.get(), 'OP.GG')
+                self.assertEqual(self.app.panel.view['source'], 'opgg')
 
     def test_source_can_be_switched_while_old_source_worker_is_pending(self):
         pending = []
         self.app.background = lambda job, callback, **kwargs: pending.append((callback, kwargs))
         self.app.fetch_hero(86)
-        self.app.panel.source_picker._choose(1)
-        self.root.update()
+        self.app.panel.chooseSource('qq101')
         callback, kwargs = pending[0]
         self.app.deliver(kwargs.get('ticket'), callback, {'source_id': 'opgg', 'augments': []}, None)
         self.assertEqual(self.app.store.source, 'qq101')

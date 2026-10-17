@@ -13,7 +13,7 @@ from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from aram_demo.theme import brand_image
+from aram_demo.brand import brand_image
 from scripts.release_seed import snapshot_seed
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--dist-dir', type=Path, default=ROOT / 'dist')
