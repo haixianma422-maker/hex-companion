@@ -28,6 +28,11 @@ class Build:
     category: str
 
 
+def is_placeholder_name(name):
+    """Internal game keys such as GoH_PentakillAug_Generic_BlankName are not titles."""
+    return '_' in name and name.isascii() and name.replace('_', '').isalnum()
+
+
 def sort_champions(champions):
     return sorted(champions, key=lambda c: (
         c.tier if c.tier is not None else 999,

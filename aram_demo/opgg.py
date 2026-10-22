@@ -5,7 +5,7 @@ import urllib.request
 from urllib.parse import urlparse
 from html import unescape
 
-from .models import Augment, Build, Champion
+from .models import Augment, Build, Champion, is_placeholder_name
 
 BASE = 'https://op.gg/zh-cn/lol/modes/aram-mayhem'
 
@@ -82,7 +82,8 @@ def parse_augments(html):
             if not isinstance(value, dict) or not {'id', 'name', 'tier', 'rarity', 'performance'} <= value.keys():
                 continue
             aid = integer(value['id'])
-            if aid and isinstance(value['name'], str) and value['name'].strip():
+            if (aid and isinstance(value['name'], str) and value['name'].strip()
+                    and not is_placeholder_name(value['name'].strip())):
                 found[aid] = Augment(aid, value['name'].strip(), integer(value['tier']), integer(value['rarity']))
     if not found:
         raise ValueError('未找到具名海克斯数据，OP.GG 页面结构可能已变化')

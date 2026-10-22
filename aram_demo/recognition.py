@@ -51,6 +51,21 @@ def title_query(text, known_names=()):
     return query
 
 
+def with_catalog(rated, catalog):
+    """Source entries keep their ratings. The catalog adds only titles the source
+    lacks, so one title never maps to two ids and turns an exact read ambiguous."""
+    ids = {augment.id for augment in rated}
+    names = {normalize(augment.name) for augment in rated}
+    extra = []
+    for augment in catalog:
+        name = normalize(augment.name)
+        if augment.id not in ids and name not in names:
+            ids.add(augment.id)
+            names.add(name)
+            extra.append(augment)
+    return list(rated) + extra
+
+
 def match_slots(texts, augments):
     names = {}
     for augment in augments:

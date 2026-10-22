@@ -13,7 +13,7 @@ from dataclasses import asdict
 from datetime import datetime, timedelta, timezone
 from functools import lru_cache
 
-from .models import Augment, Build, Champion
+from .models import Augment, Build, Champion, is_placeholder_name
 
 SOURCE_ID = 'qq101'
 SOURCE_NAME = '101 数据站'
@@ -186,10 +186,40 @@ def _augments(fields, champion_id, metadata):
             if aid in seen or not isinstance(name, str) or not name.strip() or rarity is None:
                 raise ValueError('101 海克斯字典不完整或包含重复条目')
             seen.add(aid)
+            if is_placeholder_name(name.strip()):
+                continue
             result.append(asdict(Augment(aid, name.strip(), 'SABC'.index(parts[5]), rarity)))
     if not result:
         raise ValueError('101 缺少综合海克斯评级（255）')
     return result
+
+
+def catalog_augments(metadata):
+    """Live Mayhem (KIWI) titles without ratings; PBE, retired and placeholder rows are excluded."""
+    if not isinstance(metadata, list):
+        raise ValueError('101 海克斯字典结构变化')
+    result, seen = [], set()
+    for row in metadata:
+        if not isinstance(row, dict) or not str(row.get('augmentID', '')).isdigit():
+            continue
+        aid, name = int(row['augmentID']), row.get('name_cn')
+        modes = {mode.strip() for mode in str(row.get('mode') or '').split(',')}
+        rarity = RARITIES.get(row.get('level'))
+        if ('KIWI' not in modes or str(row.get('isPBE')) == '1' or rarity is None or aid in seen
+                or not isinstance(name, str) or not name.strip() or is_placeholder_name(name.strip())):
+            continue
+        seen.add(aid)
+        result.append(Augment(aid, name.strip(), None, rarity))
+    if not result:
+        raise ValueError('101 海克斯字典为空')
+    return result
+
+
+def fetch_augment_catalog():
+    # A direct read: the in-process metadata cache would keep a pre-patch dictionary.
+    return {'augments': [asdict(a) for a in catalog_augments(fetch_json(AUGMENTS))],
+            'source_id': SOURCE_ID, 'source_name': SOURCE_NAME, 'source': AUGMENTS, 'fetched_at': _stamp(),
+            'filter': 'mode contains KIWI; isPBE, empty names and internal placeholder keys excluded; tier unrated'}
 
 
 def _optional_rows(raw):

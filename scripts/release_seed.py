@@ -4,7 +4,7 @@ import shutil
 from pathlib import Path
 
 STATIC_FILES=('champions.json','augment_display_tags.json','item_catalog.json',
-              'tier_mapping_evidence.json','visual_catalog.json')
+              'tier_mapping_evidence.json','visual_catalog.json','augment_catalog.json')
 
 def snapshot_seed(data,target):
     data,target=Path(data),Path(target)

@@ -442,7 +442,9 @@ class CompanionAppTests(unittest.TestCase):
         from aram_demo.companion_state import PanelState
         self.app.services, self.app.preview = True, False
         self.app.state = PanelState('select', 'ChampSelect', 222, queue_id=2400)
-        hero = dict(self.app.store.hero(222), fetched_at=datetime.now(timezone.utc).isoformat())
+        # Same version as the index: a refreshed local data/champions.json must not decide this test.
+        hero = dict(self.app.store.hero(222), patch=self.app.store.index_patch(),
+                    fetched_at=datetime.now(timezone.utc).isoformat())
         with patch.object(self.app, 'fetch_hero') as fetch, \
              patch.object(self.app, 'refresh_icons'), patch.object(self.app, 'refresh_visual_assets'), \
              patch.object(self.app, 'refresh_index'), patch.object(self.app, 'background'):

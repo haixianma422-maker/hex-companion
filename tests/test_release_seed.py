@@ -11,7 +11,7 @@ class ReleaseSeedTests(unittest.TestCase):
             def put(relative,value):
                 path=root/relative;path.parent.mkdir(parents=True,exist_ok=True)
                 path.write_text(json.dumps(value),encoding='utf-8')
-            for name in ('champions.json','augment_display_tags.json','item_catalog.json','tier_mapping_evidence.json','visual_catalog.json'):
+            for name in ('champions.json','augment_display_tags.json','item_catalog.json','tier_mapping_evidence.json','visual_catalog.json','augment_catalog.json'):
                 put(name,{'source':'public'})
             put('heroes/101.json',{'champion_id':101,'source_id':'opgg','build_mode_verified':True,'build_mode':'aram-mayhem'})
             put('heroes/222.json',{'champion_id':222,'build_mode_verified':False})

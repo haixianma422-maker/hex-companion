@@ -9,7 +9,7 @@ from PySide6.QtCore import QTimer
 from PySide6.QtGui import QGuiApplication
 
 from .companion_state import MAYHEM_QUEUES, PLAYING, SessionTracker
-from .cache import DataStore, SOURCE_NAMES, is_fresh
+from .cache import DataStore, SOURCE_NAMES, is_current, is_fresh
 from .advice_icons import AdviceIconCache
 from .builds import recommended_items
 from .hotkeys import Hotkeys
@@ -20,7 +20,7 @@ from .qt_overlay import CompanionBubble, CompanionPanel, Overlay
 from .qt_settings import show_settings
 from .visual_assets import VisualAssetCache
 from .runtime_log import health as log_health
-from .recognition import Recognizer, match_slots
+from .recognition import Recognizer, match_slots, with_catalog
 from .windows import LeagueWindow, find_league_window, foreground_is_ours, message_box
 
 AUTO_SCAN_INTERVAL = .25
@@ -49,6 +49,7 @@ class CompanionApp:
         self.auto = self.settings.get('auto_recognize', True)
         self.events = queue.Queue()
         self.data, self.augments, self.matches = None, [], []
+        self.catalog, self.catalog_pending = store.augment_catalog(), False
         self.status = '等待海克斯大乱斗'
         self.collapsed = self.scanning = self.poll_pending = False
         self.scan_feedback = False
@@ -87,6 +88,7 @@ class CompanionApp:
         self.panel.item_icons = self.item_icons
         self.panel.advice_icons = self.advice_icons
         self.panel.visual_assets = self.visual_assets
+        self.panel.catalog = {augment.id: augment for augment in self.catalog}
         self.panel.on_correct = lambda slot: self.show_settings(slot)
         self.panel.on_refresh = self.refresh
         self.panel.data_loading = False
@@ -244,15 +246,21 @@ class CompanionApp:
     def load_data(self):
         cid = self.state.champion_id
         self.data = self.store.hero(cid) if cid else None
-        self.augments = [Augment(**a) for a in (self.data or {}).get('augments', [])]
+        self.augments = self.recognizable(self.data)
         self.status = self.cache_status()
         self.update_source_error()
         self.update_data_loading()
         self.refresh_icons()
         self.refresh_visual_assets()
         # Champion changes are frequent in select; refresh() still forces a fetch.
-        if cid in self.champions and self.services and not self.preview and not is_fresh(self.data):
+        # A new game version retires a recent snapshot: its augment pool is outdated.
+        if (cid in self.champions and self.services and not self.preview
+                and not is_current(self.data, self.store.index_patch())):
             self.fetch_hero(cid)
+
+    def recognizable(self, data):
+        """Rated source augments first; catalog titles let new augments be named before they are rated."""
+        return with_catalog([Augment(**a) for a in (data or {}).get('augments', [])], self.catalog)
 
     def cache_status(self):
         stamp = (self.data or {}).get('fetched_at', '')[:16].replace('T', ' ')
@@ -410,7 +418,7 @@ class CompanionApp:
                                                 store.source, cid, len(data.get('augments', [])), data.get('build_mode_verified'),
                                                 time.monotonic() - started)
                 self.data = data
-                self.augments = [Augment(**a) for a in data.get('augments', [])]
+                self.augments = self.recognizable(data)
                 self.status = self.cache_status()
                 self.refresh_icons()
                 self.refresh_visual_assets()
@@ -433,8 +441,11 @@ class CompanionApp:
         def loaded(data):
             self.champions = {c.id: c for c in store.champions()}
             self.panel.signature = None
-            if self.data is None and self.state.champion_id:
+            cid = self.state.champion_id
+            if self.data is None and cid:
                 self.load_data()
+            elif cid in self.champions and not is_current(self.data, data.get('patch')):
+                self.fetch_hero(cid)
             self.refresh_visual_assets()
             self.present()
         def finished():
@@ -443,6 +454,29 @@ class CompanionApp:
             self.update_data_loading()
         self.background(lambda: store.refresh(None), loaded, ticket=('source', id(store)),
                         done=finished)
+        self.refresh_catalog()
+
+    def refresh_catalog(self):
+        """Refresh the shared title catalog daily; failures keep the previous one silently."""
+        if self.catalog_pending or is_fresh(self.store.read('augment_catalog.json')):
+            return
+        self.catalog_pending = True
+        store = self.store
+        def fetch():
+            try:
+                return store.refresh_augment_catalog()
+            except (OSError, ValueError) as exc:
+                logging.getLogger(__name__).warning('augment catalog refresh failed: %s', exc)
+                return None
+        def loaded(data):
+            if not data:
+                return
+            self.catalog = store.augment_catalog()
+            self.panel.catalog = {augment.id: augment for augment in self.catalog}
+            self.augments = self.recognizable(self.data)
+            logging.getLogger(__name__).info('augment catalog loaded titles=%s', len(self.catalog))
+            self.present()
+        self.background(fetch, loaded, done=lambda: setattr(self, 'catalog_pending', False))
 
     def locate(self):
         if self.preview:
