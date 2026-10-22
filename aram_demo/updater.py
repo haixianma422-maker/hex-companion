@@ -1,7 +1,8 @@
 """Program updates through Velopack: CNB first for mainland users, GitHub as fallback.
 
-Each release carries releases.win.json and its packages, so the fixed latest/download
-address of either host is a complete Velopack feed.
+Each GitHub release carries releases.win.json and its packages, so the fixed latest/download
+address is a complete Velopack feed. CNB documents no such address, so its feed lives in one
+release whose tag never changes; the publish script replaces its packages each time.
 """
 import logging
 import os
@@ -12,7 +13,8 @@ from . import __version__
 PACK_ID = 'HaixianMa.HexCompanion'
 GITHUB_REPO = 'haixianma422-maker/hex-companion'
 CNB_REPO = 'haixianma422-maker/hex-companion'
-FEEDS = (('CNB', f'https://cnb.cool/{CNB_REPO}/-/releases/latest/download'),
+CNB_FEED_TAG = 'update-feed'
+FEEDS = (('CNB', f'https://cnb.cool/{CNB_REPO}/-/releases/download/{CNB_FEED_TAG}'),
          ('GitHub', f'https://github.com/{GITHUB_REPO}/releases/latest/download'))
 CHECK_TIMEOUT_MS = 15_000
 DOWNLOAD_TIMEOUT_MS = 30 * 60_000
@@ -38,10 +40,15 @@ def velopack_manager(source, timeout_ms):
 
 
 class Updater:
-    """One check and download at a time, off the GUI thread; results return through dispatch."""
+    """One check and download at a time, off the GUI thread; results return through dispatch.
 
-    def __init__(self, dispatch, notify, on_ready=None, manager=velopack_manager, sources=None):
+    notify carries background news (a finished download). answer replies to a check the user
+    started, so it needs a channel that system notification settings cannot hide.
+    """
+
+    def __init__(self, dispatch, notify, answer=None, on_ready=None, manager=velopack_manager, sources=None):
         self.dispatch, self.notify, self.on_ready, self.manager = dispatch, notify, on_ready, manager
+        self.answer = answer or notify
         self.sources = sources or feeds()
         self.busy = False
         self.ready = None
@@ -59,15 +66,15 @@ class Updater:
     def check(self, manual=False):
         if not self.installed:
             if manual:
-                self.notify('当前运行的不是安装版，无法自动更新。请从发布页下载安装包。')
+                self.answer('当前运行的不是安装版，无法自动更新。请从发布页下载安装包。')
             return
         if self.ready:
             if manual:
-                self.notify(f'新版本 {self.ready_version} 已下载，在托盘菜单选择“重启并更新”即可安装。')
+                self.answer(f'新版本 {self.ready_version} 已下载，在托盘菜单选择“重启并更新”即可安装。')
             return
         if self.busy:
             if manual:
-                self.notify('正在检查或下载更新，完成后会提示。')
+                self.answer('正在检查或下载更新，请稍候。')
             return
         self.busy = True
         threading.Thread(target=self._run, args=(manual,), daemon=True).start()
@@ -95,7 +102,8 @@ class Updater:
             version = info.TargetFullRelease.Version
             logger.info('update %s found via %s, deltas=%s', version, name, len(info.DeltasToTarget))
             if manual:
-                self.dispatch(lambda: self.notify(f'发现新版本 {version}，正在后台下载。'))
+                self.dispatch(lambda: self.answer(f'发现新版本 {version}，正在后台下载。\n'
+                                                  '下载完成后，托盘菜单会出现“重启并更新”。'))
             try:
                 manager = self.manager(source, DOWNLOAD_TIMEOUT_MS)
                 manager.download_updates(info)
@@ -110,11 +118,11 @@ class Updater:
         self.busy = False
         if isinstance(result, Exception):
             if manual:
-                self.notify('检查更新失败：' + str(result)[:120])
+                self.answer('检查更新失败：' + str(result)[:120])
             return
         if result is None:
             if manual:
-                self.notify(f'已是最新版本 {__version__}。')
+                self.answer(f'已是最新版本 {__version__}。')
             return
         self.ready = result
         logger.info('update %s downloaded', self.ready_version)

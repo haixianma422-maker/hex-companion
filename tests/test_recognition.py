@@ -167,7 +167,6 @@ class RecognitionTests(unittest.TestCase):
         with patch.object(recognizer, 'read_image', return_value='海克斯') as ocr:
             self.assertIsNone(recognizer.read_screen(frame, [], automatic=True))
             ocr.assert_not_called()
-            self.assertIsNone(recognizer._engine)
             recognizer.read_screen(frame, [], automatic=True, force=True)
             self.assertEqual(ocr.call_count, 3, 'F6 must bypass the visual gate')
 

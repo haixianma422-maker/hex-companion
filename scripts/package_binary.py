@@ -22,7 +22,8 @@ def package(exe,check_path):
     assert not any('settings.json' in name or 'lockfile' in name or name.startswith('data/logs/') for name in names)
     assert not any(path.suffix in ('.log','.tmp') for path in app_dir.rglob('*')),'Runtime files inside the build folder'
     models=[name for name in names if name.endswith('.onnx')]
-    assert len(models)==2
+    assert models==['models/PP-OCRv6_rec_small.onnx'],models
+    assert not any(name.startswith(('cv2/','rapidocr/','shapely/')) for name in names),'RapidOCR pipeline bundled'
     for source,prefix in (('opgg','data/heroes/'),('qq101','data/sources/qq101/heroes/')):
         snapshots=[name for name in names if name.startswith(prefix) and name.endswith('.json')]
         assert snapshots,f'No verified seed for {source}'
@@ -33,7 +34,8 @@ def package(exe,check_path):
     assert 'data/sources/qq101/champions.json' in names
     assert {'aram_demo/qml/Overlay.qml','aram_demo/qml/Panel.qml','aram_demo/qml/Settings.qml'} <= set(names)
     pyz=CArchiveReader(str(exe)).open_embedded_archive('PYZ.pyz')
-    assert all(name in pyz.toc for name in ('aram_demo.qq101','aram_demo.opgg','aram_demo.qt_overlay','aram_demo.qt_settings'))
+    assert all(name in pyz.toc for name in ('aram_demo.qq101','aram_demo.opgg','aram_demo.qt_overlay','aram_demo.qt_settings',
+                                            'aram_demo.ocr','winrt.windows.media.ocr'))
     assert 'tkinter' not in pyz.toc
     inventory=json.loads(names['data/visual-assets/resource-cache-manifest.json'].read_text(encoding='utf-8'))
     for asset in inventory['assets']:

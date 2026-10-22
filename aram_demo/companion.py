@@ -22,7 +22,7 @@ from .visual_assets import VisualAssetCache
 from .runtime_log import health as log_health
 from .updater import CHECK_INTERVAL_MS, FIRST_CHECK_MS, Updater
 from .recognition import Recognizer, match_slots, with_catalog
-from .windows import LeagueWindow, find_league_window, foreground_is_ours, message_box
+from .windows import LeagueWindow, find_league_window, foreground_is_ours, message_box, show_message
 
 AUTO_SCAN_INTERVAL = .25
 IDLE_SCAN_INTERVAL = 1.5
@@ -105,7 +105,8 @@ class CompanionApp:
         self.bubble.set_hotkeys(self.hotkeys.bindings)
         if services:
             from .tray import Tray
-            self.updater = Updater(self.dispatch, self.notify, on_ready=lambda: self.tray and self.tray.refresh_menu())
+            self.updater = Updater(self.dispatch, self.notify, self.answer,
+                                   on_ready=lambda: self.tray and self.tray.refresh_menu())
             self.tray = Tray(self.dispatch, self.toggle, self.show_settings, self.refresh, self.close, self.tray_failed,
                              updates=(lambda: self.updater.check(manual=True), self.restart_update,
                                       lambda: self.updater.ready_version))
@@ -697,6 +698,11 @@ class CompanionApp:
         if self.tray:
             self.tray.notify(text)
 
+    def answer(self, text):
+        # Replies to a tray command. Tray balloons vanish when Windows notifications are off.
+        if not self.closed:
+            show_message('海克斯随行', text)
+
     def auto_check_update(self):
         if self.closed:
             return
@@ -706,7 +712,7 @@ class CompanionApp:
     def restart_update(self):
         # Restarting closes the overlay, so it waits for the lobby, champion select and the game to end.
         if self.state.phase in ACTIVE:
-            self.notify('组队、选人或对局中暂不重启。结束后再选“重启并更新”，退出程序时也会自动安装。')
+            self.answer('组队、选人或对局中暂不重启。结束后再选“重启并更新”，退出程序时也会自动安装。')
             return
         if not self.updater.ready:
             return
@@ -714,7 +720,7 @@ class CompanionApp:
             self.updater.restart()
         except Exception as exc:
             logging.getLogger(__name__).exception('启动更新失败')
-            self.notify('启动更新失败：' + str(exc)[:120])
+            self.answer('启动更新失败：' + str(exc)[:120])
             return
         self.close()
 

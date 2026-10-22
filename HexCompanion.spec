@@ -1,10 +1,11 @@
 # Build from this directory with: .venv/Scripts/python.exe -m PyInstaller HexCompanion.spec
 # Output is a folder (dist/HexCompanion): a one-file EXE would unpack Qt on every start.
 from pathlib import Path
+import importlib.util
 import os
 import json
 import re
-from PyInstaller.utils.hooks import collect_data_files, collect_dynamic_libs
+from PyInstaller.utils.hooks import collect_dynamic_libs
 
 root = Path(SPECPATH)
 seed = Path(os.environ.get('HEX_COMPANION_SEED_DIR', root / 'data'))
@@ -23,7 +24,10 @@ for prefix in (Path(), Path('sources/qq101')):
         row = json.loads(path.read_text(encoding='utf-8'))
         if row.get('build_mode_verified') and row.get('build_mode') == 'aram-mayhem':
             datas.append((str(path), 'data/' + (prefix / 'heroes').as_posix()))
-datas += collect_data_files('rapidocr', includes=['*.yaml', 'models/PP-OCRv6_det_small.onnx', 'models/PP-OCRv6_rec_small.onnx'])
+# Windows' own OCR reads titles. Only RapidOCR's recognition model ships, for the reread of
+# titles Windows could not match (aram_demo/ocr.py); RapidOCR's code and OpenCV stay out.
+rapidocr = Path(importlib.util.find_spec('rapidocr').submodule_search_locations[0])
+datas.append((str(rapidocr / 'models/PP-OCRv6_rec_small.onnx'), 'models'))
 datas += [(str(path), 'licenses') for path in (root / 'packaging/licenses').glob('*')]
 datas += [(str(path), 'aram_demo/qml') for path in (root / 'aram_demo/qml').iterdir() if path.is_file()]
 datas.append((str(root / 'packaging/hex-companion.ico'), 'packaging'))
@@ -37,13 +41,19 @@ UNUSED_QT = re.compile(r'(opengl32sw|Qt6Pdf|Qt6VirtualKeyboard|Qt6QuickTest|Qt6T
 
 a = Analysis([str(root / 'app.py')], pathex=[str(root)],
     binaries=collect_dynamic_libs('onnxruntime'), datas=datas,
-    hiddenimports=['rapidocr.main', 'rapidocr.inference_engine.onnxruntime', 'pystray._win32',
-                   'PySide6.QtQuick', 'PySide6.QtQml'],
+    hiddenimports=['pystray._win32', 'PySide6.QtQuick', 'PySide6.QtQml'],
     hookspath=[], hooksconfig={}, runtime_hooks=[str(root / 'scripts/frozen_streams.py')],
-    excludes=['pytest', 'IPython', 'matplotlib', 'torch', 'paddle', 'tensorflow', 'openvino', 'tkinter'],
+    excludes=['pytest', 'IPython', 'matplotlib', 'torch', 'paddle', 'tensorflow', 'openvino', 'tkinter',
+              'rapidocr', 'cv2', 'shapely', 'pyclipper'],
     noarchive=False)
-a.binaries = [entry for entry in a.binaries if not UNUSED_QT.search(entry[0])]
-a.datas = [entry for entry in a.datas if not UNUSED_QT.search(entry[0])]
+# Other unused parts: Pillow's AVIF codec, QML debugger plugins, Qt's OpenSSL TLS backend (Python's
+# own OpenSSL, libcrypto-3.dll/libssl-3.dll, stays) and pywinrt's msvcp140.dll 14.29, which
+# onnxruntime cannot run beside; Qt's newer copy serves both. Keep PySide6.QtOpenGL: importing
+# PySide6.QtQuick loads it.
+UNUSED_OTHER = re.compile(r'([\\/]_avif\.|qmltooling[\\/]|qopensslbackend|lib(crypto|ssl)-3-x64\.dll|'
+                          r'winrt[\\/]msvcp140\.dll)', re.I)
+a.binaries = [entry for entry in a.binaries if not (UNUSED_QT.search(entry[0]) or UNUSED_OTHER.search(entry[0]))]
+a.datas = [entry for entry in a.datas if not (UNUSED_QT.search(entry[0]) or UNUSED_OTHER.search(entry[0]))]
 pyz = PYZ(a.pure)
 exe = EXE(pyz, a.scripts, [], exclude_binaries=True, name='HexCompanion',
     debug=False, bootloader_ignore_signals=False, strip=False, upx=False,

@@ -39,7 +39,7 @@ class CompanionAppTests(unittest.TestCase):
         from unittest.mock import Mock
         self.app.updater = Mock(ready=('manager', 'info'))
         notes = []
-        self.app.notify = notes.append
+        self.app.answer = notes.append
         for phase in ('Lobby', 'ChampSelect', 'InProgress'):
             self.app.on_client_state(ClientState(phase, 222, queue_id=2400))
             self.app.restart_update()

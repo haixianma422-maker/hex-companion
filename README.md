@@ -61,7 +61,7 @@
 
 **程序更新**：从 v0.8.0 起，Releases 提供安装包 `HaixianMa.HexCompanion-win-Setup.exe` 和免安装包 `HaixianMa.HexCompanion-win-Portable.zip`，两者都能自动更新。安装包装到 `%LOCALAPPDATA%\HaixianMa.HexCompanion`。工具启动约 1 分钟后检查一次新版本，之后每 6 小时检查一次；先查 [CNB 镜像](https://cnb.cool/haixianma422-maker/hex-companion)，连不上再查 GitHub。新版本在后台下载，通常只需下载差量包。下载完成后，在托盘菜单选“重启并更新”即可安装，组队、选人和对局中不会重启；也可以直接退出，退出时自动安装。托盘菜单的“检查更新”可随时手动检查。v0.7.0 及更早的压缩包不含更新程序，需要重新下载一次安装包。
 
-EXE 的设置和更新缓存保存在 `%LOCALAPPDATA%\HexCompanion\data`。获取新资料需要能够访问所选数据来源；101 的召唤师技能补充需要访问 OP.GG。已有缓存和内置 OCR 模型可离线使用。
+EXE 的设置和更新缓存保存在 `%LOCALAPPDATA%\HexCompanion\data`。获取新资料需要能够访问所选数据来源；101 的召唤师技能补充需要访问 OP.GG。已有缓存和文字识别可离线使用。
 
 在“设置 → 快捷键”中点击输入框后按下组合键，或填写 `F8`、`Ctrl+Alt+H` 等形式。重复、无效或已被其他程序占用的组合会提示错误，并保留原设置；设置窗口打开期间暂停全局快捷键。
 
@@ -164,7 +164,19 @@ dotnet tool install -g vpk --version 1.2.161
 - `gh` 已登录；已添加 CNB 远程仓库：`git remote add cnb https://cnb.cool/haixianma422-maker/hex-companion.git`。
 - 环境变量 `CNB_TOKEN` 是有该仓库 Release 读写权限的 CNB 访问令牌。
 
-每个 Release 上传本版完整包、最近 10 个差量包、安装包、免安装包，最后上传 `releases.win.json`，再标为最新正式版。客户端从两边固定的 `latest/download` 地址读取更新，所以带更新的版本不能标为预发布。CNB 仓库地址改变时，同步修改 `aram_demo/updater.py` 的 `CNB_REPO`。测试时可设置环境变量 `HEX_COMPANION_UPDATE_URL` 指向本地更新目录，代替两个线上地址。
+GitHub 的版本 Release 上传本版完整包、最近 10 个差量包、安装包、免安装包，最后上传 `releases.win.json`，再标为最新正式版。客户端从 GitHub 固定的 `latest/download` 地址读取更新，所以带更新的版本不能标为预发布。
+
+CNB 没有文档化的 `latest/download` 地址，客户端改从固定标签 `update-feed` 的 Release（“自动更新源”）读取：完整包、差量包和 `releases.win.json` 上传到这里，新更新源上线后删除它不再列出的旧包；安装包和免安装包上传到本版 Release，再标为最新正式版。`update-feed` 标签首次发布时自动创建，之后不移动，这个 Release 不要删除。
+
+CNB 上传中断时，用同一版本号补传，已完整上传的附件会跳过，不重新打包，也不再上传 GitHub：
+
+```powershell
+.\.venv\Scripts\python.exe scripts/publish_update.py --cnb-only --notes 版本说明.md
+```
+
+CNB 仓库地址改变时，同步修改 `aram_demo/updater.py` 的 `CNB_REPO`。测试时可设置环境变量 `HEX_COMPANION_UPDATE_URL` 指向本地更新目录，代替两个线上地址。
+
+托盘的“检查更新”和“重启并更新”用程序自己的对话框回复结果，不依赖 Windows 通知；后台自动检查只在下载完新版本后发一条托盘通知。
 
 ## 常见问题
 
@@ -178,7 +190,7 @@ EXE 启动时确认管理员提示。源码版使用管理员入口，必要时�
 
 **部分海克斯显示待确认**
 
-按 F6 重识别，或调整三个标题区域。也可在设置里手动选择选项。OCR 无法确定名称时保留待确认状态；手动修正后按 F6 恢复自动识别。新版本上线初期，来源尚未统计的新海克斯按名称表识别，显示名称和“暂无评级”。
+按 F6 重识别，或调整三个标题区域。也可在设置里手动选择选项。标题先由 Windows 自带的简体中文文字识别读取，对不上海克斯名称时再由内置的 PP-OCRv6 识别模型补读。系统缺少该组件时只用内置模型，识别仍可用，但每张卡慢约 10 ms；可在“设置 → 时间和语言 → 语言和区域”为“中文(简体)”安装“光学字符识别”。OCR 无法确定名称时保留待确认状态；手动修正后按 F6 恢复自动识别。新版本上线初期，来源尚未统计的新海克斯按名称表识别，显示名称和“暂无评级”。
 
 **切换 101 后加载较慢或图片不完整**
 

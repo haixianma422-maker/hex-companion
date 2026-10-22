@@ -7,6 +7,8 @@ from dataclasses import dataclass, field
 from difflib import SequenceMatcher
 from pathlib import Path
 
+from .ocr import TitleOcr
+
 DEFAULT_REGIONS = [(0.22, 0.34, 0.39, 0.44), (0.415, 0.34, 0.585, 0.44), (0.61, 0.34, 0.78, 0.44)]
 # Complete display-tag family extracted from the versioned Chinese game resource.
 # Keep resource metadata and definitions together; the audit script checks this snapshot.
@@ -15,6 +17,8 @@ TAG_DEFINITIONS = json.loads((Path(__file__).resolve().parents[1] / 'data' /
 TITLE_CATEGORY_CHIPS = frozenset(value.strip() for value in TAG_DEFINITIONS.values())
 CHIP_LINE = re.compile('(?:' + '|'.join(re.escape(tag) for tag in
                                      sorted(TITLE_CATEGORY_CHIPS, key=len, reverse=True)) + ')+')
+# One engine pair for every Recognizer: changing the regions must not reload the OCR model.
+TITLE_OCR = TitleOcr()
 
 
 @dataclass(frozen=True)
@@ -113,28 +117,14 @@ class Recognizer:
             x1, y1, x2, y2 = region
             if not (0 <= x1 < x2 <= 1 and 0 <= y1 < y2 <= 1):
                 raise ValueError('区域坐标需在 0～1 内，且右下角大于左上角')
-        self._engine = None
-        self._lock = threading.Lock()
         self._screen_lock = threading.Lock()
         self._slot_cache = [None] * 3
 
-    def read_image(self, image):
-        import numpy as np
-        from rapidocr import RapidOCR
-        with self._lock:
-            if self._engine is None:
-                # These are small, horizontal game titles. The default detector
-                # enlarges their short side to 736px, doing several seconds of
-                # unnecessary work. Keep their native scale (cap large crops)
-                # and bound inference threads so OCR can coexist with the game.
-                self._engine = RapidOCR(params={
-                    'Det.limit_type': 'max', 'Det.limit_side_len': 736,
-                    'Global.use_cls': False,
-                    'EngineConfig.onnxruntime.intra_op_num_threads': 2,
-                    'EngineConfig.onnxruntime.inter_op_num_threads': 1,
-                })
-            output = self._engine(np.array(image.convert('RGB')))
-            return '\n'.join(output.txts or [])
+    def read_image(self, image, augments=()):
+        """OCR text of one title region. With augments, a read naming none is retried."""
+        crop = image.convert('RGB')
+        matches = (lambda text: match_slots([text], augments)[0].status == 'matched') if augments else None
+        return TITLE_OCR.read(crop, self.title_mask(crop), matches)
 
     def title_mask(self, crop):
         from PIL import ImageChops
@@ -189,7 +179,7 @@ class Recognizer:
                 if not force and cached is not None and now - cached[3] < cache_seconds and same:
                     text = cached[1]
                 else:
-                    text = self.read_image(crop)
+                    text = self.read_image(crop, augments)
                     if mask is None:
                         mask = self.title_mask(crop)
                     self._slot_cache[slot] = (pixels, text, mask, now)
