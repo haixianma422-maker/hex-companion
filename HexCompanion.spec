@@ -42,8 +42,13 @@ a = Analysis([str(root / 'app.py')], pathex=[str(root)],
     hookspath=[], hooksconfig={}, runtime_hooks=[str(root / 'scripts/frozen_streams.py')],
     excludes=['pytest', 'IPython', 'matplotlib', 'torch', 'paddle', 'tensorflow', 'openvino', 'tkinter'],
     noarchive=False)
-a.binaries = [entry for entry in a.binaries if not UNUSED_QT.search(entry[0])]
-a.datas = [entry for entry in a.datas if not UNUSED_QT.search(entry[0])]
+# Other unused parts: OpenCV's video I/O backend, Pillow's AVIF codec, QML debugger plugins and
+# Qt's OpenSSL TLS backend (Python's own OpenSSL, libcrypto-3.dll/libssl-3.dll, stays). Keep
+# PySide6.QtOpenGL: importing PySide6.QtQuick loads it.
+UNUSED_OTHER = re.compile(r'(opencv_videoio_ffmpeg|[\\/]_avif\.|qmltooling[\\/]|qopensslbackend|'
+                          r'lib(crypto|ssl)-3-x64\.dll)', re.I)
+a.binaries = [entry for entry in a.binaries if not (UNUSED_QT.search(entry[0]) or UNUSED_OTHER.search(entry[0]))]
+a.datas = [entry for entry in a.datas if not (UNUSED_QT.search(entry[0]) or UNUSED_OTHER.search(entry[0]))]
 pyz = PYZ(a.pure)
 exe = EXE(pyz, a.scripts, [], exclude_binaries=True, name='HexCompanion',
     debug=False, bootloader_ignore_signals=False, strip=False, upx=False,
