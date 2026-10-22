@@ -76,6 +76,13 @@ def run(report_path):
             report['ocr'] = [{'text': m.text, 'augment_id': m.augment_id, 'status': m.status} for m in matches]
             assert [m.augment_id for m in matches] == [1356, 1133, 1225], f'OCR mismatch: {report["ocr"]}'
             assert all(m.status == 'matched' for m in matches)
+            # Windows OCR answered above; the bundled model must reread on its own as well.
+            from aram_demo.recognition import TITLE_OCR
+            report['ocr_engines'] = {'windows': TITLE_OCR._windows is not None, 'model': TITLE_OCR._model is not None}
+            assert all(report['ocr_engines'].values()), f'OCR engine missing: {report["ocr_engines"]}'
+            crop = image.crop((550, 180, 950, 300))
+            report['model_reread'] = TITLE_OCR._model.read(crop, Recognizer(regions).title_mask(crop))
+            assert report['model_reread'] == '魔法飞弹', f'Model reread mismatch: {report["model_reread"]}'
             app = CompanionApp(store, preview=True)
             assert wait(lambda: app.tray.icon.visible)
             panel_window = app.overlay.window('panelWindow')

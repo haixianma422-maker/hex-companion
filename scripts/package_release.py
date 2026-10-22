@@ -17,7 +17,7 @@ assert check['status'] == 'passed' and check['frozen'] and check['clean_exit']
 assert (ROOT / 'artifacts/packaged_desktop_check.json').stat().st_mtime >= exe.stat().st_mtime, 'Run acceptance on the latest EXE first'
 inventory = list(CArchiveReader(str(exe)).toc)
 assert not any('settings.json' in name or 'lockfile' in name for name in inventory)
-assert sum(name.endswith('.onnx') for name in inventory) == 2
+assert sum(name.endswith('.onnx') for name in inventory) == 1
 archive_reader = CArchiveReader(str(exe))
 hero_names = [name for name in inventory if name.replace(chr(92), '/').startswith('data/heroes/')]
 for name in hero_names:

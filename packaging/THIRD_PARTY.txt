@@ -5,17 +5,20 @@ License. See the project LICENSE file included with new release packages.
 Third-party components and resources retain their respective licenses and terms.
 
 Dependency versions and license texts are in licenses/.
-The application folder includes Python, Qt 6 with PySide6, Pillow, RapidOCR,
-ONNX Runtime, OpenCV, NumPy, pystray and their runtime dependencies.
+The application folder includes Python, Qt 6 with PySide6, Pillow, the Python/WinRT
+projection (pywinrt), ONNX Runtime, NumPy, pystray and their runtime dependencies.
+Augment titles are read with the Windows OCR engine (Windows.Media.Ocr), a
+component of Windows that is not distributed with the application.
 
 Upstream source:
 Python: https://www.python.org/downloads/source/
 Qt: https://download.qt.io/official_releases/qt/
 PySide6 / Qt for Python: https://download.qt.io/official_releases/QtForPython/
 Pillow: https://github.com/python-pillow/Pillow
-RapidOCR: https://github.com/RapidAI/RapidOCR
+pywinrt: https://github.com/pywinrt/pywinrt
+RapidOCR (model distribution): https://github.com/RapidAI/RapidOCR
+PaddleOCR (model origin): https://github.com/PaddlePaddle/PaddleOCR
 ONNX Runtime: https://github.com/microsoft/onnxruntime
-OpenCV Python: https://github.com/opencv/opencv-python
 NumPy: https://github.com/numpy/numpy
 pystray: https://github.com/moses-palmer/pystray
 
@@ -29,9 +32,10 @@ Its unmodified installed Python source is also included in licenses/pystray-sour
 The companion source package includes its PyInstaller spec and build script,
 so developers can rebuild with a replacement dependency.
 
-OCR model origin/configuration is recorded in RapidOCR's default_models.yaml
-inside the executable. The application uses the bundled PP-OCRv6 detection
-and recognition models; model inference does not require a network download.
+The PP-OCRv6 recognition model (models/PP-OCRv6_rec_small.onnx) is PaddleOCR's
+model as converted and distributed by RapidOCR 3.10.0, shipped unmodified. It
+rereads titles the Windows OCR engine could not match; inference runs locally
+without a network download.
 
 OP.GG snapshot files record their source URLs and retrieval timestamps.
 Equipment icons are Riot Games Data Dragon assets. Their version and source

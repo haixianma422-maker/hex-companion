@@ -1,6 +1,15 @@
 Pillow==12.3.0
+# Only the PP-OCRv6 recognition model is used from RapidOCR; its code and OpenCV are not imported.
 rapidocr==3.10.0
 onnxruntime==1.31.0
+numpy==2.5.4
+winrt-runtime==3.2.1
+winrt-Windows.Foundation==3.2.1
+winrt-Windows.Foundation.Collections==3.2.1
+winrt-Windows.Globalization==3.2.1
+winrt-Windows.Graphics.Imaging==3.2.1
+winrt-Windows.Media.Ocr==3.2.1
+winrt-Windows.Storage.Streams==3.2.1
 pystray==0.19.5
 PySide6-Essentials==6.12.0
 velopack==1.2.161
