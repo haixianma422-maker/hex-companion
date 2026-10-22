@@ -181,11 +181,17 @@ def _augments(fields, champion_id, metadata):
             if not math.isfinite(pick_rate) or not 0 <= pick_rate <= 1:
                 raise ValueError('101 海克斯选取率无效')
             aid = int(parts[2])
-            meta = entries.get(aid, {})
-            name, rarity = meta.get('name_cn'), RARITIES.get(meta.get('level'))
-            if aid in seen or not isinstance(name, str) or not name.strip() or rarity is None:
+            if aid in seen:
                 raise ValueError('101 海克斯字典不完整或包含重复条目')
             seen.add(aid)
+            meta = entries.get(aid)
+            if meta is None:
+                # Statistics lag the dictionary: augments retired by a new patch
+                # stay rated for a day or more but can no longer be offered.
+                continue
+            name, rarity = meta.get('name_cn'), RARITIES.get(meta.get('level'))
+            if not isinstance(name, str) or not name.strip() or rarity is None:
+                raise ValueError('101 海克斯字典不完整或包含重复条目')
             if is_placeholder_name(name.strip()):
                 continue
             result.append(asdict(Augment(aid, name.strip(), 'SABC'.index(parts[5]), rarity)))
