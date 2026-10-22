@@ -103,6 +103,16 @@ class CatalogTests(unittest.TestCase):
         self.assertEqual([r.augment_id for r in rows], [3010, 3006, None])
         self.assertNotEqual(rows[2].status, 'matched')
 
+    def test_titles_differing_only_by_punctuation_are_told_apart(self):
+        # 26.21 added 罪恶快感！ (Get Jinxed) beside 罪恶快感 (Get Excited); both are offered to one hero.
+        augments = [Augment(1322, '罪恶快感', 3, 4), Augment(3004, '罪恶快感！', 1, 4)]
+        rows = match_slots(['罪恶快感！\n功能', '罪恶快感', '罪恶快感!'], augments)
+        self.assertEqual([(r.augment_id, r.status) for r in rows],
+                         [(3004, 'matched'), (1322, 'matched'), (3004, 'matched')])
+        unclear = match_slots(['罪恶快感？'], augments)[0]
+        self.assertEqual((unclear.augment_id, unclear.status, sorted(unclear.candidates)), (None, 'ambiguous', [1322, 3004]))
+        self.assertEqual([a.id for a in with_catalog([augments[0]], [augments[1]])], [1322, 3004])
+
 
 class CompanionPatchTests(unittest.TestCase):
     def setUp(self):
@@ -146,14 +156,15 @@ class CompanionPatchTests(unittest.TestCase):
             fetch.assert_called_once_with(222)
 
     def test_unrated_new_augment_is_named_instead_of_pending(self):
-        self.app.catalog = [Augment(3001, '死之舞', None, 8)]
-        self.app.panel.catalog = {3001: self.app.catalog[0]}
+        # A title the source cannot have rated, whatever the shipped snapshot holds.
+        self.app.catalog = [Augment(99001, '尚无评级的新海克斯', None, 8)]
+        self.app.panel.catalog = {99001: self.app.catalog[0]}
         self.app.on_client_state(ClientState('InProgress', 222, queue_id=2400, match_id=1))
-        self.assertNotIn(3001, {a['id'] for a in self.app.data['augments']})
-        self.app.accept_matches(match_slots(['死之舞', '暴击飞弹', ''], self.app.augments))
-        self.assertEqual([m.augment_id for m in self.app.matches[:2]], [3001, 1356])
+        self.assertNotIn(99001, {a['id'] for a in self.app.data['augments']})
+        self.app.accept_matches(match_slots(['尚无评级的新海克斯', '暴击飞弹', ''], self.app.augments))
+        self.assertEqual([m.augment_id for m in self.app.matches[:2]], [99001, 1356])
         text = self.app.panel.content_text()
-        self.assertIn('死之舞', text)
+        self.assertIn('尚无评级的新海克斯', text)
         self.assertIn('暂无评级', text)
         self.assertIn('已识别 2 / 3', text)
 
