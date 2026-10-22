@@ -55,6 +55,39 @@ class OverlayMotionTests(unittest.TestCase):
         self.assertEqual(len(cards), 3)
         pump(until=lambda: all(card.property('opacity') == 1 and card.property('scale') == 1 for card in cards))
 
+    def test_rapid_bench_changes_leave_every_candidate_visible_in_its_cell(self):
+        # Interrupted add transitions left live cards at opacity 0: a blank, occupied cell.
+        import random
+        from aram_demo.models import Champion
+        grid = self.item('candidateGrid')
+        self.app.on_client_state(ClientState('ChampSelect', 222, [101, 222, 99], queue_id=2400))
+        pump(until=lambda: self.at_rest() and grid.property('count') == 3)
+        self.app.panel.set_motion(True)
+        pool = [101, 222, 99, 17, 86, 90, 201, 104, 12, 14, 112, 115]
+        rng = random.Random(4)  # A sequence that left four blank cells before the fix.
+        for turn in range(8):
+            ids = rng.sample(pool, rng.randint(3, 8))
+            self.app.on_client_state(ClientState('ChampSelect', 222, ids, queue_id=2400))
+            pump(rng.choice([.02, .05, .1, .15]))
+            if turn % 3 == 0:
+                # A tier index arriving mid-transition reorders the same cards.
+                self.app.champions = {cid: Champion(cid, c.name, c.slug, rng.randint(1, 5), rng.randint(1, 170))
+                                      for cid, c in self.app.champions.items()}
+                self.app.panel.signature = None
+                self.app.present()
+                pump(rng.choice([.02, .05]))
+        def body(card):
+            return next(child for child in card.childItems() if child.objectName() == 'candidateBody')
+        def settled():
+            cards = [c for c in grid.property('contentItem').childItems()
+                     if c.objectName() == 'candidateCard' and c.property('visible')]
+            cells = {(c.property('x'), c.property('y')) for c in cards}
+            return (len(cards) == len(ids) == len(cells)
+                    and all(x % 168 == 0 and y % 64 == 0 for x, y in cells)
+                    and all(min(c.property('opacity'), c.property('scale'),
+                                body(c).property('opacity'), body(c).property('scale')) == 1 for c in cards))
+        pump(until=settled, timeout=3)
+
     def test_card_reveal_only_touches_the_changed_card(self):
         self.game()
         self.app.accept_matches(match_slots(['暴击飞弹', '魔法飞弹', ''], self.app.augments))

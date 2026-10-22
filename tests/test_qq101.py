@@ -120,6 +120,19 @@ class ProviderTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     self.qq.fetch_hero(GAREN)
 
+    def test_augments_retired_after_the_statistics_day_are_skipped(self):
+        # 26.21: 101's 10-21 statistics still rated augments its dictionary had dropped.
+        fields = hero_fields(self.payloads)
+        fields['augment_json_irank'] = '255:1|86|1214|255|0.1|S#2|86|999999|255|0.1|A'
+        replace_fields(self.payloads, fields)
+        assert [a['id'] for a in self.qq.fetch_hero(GAREN)['augments']] == [1214]
+        for bad in ['255:1|86|1214|255|0.1|S#2|86|1214|255|0.1|A', '255:1|86|999999|255|0.1|S#2|86|999999|255|0.1|A']:
+            with self.subTest(duplicate=bad):
+                fields['augment_json_irank'] = bad
+                replace_fields(self.payloads, fields)
+                with self.assertRaises(ValueError):
+                    self.qq.fetch_hero(GAREN)
+
     def test_business_errors_are_not_successful_empty_heroes(self):
         for payload in [{'code': 0, 'data': None}, {'code': 1, 'data': {'_fieldValues': {'x': '{}'}}},
                         {'code': 0, 'data': {'_fieldValues': {'x': 'not json'}}}]:

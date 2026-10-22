@@ -272,23 +272,17 @@ Rectangle {
                         cid: model.cid; name: model.name; tier: model.tier; portrait: model.portrait
                         selected: model.selected; tipText: model.tip; tip: tip
                     }
-                    add: Transition {
-                        OpacityAnimator { from: 0; to: 1; duration: Theme.ms(Theme.normal) }
-                        ScaleAnimator { from: .92; to: 1; duration: Theme.ms(Theme.slow); easing.type: Easing.OutBack }
-                    }
+                    // View transitions only move cards. An interrupted add transition's
+                    // opacity/scale Animators never wrote their end values back and left
+                    // live cards invisible in their cells; CandidateCard fades itself in.
                     remove: Transition {
-                        OpacityAnimator { to: 0; duration: Theme.ms(Theme.fast) }
-                        ScaleAnimator { to: .92; duration: Theme.ms(Theme.fast) }
+                        NumberAnimation { property: "opacity"; to: 0; duration: Theme.ms(Theme.fast) }
                     }
                     displaced: Transition {
-                        XAnimator { duration: Theme.ms(Theme.slow); easing.type: Easing.OutCubic }
-                        YAnimator { duration: Theme.ms(Theme.slow); easing.type: Easing.OutCubic }
-                        OpacityAnimator { to: 1; duration: Theme.ms(Theme.fast) }
-                        ScaleAnimator { to: 1; duration: Theme.ms(Theme.fast) }
+                        NumberAnimation { properties: "x,y"; duration: Theme.ms(Theme.slow); easing.type: Easing.OutCubic }
                     }
                     move: Transition {
-                        XAnimator { duration: Theme.ms(Theme.slow); easing.type: Easing.OutCubic }
-                        YAnimator { duration: Theme.ms(Theme.slow); easing.type: Easing.OutCubic }
+                        NumberAnimation { properties: "x,y"; duration: Theme.ms(Theme.slow); easing.type: Easing.OutCubic }
                     }
                     Rectangle {
                         visible: grid.contentHeight > grid.height

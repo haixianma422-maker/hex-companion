@@ -11,10 +11,18 @@ Item {
     property bool selected
     property string tipText
     property Item tip: null
+    property bool revealed: false
     width: 164; height: 60
+    Component.onCompleted: revealed = true
 
     Rectangle {
+        objectName: "candidateBody"
         anchors.fill: parent
+        // The card fades itself in. Grid transitions interrupt one another, so they only move cards.
+        opacity: card.revealed ? 1 : 0
+        scale: card.revealed ? 1 : .92
+        Behavior on opacity { NumberAnimation { duration: Theme.ms(Theme.normal) } }
+        Behavior on scale { NumberAnimation { duration: Theme.ms(Theme.slow); easing.type: Easing.OutBack } }
         radius: 10
         color: card.selected ? Theme.lilac : (hover.hovered ? Theme.hover : Theme.surface)
         Behavior on color { ColorAnimation { duration: Theme.ms(Theme.normal); easing.type: Easing.OutCubic } }

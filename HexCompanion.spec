@@ -10,7 +10,7 @@ root = Path(SPECPATH)
 seed = Path(os.environ.get('HEX_COMPANION_SEED_DIR', root / 'data'))
 datas = [(str(seed / filename), 'data') for filename in (
     'champions.json', 'augment_display_tags.json', 'item_catalog.json', 'tier_mapping_evidence.json',
-    'visual_catalog.json')]
+    'visual_catalog.json', 'augment_catalog.json')]
 for folder in ('item-icons', 'visual-assets', 'advice-icons'):
     for path in (seed / folder).rglob('*'):
         if path.is_file() and path.suffix in ('.png', '.jpg', '.jpeg', '.json'):

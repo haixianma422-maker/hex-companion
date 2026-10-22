@@ -6,6 +6,7 @@ that contract and publish plain view dictionaries that the QML in aram_demo/qml 
 import ctypes
 import os
 import threading
+from dataclasses import asdict
 from pathlib import Path
 
 from PySide6.QtCore import (QAbstractListModel, QByteArray, QModelIndex, QObject, Property, QTimer, QUrl, Qt,
@@ -169,6 +170,7 @@ class CompanionPanel(QObject):
         self.on_preview, self.on_source = on_preview, on_source
         self.on_refresh = self.on_correct = self.on_resize = None
         self.item_icons = self.advice_icons = self.visual_assets = None
+        self.catalog = {}  # Unrated titles by id, for augments the source has not rated yet.
         self.source_name = 'OP.GG'
         self.hotkey_bindings = {'scan': 'F6', 'refresh': 'F7', 'toggle': 'F8'}
         self.data_loading = self.images_loading = False
@@ -416,6 +418,8 @@ class CompanionPanel(QObject):
         for slot in range(3):
             match = next((m for m in matches if m.slot == slot), None)
             augment = index.get(match.augment_id) if match else None
+            if match and augment is None and match.augment_id in self.catalog:
+                augment = asdict(self.catalog[match.augment_id])
             grade = augment_label(augment.get('tier'), data.get('tier_labels')) if augment else '—'
             if grade not in tuple('SABCDE'):
                 grade = '—'

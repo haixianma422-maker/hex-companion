@@ -8,7 +8,7 @@ from PySide6.QtCore import QObject
 from aram_demo.cache import DataStore
 from aram_demo.lcu import ClientState
 from aram_demo.recognition import match_slots
-from aram_demo.models import Champion
+from aram_demo.models import Champion, augment_label
 from aram_demo.windows import LeagueWindow
 from tests.qt_support import close_companion, new_companion, pump
 
@@ -45,13 +45,17 @@ class CompanionAppTests(unittest.TestCase):
     def test_game_transition_shows_builds_and_letter_ratings_in_same_panel(self):
         self.app.on_client_state(ClientState('ChampSelect', 222, [99, 86], queue_id=2400))
         self.app.on_client_state(ClientState('InProgress', 222, queue_id=2400, match_id=1))
-        self.app.accept_matches(match_slots(['暴击飞弹', '魔法飞弹', '纯粹主义者 - 术师'], self.app.augments))
+        names = ['暴击飞弹', '魔法飞弹', '纯粹主义者 - 术师']
+        self.app.accept_matches(match_slots(names, self.app.augments))
         labels = self.app.panel.content_text()
         self.assertIn('核心出装', labels)
         self.assertIn('卢安娜飓风', labels)
-        self.assertIn('S', labels)
-        self.assertIn('B', labels)
-        self.assertIn('E', labels)
+        # Grades come from the shipped snapshot, which changes with every patch.
+        grades = {a['name']: augment_label(a['tier']) for a in self.app.data['augments']}
+        for name in names:
+            self.assertIn(grades[name], tuple('SABCDE'))
+            self.assertIn(name + '\n已识别', labels)
+            self.assertIn(grades[name] + '\n' + name, labels)
 
     def test_partial_recognition_reports_count_instead_of_complete_success(self):
         self.app.on_client_state(ClientState('InProgress', 222, queue_id=3270))
@@ -442,7 +446,9 @@ class CompanionAppTests(unittest.TestCase):
         from aram_demo.companion_state import PanelState
         self.app.services, self.app.preview = True, False
         self.app.state = PanelState('select', 'ChampSelect', 222, queue_id=2400)
-        hero = dict(self.app.store.hero(222), fetched_at=datetime.now(timezone.utc).isoformat())
+        # Same version as the index: a refreshed local data/champions.json must not decide this test.
+        hero = dict(self.app.store.hero(222), patch=self.app.store.index_patch(),
+                    fetched_at=datetime.now(timezone.utc).isoformat())
         with patch.object(self.app, 'fetch_hero') as fetch, \
              patch.object(self.app, 'refresh_icons'), patch.object(self.app, 'refresh_visual_assets'), \
              patch.object(self.app, 'refresh_index'), patch.object(self.app, 'background'):

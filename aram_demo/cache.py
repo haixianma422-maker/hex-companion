@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import threading
 import tempfile
 from dataclasses import asdict
@@ -7,7 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from weakref import WeakValueDictionary
 
-from .models import Champion
+from .models import Augment, Champion
 from .opgg import (BASE, fetch_html, page_patch, parse_augments, parse_builds,
                    parse_champions, parse_recommendations, verify_mayhem_page)
 
@@ -24,6 +25,20 @@ def is_fresh(data, max_age=FRESH_SECONDS):
     except (AttributeError, TypeError, ValueError):
         return False
     return 0 <= age < max_age
+
+
+def patch_key(value):
+    """Major.minor game version; OP.GG writes 16.21.1 and 101 writes 16.21."""
+    match = re.match(r'(\d+)\.(\d+)', str(value or ''))
+    return (int(match[1]), int(match[2])) if match else None
+
+
+def is_current(data, index_patch=None, max_age=FRESH_SECONDS):
+    """Fresh, and not from an older game version than the source's hero index."""
+    if not is_fresh(data, max_age):
+        return False
+    current, cached = patch_key(index_patch), patch_key(data.get('patch'))
+    return current is None or cached is None or cached >= current
 
 
 def _root_lock(root):
@@ -106,6 +121,24 @@ class DataStore:
 
     def hero(self, champion_id):
         return self.read(f'heroes/{int(champion_id)}.json')
+
+    def index_patch(self):
+        return (self.read('champions.json') or {}).get('patch')
+
+    def augment_catalog(self):
+        """Every live title, shared by both sources; recognition only, never ratings."""
+        raw = self.read('augment_catalog.json') or {}
+        try:
+            return [Augment(**dict(row, tier=None)) for row in raw.get('augments', [])]
+        except (TypeError, KeyError):
+            self.last_error = '海克斯名称表格式不兼容'
+            return []
+
+    def refresh_augment_catalog(self):
+        from . import qq101
+        data = qq101.fetch_augment_catalog()
+        self._write('augment_catalog.json', data)
+        return data
 
     def refresh(self, champion=None, on_ready=None):
         if self.source == 'qq101':

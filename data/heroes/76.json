@@ -1,6 +1,8 @@
 {
   "champion_id": 76,
   "name": "狂野女猎手",
+  "source_id": "opgg",
+  "source_name": "OP.GG",
   "augments": [
     {
       "id": 1113,
@@ -69,6 +71,12 @@
       "rarity": 4
     },
     {
+      "id": 1105,
+      "name": "家园卫士",
+      "tier": 0,
+      "rarity": 1
+    },
+    {
       "id": 2100,
       "name": "急速之追求",
       "tier": 0,
@@ -85,12 +93,6 @@
       "name": "质变：棱彩阶",
       "tier": 1,
       "rarity": 4
-    },
-    {
-      "id": 1105,
-      "name": "家园卫士",
-      "tier": 1,
-      "rarity": 1
     },
     {
       "id": 1415,
@@ -111,12 +113,6 @@
       "rarity": 1
     },
     {
-      "id": 2083,
-      "name": "牙仙子",
-      "tier": 1,
-      "rarity": 4
-    },
-    {
       "id": 2018,
       "name": "纯粹主义者 - 术师",
       "tier": 1,
@@ -129,14 +125,20 @@
       "rarity": 4
     },
     {
+      "id": 1129,
+      "name": "神射法师",
+      "tier": 1,
+      "rarity": 4
+    },
+    {
       "id": 2087,
       "name": "大法师",
       "tier": 1,
       "rarity": 8
     },
     {
-      "id": 1129,
-      "name": "神射法师",
+      "id": 2083,
+      "name": "牙仙子",
       "tier": 1,
       "rarity": 4
     },
@@ -177,22 +179,16 @@
       "rarity": 8
     },
     {
-      "id": 1156,
-      "name": "沃格勒特的巫师帽",
-      "tier": 1,
-      "rarity": 8
-    },
-    {
       "id": 1388,
       "name": "无限循环往复",
       "tier": 1,
       "rarity": 8
     },
     {
-      "id": 2128,
-      "name": "炽燃利息",
+      "id": 1156,
+      "name": "沃格勒特的巫师帽",
       "tier": 1,
-      "rarity": 4
+      "rarity": 8
     },
     {
       "id": 1329,
@@ -207,14 +203,14 @@
       "rarity": 8
     },
     {
-      "id": 1333,
-      "name": "逃跑计划",
+      "id": 2128,
+      "name": "炽燃利息",
       "tier": 1,
-      "rarity": 1
+      "rarity": 4
     },
     {
-      "id": 2127,
-      "name": "大师铸就",
+      "id": 1333,
+      "name": "逃跑计划",
       "tier": 1,
       "rarity": 1
     },
@@ -231,6 +227,12 @@
       "rarity": 8
     },
     {
+      "id": 2127,
+      "name": "大师铸就",
+      "tier": 1,
+      "rarity": 1
+    },
+    {
       "id": 1180,
       "name": "超强大脑",
       "tier": 1,
@@ -241,6 +243,12 @@
       "name": "巨人杀手",
       "tier": 1,
       "rarity": 8
+    },
+    {
+      "id": 1308,
+      "name": "火狐",
+      "tier": 1,
+      "rarity": 1
     },
     {
       "id": 1384,
@@ -255,12 +263,6 @@
       "rarity": 4
     },
     {
-      "id": 1062,
-      "name": "全能龙魂",
-      "tier": 1,
-      "rarity": 8
-    },
-    {
       "id": 1325,
       "name": "玻璃大炮",
       "tier": 2,
@@ -273,20 +275,14 @@
       "rarity": 4
     },
     {
-      "id": 1138,
-      "name": "渴血",
-      "tier": 2,
-      "rarity": 1
-    },
-    {
       "id": 1243,
       "name": "质变：混沌",
       "tier": 2,
       "rarity": 8
     },
     {
-      "id": 1318,
-      "name": "升级：中娅",
+      "id": 1138,
+      "name": "渴血",
       "tier": 2,
       "rarity": 1
     },
@@ -297,10 +293,22 @@
       "rarity": 8
     },
     {
+      "id": 1318,
+      "name": "升级：中娅",
+      "tier": 2,
+      "rarity": 1
+    },
+    {
       "id": 1073,
       "name": "暗影疾奔",
       "tier": 2,
       "rarity": 1
+    },
+    {
+      "id": 1358,
+      "name": "弹球",
+      "tier": 2,
+      "rarity": 4
     },
     {
       "id": 1098,
@@ -315,20 +323,14 @@
       "rarity": 4
     },
     {
-      "id": 1358,
-      "name": "弹球",
-      "tier": 2,
-      "rarity": 4
-    },
-    {
       "id": 1311,
       "name": "溢流",
       "tier": 2,
       "rarity": 4
     },
     {
-      "id": 1308,
-      "name": "火狐",
+      "id": 2016,
+      "name": "注魔",
       "tier": 2,
       "rarity": 1
     },
@@ -339,22 +341,16 @@
       "rarity": 4
     },
     {
-      "id": 1310,
-      "name": "小丑学院",
-      "tier": 2,
-      "rarity": 8
-    },
-    {
       "id": 1041,
       "name": "歌利亚巨人",
       "tier": 2,
       "rarity": 8
     },
     {
-      "id": 1403,
-      "name": "属性叠属性！",
+      "id": 1310,
+      "name": "小丑学院",
       "tier": 2,
-      "rarity": 4
+      "rarity": 8
     },
     {
       "id": 12317,
@@ -363,14 +359,8 @@
       "rarity": 8
     },
     {
-      "id": 2016,
-      "name": "注魔",
-      "tier": 2,
-      "rarity": 1
-    },
-    {
-      "id": 1345,
-      "name": "心灵净化",
+      "id": 1403,
+      "name": "属性叠属性！",
       "tier": 2,
       "rarity": 4
     },
@@ -387,10 +377,10 @@
       "rarity": 1
     },
     {
-      "id": 1332,
-      "name": "不祥契约",
+      "id": 1345,
+      "name": "心灵净化",
       "tier": 2,
-      "rarity": 8
+      "rarity": 4
     },
     {
       "id": 1118,
@@ -399,22 +389,10 @@
       "rarity": 4
     },
     {
-      "id": 1060,
-      "name": "海洋龙魂",
-      "tier": 2,
-      "rarity": 1
-    },
-    {
-      "id": 1344,
-      "name": "最终形态",
+      "id": 1332,
+      "name": "不祥契约",
       "tier": 2,
       "rarity": 8
-    },
-    {
-      "id": 1420,
-      "name": "咏叹奏鸣",
-      "tier": 2,
-      "rarity": 4
     },
     {
       "id": 1154,
@@ -423,10 +401,34 @@
       "rarity": 8
     },
     {
+      "id": 1344,
+      "name": "最终形态",
+      "tier": 2,
+      "rarity": 8
+    },
+    {
+      "id": 1060,
+      "name": "海洋龙魂",
+      "tier": 2,
+      "rarity": 1
+    },
+    {
+      "id": 1420,
+      "name": "咏叹奏鸣",
+      "tier": 2,
+      "rarity": 4
+    },
+    {
       "id": 2034,
       "name": "鲨鱼暴风",
       "tier": 2,
       "rarity": 4
+    },
+    {
+      "id": 1062,
+      "name": "全能龙魂",
+      "tier": 2,
+      "rarity": 8
     },
     {
       "id": 1326,
@@ -459,6 +461,18 @@
       "rarity": 1
     },
     {
+      "id": 3170,
+      "name": "重型",
+      "tier": 2,
+      "rarity": 4
+    },
+    {
+      "id": 3086,
+      "name": "小蜜蜂！！！",
+      "tier": 2,
+      "rarity": 4
+    },
+    {
       "id": 1054,
       "name": "物法皆修",
       "tier": 3,
@@ -489,12 +503,6 @@
       "rarity": 8
     },
     {
-      "id": 2089,
-      "name": "哎哟，我的硬币！",
-      "tier": 3,
-      "rarity": 4
-    },
-    {
       "id": 1002,
       "name": "尖端发明家",
       "tier": 3,
@@ -507,28 +515,10 @@
       "rarity": 1
     },
     {
-      "id": 1005,
-      "name": "喂呜喂呜",
+      "id": 3088,
+      "name": "深红钴蓝闪光",
       "tier": 3,
       "rarity": 4
-    },
-    {
-      "id": 1335,
-      "name": "夺金",
-      "tier": 3,
-      "rarity": 8
-    },
-    {
-      "id": 1402,
-      "name": "属性叠属性叠属性！",
-      "tier": 3,
-      "rarity": 8
-    },
-    {
-      "id": 2095,
-      "name": "掷骰狂人",
-      "tier": 3,
-      "rarity": 8
     },
     {
       "id": 1389,
@@ -537,9 +527,15 @@
       "rarity": 8
     },
     {
-      "id": 2082,
-      "name": "我们的治疗",
-      "tier": 4,
+      "id": 1335,
+      "name": "夺金",
+      "tier": 3,
+      "rarity": 8
+    },
+    {
+      "id": 1005,
+      "name": "喂呜喂呜",
+      "tier": 3,
       "rarity": 4
     },
     {
@@ -549,26 +545,14 @@
       "rarity": 1
     },
     {
+      "id": 1402,
+      "name": "属性叠属性叠属性！",
+      "tier": 4,
+      "rarity": 8
+    },
+    {
       "id": 2099,
       "name": "飞升仪式",
-      "tier": 4,
-      "rarity": 8
-    },
-    {
-      "id": 2004,
-      "name": "信念者的强化",
-      "tier": 4,
-      "rarity": 8
-    },
-    {
-      "id": 2104,
-      "name": "灵魄炸弹",
-      "tier": 4,
-      "rarity": 8
-    },
-    {
-      "id": 1058,
-      "name": "秘术冲拳",
       "tier": 4,
       "rarity": 8
     },
@@ -585,16 +569,34 @@
       "rarity": 8
     },
     {
-      "id": 1036,
-      "name": "火上浇油",
+      "id": 2004,
+      "name": "信念者的强化",
+      "tier": 4,
+      "rarity": 8
+    },
+    {
+      "id": 1058,
+      "name": "秘术冲拳",
+      "tier": 4,
+      "rarity": 8
+    },
+    {
+      "id": 2104,
+      "name": "灵魄炸弹",
+      "tier": 4,
+      "rarity": 8
+    },
+    {
+      "id": 2082,
+      "name": "我们的治疗",
       "tier": 4,
       "rarity": 4
     },
     {
-      "id": 1337,
-      "name": "尊我为王",
+      "id": 1036,
+      "name": "火上浇油",
       "tier": 4,
-      "rarity": 8
+      "rarity": 4
     },
     {
       "id": 1322,
@@ -609,16 +611,16 @@
       "rarity": 8
     },
     {
+      "id": 1022,
+      "name": "灵巧",
+      "tier": 4,
+      "rarity": 1
+    },
+    {
       "id": 2042,
       "name": "藏身草丛",
       "tier": 4,
       "rarity": 4
-    },
-    {
-      "id": 1220,
-      "name": "连拨击锤",
-      "tier": 4,
-      "rarity": 8
     },
     {
       "id": 1019,
@@ -633,20 +635,32 @@
       "rarity": 8
     },
     {
-      "id": 1022,
-      "name": "灵巧",
+      "id": 1379,
+      "name": "升级：花晓之剑",
       "tier": 4,
-      "rarity": 1
+      "rarity": 8
     },
     {
-      "id": 2091,
-      "name": "无尽大杀四方",
+      "id": 1220,
+      "name": "连拨击锤",
       "tier": 4,
-      "rarity": 4
+      "rarity": 8
     },
     {
       "id": 1063,
       "name": "狂徒豪气",
+      "tier": 4,
+      "rarity": 4
+    },
+    {
+      "id": 1074,
+      "name": "缩小射线",
+      "tier": 4,
+      "rarity": 4
+    },
+    {
+      "id": 2091,
+      "name": "无尽大杀四方",
       "tier": 4,
       "rarity": 4
     },
@@ -657,8 +671,14 @@
       "rarity": 1
     },
     {
-      "id": 1379,
-      "name": "升级：花晓之剑",
+      "id": 1337,
+      "name": "尊我为王",
+      "tier": 4,
+      "rarity": 8
+    },
+    {
+      "id": 1095,
+      "name": "风语者的祝福",
       "tier": 4,
       "rarity": 8
     },
@@ -669,34 +689,10 @@
       "rarity": 8
     },
     {
-      "id": 1074,
-      "name": "缩小射线",
-      "tier": 4,
-      "rarity": 4
-    },
-    {
-      "id": 1095,
-      "name": "风语者的祝福",
-      "tier": 4,
-      "rarity": 8
-    },
-    {
-      "id": 1057,
-      "name": "山脉龙魂",
-      "tier": 4,
-      "rarity": 1
-    },
-    {
       "id": 1328,
       "name": "暴击律动",
       "tier": 4,
       "rarity": 4
-    },
-    {
-      "id": 1044,
-      "name": "冰寒",
-      "tier": 4,
-      "rarity": 1
     },
     {
       "id": 1051,
@@ -705,16 +701,22 @@
       "rarity": 1
     },
     {
-      "id": 2046,
-      "name": "魄罗蛮冲",
+      "id": 1057,
+      "name": "山脉龙魂",
+      "tier": 4,
+      "rarity": 1
+    },
+    {
+      "id": 1225,
+      "name": "双刀流",
       "tier": 4,
       "rarity": 8
     },
     {
-      "id": 2137,
-      "name": "轻拍背部",
+      "id": 1044,
+      "name": "冰寒",
       "tier": 4,
-      "rarity": 4
+      "rarity": 1
     },
     {
       "id": 1081,
@@ -723,10 +725,16 @@
       "rarity": 8
     },
     {
-      "id": 1225,
-      "name": "双刀流",
+      "id": 2107,
+      "name": "濒死悟道",
       "tier": 4,
       "rarity": 8
+    },
+    {
+      "id": 2137,
+      "name": "轻拍背部",
+      "tier": 4,
+      "rarity": 4
     },
     {
       "id": 1386,
@@ -741,20 +749,20 @@
       "rarity": 8
     },
     {
-      "id": 2107,
-      "name": "濒死悟道",
+      "id": 3004,
+      "name": "罪恶快感！",
       "tier": 4,
-      "rarity": 8
+      "rarity": 4
+    },
+    {
+      "id": 3163,
+      "name": "迷人蝴蝶",
+      "tier": 4,
+      "rarity": 4
     },
     {
       "id": 1027,
       "name": "大地苏醒",
-      "tier": 4,
-      "rarity": 8
-    },
-    {
-      "id": 1079,
-      "name": "战争交响乐",
       "tier": 5,
       "rarity": 8
     },
@@ -765,10 +773,46 @@
       "rarity": 1
     },
     {
+      "id": 1079,
+      "name": "战争交响乐",
+      "tier": 5,
+      "rarity": 8
+    },
+    {
+      "id": 3116,
+      "name": "将他们放倒倒倒",
+      "tier": 5,
+      "rarity": 4
+    },
+    {
+      "id": 3149,
+      "name": "一起抱抱",
+      "tier": 5,
+      "rarity": 8
+    },
+    {
       "id": 1007,
       "name": "大力",
       "tier": 5,
       "rarity": 1
+    },
+    {
+      "id": 3078,
+      "name": "鼓声暴起 低音轰鸣",
+      "tier": 5,
+      "rarity": 4
+    },
+    {
+      "id": 3071,
+      "name": "黄铜爆音",
+      "tier": 5,
+      "rarity": 4
+    },
+    {
+      "id": 3132,
+      "name": "王冠之重",
+      "tier": 5,
+      "rarity": 4
     },
     {
       "id": 2119,
@@ -777,16 +821,16 @@
       "rarity": 4
     },
     {
-      "id": 2063,
-      "name": "位面转移",
-      "tier": 5,
-      "rarity": 8
-    },
-    {
       "id": 2141,
       "name": "终极九头蛇",
       "tier": 5,
       "rarity": 8
+    },
+    {
+      "id": 3036,
+      "name": "翻倍时间",
+      "tier": 5,
+      "rarity": 4
     },
     {
       "id": 2140,
@@ -795,34 +839,34 @@
       "rarity": 4
     },
     {
-      "id": 1067,
-      "name": "活力焕发",
+      "id": 3079,
+      "name": "死之舞",
+      "tier": 5,
+      "rarity": 8
+    },
+    {
+      "id": 3131,
+      "name": "屹立不倒",
       "tier": 5,
       "rarity": 4
     },
     {
-      "id": 2026,
-      "name": "杀意翻涌",
-      "tier": 5,
-      "rarity": 1
-    },
-    {
-      "id": 1092,
-      "name": "易损",
+      "id": 3172,
+      "name": "鞭挞",
       "tier": 5,
       "rarity": 4
     },
     {
-      "id": 1305,
-      "name": "练腿日",
+      "id": 3171,
+      "name": "力量",
       "tier": 5,
-      "rarity": 1
+      "rarity": 4
     },
     {
-      "id": 1034,
-      "name": "防护面纱",
+      "id": 3150,
+      "name": "升级：风暴狂涌",
       "tier": 5,
-      "rarity": 1
+      "rarity": 4
     },
     {
       "id": 1037,
@@ -831,26 +875,56 @@
       "rarity": 1
     },
     {
+      "id": 1305,
+      "name": "练腿日",
+      "tier": 5,
+      "rarity": 1
+    },
+    {
+      "id": 3173,
+      "name": "厄运",
+      "tier": 5,
+      "rarity": 4
+    },
+    {
+      "id": 1092,
+      "name": "易损",
+      "tier": 5,
+      "rarity": 4
+    },
+    {
+      "id": 3081,
+      "name": "命运之武器",
+      "tier": 5,
+      "rarity": 4
+    },
+    {
+      "id": 1072,
+      "name": "炽烈黎明",
+      "tier": 5,
+      "rarity": 4
+    },
+    {
       "id": 1047,
       "name": "关键暴击",
       "tier": 5,
       "rarity": 4
     },
     {
-      "id": 1334,
-      "name": "升级：雪球",
-      "tier": 5,
-      "rarity": 4
-    },
-    {
-      "id": 1170,
-      "name": "万用瞄准镜",
+      "id": 1034,
+      "name": "防护面纱",
       "tier": 5,
       "rarity": 1
     },
     {
-      "id": 1406,
-      "name": "祖母的辣椒油",
+      "id": 2026,
+      "name": "杀意翻涌",
+      "tier": 5,
+      "rarity": 1
+    },
+    {
+      "id": 1067,
+      "name": "活力焕发",
       "tier": 5,
       "rarity": 4
     },
@@ -861,62 +935,8 @@
       "rarity": 4
     },
     {
-      "id": 2006,
-      "name": "飞身踢",
-      "tier": 5,
-      "rarity": 8
-    },
-    {
-      "id": 1072,
-      "name": "炽烈黎明",
-      "tier": 5,
-      "rarity": 4
-    },
-    {
-      "id": 1301,
-      "name": "神圣干预",
-      "tier": 5,
-      "rarity": 4
-    },
-    {
-      "id": 1320,
-      "name": "升级：收集者",
-      "tier": 5,
-      "rarity": 1
-    },
-    {
-      "id": 1071,
-      "name": "更万用的瞄准镜",
-      "tier": 5,
-      "rarity": 4
-    },
-    {
-      "id": 1025,
-      "name": "俯冲轰炸",
-      "tier": 5,
-      "rarity": 1
-    },
-    {
-      "id": 1346,
-      "name": "吸血习性",
-      "tier": 5,
-      "rarity": 4
-    },
-    {
-      "id": 1356,
-      "name": "暴击飞弹",
-      "tier": 5,
-      "rarity": 4
-    },
-    {
-      "id": 1020,
-      "name": "黎明使者的坚决",
-      "tier": 5,
-      "rarity": 4
-    },
-    {
-      "id": 1026,
-      "name": "唯快不破",
+      "id": 3121,
+      "name": "水果化",
       "tier": 5,
       "rarity": 1
     },
@@ -927,20 +947,92 @@
       "rarity": 4
     },
     {
-      "id": 1347,
-      "name": "吵闹鬼",
-      "tier": 5,
-      "rarity": 1
-    },
-    {
       "id": 1080,
       "name": "会心防御",
       "tier": 5,
       "rarity": 1
     },
     {
-      "id": 1342,
-      "name": "雪球扭蛋机",
+      "id": 1356,
+      "name": "暴击飞弹",
+      "tier": 5,
+      "rarity": 4
+    },
+    {
+      "id": 1406,
+      "name": "祖母的辣椒油",
+      "tier": 5,
+      "rarity": 4
+    },
+    {
+      "id": 1025,
+      "name": "俯冲轰炸",
+      "tier": 5,
+      "rarity": 1
+    },
+    {
+      "id": 1170,
+      "name": "万用瞄准镜",
+      "tier": 5,
+      "rarity": 1
+    },
+    {
+      "id": 2006,
+      "name": "飞身踢",
+      "tier": 5,
+      "rarity": 8
+    },
+    {
+      "id": 3094,
+      "name": "巫妖大脑",
+      "tier": 5,
+      "rarity": 1
+    },
+    {
+      "id": 1020,
+      "name": "黎明使者的坚决",
+      "tier": 5,
+      "rarity": 4
+    },
+    {
+      "id": 1301,
+      "name": "神圣干预",
+      "tier": 5,
+      "rarity": 4
+    },
+    {
+      "id": 1026,
+      "name": "唯快不破",
+      "tier": 5,
+      "rarity": 1
+    },
+    {
+      "id": 1339,
+      "name": "激光治疗",
+      "tier": 5,
+      "rarity": 8
+    },
+    {
+      "id": 1346,
+      "name": "吸血习性",
+      "tier": 5,
+      "rarity": 4
+    },
+    {
+      "id": 1347,
+      "name": "吵闹鬼",
+      "tier": 5,
+      "rarity": 1
+    },
+    {
+      "id": 1116,
+      "name": "闪现向前",
+      "tier": 5,
+      "rarity": 4
+    },
+    {
+      "id": 1334,
+      "name": "升级：雪球",
       "tier": 5,
       "rarity": 4
     },
@@ -951,8 +1043,26 @@
       "rarity": 1
     },
     {
-      "id": 2043,
-      "name": "自然即是治愈",
+      "id": 1348,
+      "name": "闪闪现现",
+      "tier": 5,
+      "rarity": 1
+    },
+    {
+      "id": 1353,
+      "name": "坦克引擎",
+      "tier": 5,
+      "rarity": 4
+    },
+    {
+      "id": 2010,
+      "name": "双发快射",
+      "tier": 5,
+      "rarity": 8
+    },
+    {
+      "id": 1071,
+      "name": "更万用的瞄准镜",
       "tier": 5,
       "rarity": 4
     },
@@ -963,14 +1073,26 @@
       "rarity": 8
     },
     {
+      "id": 1187,
+      "name": "闪光弹",
+      "tier": 5,
+      "rarity": 1
+    },
+    {
+      "id": 1320,
+      "name": "升级：收集者",
+      "tier": 5,
+      "rarity": 1
+    },
+    {
       "id": 1336,
       "name": "升级：无尽之刃",
       "tier": 5,
       "rarity": 4
     },
     {
-      "id": 1400,
-      "name": "最终都市列车",
+      "id": 1342,
+      "name": "雪球扭蛋机",
       "tier": 5,
       "rarity": 4
     },
@@ -987,82 +1109,16 @@
       "rarity": 8
     },
     {
-      "id": 1152,
-      "name": "钢化你心",
-      "tier": 5,
-      "rarity": 4
-    },
-    {
-      "id": 1353,
-      "name": "坦克引擎",
-      "tier": 5,
-      "rarity": 4
-    },
-    {
-      "id": 2010,
-      "name": "双发快射",
+      "id": 2031,
+      "name": "空投熊",
       "tier": 5,
       "rarity": 8
     },
     {
-      "id": 2024,
-      "name": "由暴生急",
-      "tier": 5,
-      "rarity": 1
-    },
-    {
-      "id": 1112,
-      "name": "终极不可阻挡",
-      "tier": 5,
-      "rarity": 1
-    },
-    {
-      "id": 1348,
-      "name": "闪闪现现",
-      "tier": 5,
-      "rarity": 1
-    },
-    {
-      "id": 2073,
-      "name": "虹吸",
-      "tier": 5,
-      "rarity": 1
-    },
-    {
-      "id": 2136,
-      "name": "可靠武器",
-      "tier": 5,
-      "rarity": 1
-    },
-    {
-      "id": 1013,
-      "name": "星界躯体",
+      "id": 1152,
+      "name": "钢化你心",
       "tier": 5,
       "rarity": 4
-    },
-    {
-      "id": 1116,
-      "name": "闪现向前",
-      "tier": 5,
-      "rarity": 4
-    },
-    {
-      "id": 1187,
-      "name": "闪光弹",
-      "tier": 5,
-      "rarity": 1
-    },
-    {
-      "id": 1211,
-      "name": "杀戮时间到了",
-      "tier": 5,
-      "rarity": 4
-    },
-    {
-      "id": 1314,
-      "name": "强力护盾",
-      "tier": 5,
-      "rarity": 1
     },
     {
       "id": 1319,
@@ -1071,38 +1127,14 @@
       "rarity": 1
     },
     {
-      "id": 1372,
-      "name": "小猫咪找妈妈",
-      "tier": 5,
-      "rarity": 8
-    },
-    {
-      "id": 2003,
-      "name": "魄罗之王的弹跳",
-      "tier": 5,
-      "rarity": 8
-    },
-    {
-      "id": 2031,
-      "name": "空投熊",
-      "tier": 5,
-      "rarity": 8
-    },
-    {
-      "id": 2032,
-      "name": "鲨鱼诱饵",
-      "tier": 5,
-      "rarity": 4
-    },
-    {
-      "id": 1339,
-      "name": "激光治疗",
-      "tier": 5,
-      "rarity": 8
-    },
-    {
       "id": 1414,
       "name": "卡皮巴拉空投",
+      "tier": 5,
+      "rarity": 8
+    },
+    {
+      "id": 1421,
+      "name": "舞会女王",
       "tier": 5,
       "rarity": 8
     },
@@ -1119,22 +1151,64 @@
       "rarity": 8
     },
     {
-      "id": 2138,
-      "name": "自适应防护",
+      "id": 1013,
+      "name": "星界躯体",
+      "tier": 5,
+      "rarity": 4
+    },
+    {
+      "id": 1112,
+      "name": "终极不可阻挡",
       "tier": 5,
       "rarity": 1
     },
     {
-      "id": 2139,
-      "name": "豪猪",
+      "id": 1314,
+      "name": "强力护盾",
+      "tier": 5,
+      "rarity": 1
+    },
+    {
+      "id": 1413,
+      "name": "和我一起困在这里",
+      "tier": 5,
+      "rarity": 8
+    },
+    {
+      "id": 2032,
+      "name": "鲨鱼诱饵",
       "tier": 5,
       "rarity": 4
+    },
+    {
+      "id": 2043,
+      "name": "自然即是治愈",
+      "tier": 5,
+      "rarity": 4
+    },
+    {
+      "id": 2108,
+      "name": "主玩辅助",
+      "tier": 5,
+      "rarity": 1
     },
     {
       "id": 2143,
       "name": "升级：焚天",
       "tier": 5,
       "rarity": 4
+    },
+    {
+      "id": 3016,
+      "name": "伤不过三",
+      "tier": 5,
+      "rarity": 8
+    },
+    {
+      "id": 3134,
+      "name": "孤勇者",
+      "tier": 5,
+      "rarity": 1
     }
   ],
   "builds": [
@@ -1202,8 +1276,8 @@
           "name": "卢登的回声"
         },
         {
-          "id": 4646,
-          "name": "风暴狂涌"
+          "id": 4645,
+          "name": "影焰"
         },
         {
           "id": 3089,
@@ -1236,285 +1310,31 @@
           "name": "卢登的回声"
         },
         {
-          "id": 4646,
-          "name": "风暴狂涌"
+          "id": 3089,
+          "name": "灭世者的死亡之帽"
         },
-        {
-          "id": 4628,
-          "name": "视界专注"
-        }
-      ],
-      "category": "核心装备"
-    },
-    {
-      "items": [
-        {
-          "id": 6655,
-          "name": "卢登的回声"
-        }
-      ],
-      "category": "后续装备"
-    },
-    {
-      "items": [
         {
           "id": 4645,
           "name": "影焰"
         }
       ],
-      "category": "后续装备"
+      "category": "核心装备"
+    }
+  ],
+  "skill_priority": [
+    "Q",
+    "E"
+  ],
+  "summoner_spells": [
+    {
+      "id": 4,
+      "name": "闪现",
+      "icon_url": "https://opgg-static.akamaized.net/meta/images/lol/16.21.1/spell/SummonerFlash.png"
     },
     {
-      "items": [
-        {
-          "id": 4646,
-          "name": "风暴狂涌"
-        }
-      ],
-      "category": "后续装备"
-    },
-    {
-      "items": [
-        {
-          "id": 3089,
-          "name": "灭世者的死亡之帽"
-        }
-      ],
-      "category": "后续装备"
-    },
-    {
-      "items": [
-        {
-          "id": 3135,
-          "name": "虚空之杖"
-        }
-      ],
-      "category": "后续装备"
-    },
-    {
-      "items": [
-        {
-          "id": 4628,
-          "name": "视界专注"
-        }
-      ],
-      "category": "后续装备"
-    },
-    {
-      "items": [
-        {
-          "id": 3100,
-          "name": "巫妖之祸"
-        }
-      ],
-      "category": "后续装备"
-    },
-    {
-      "items": [
-        {
-          "id": 6653,
-          "name": "兰德里的折磨"
-        }
-      ],
-      "category": "后续装备"
-    },
-    {
-      "items": [
-        {
-          "id": 3157,
-          "name": "中娅沙漏"
-        }
-      ],
-      "category": "后续装备"
-    },
-    {
-      "items": [
-        {
-          "id": 2503,
-          "name": "黯炎火炬"
-        }
-      ],
-      "category": "后续装备"
-    },
-    {
-      "items": [
-        {
-          "id": 3040,
-          "name": "炽天使之拥"
-        }
-      ],
-      "category": "后续装备"
-    },
-    {
-      "items": [
-        {
-          "id": 3070,
-          "name": "女神之泪"
-        }
-      ],
-      "category": "后续装备"
-    },
-    {
-      "items": [
-        {
-          "id": 3916,
-          "name": "湮灭宝珠"
-        }
-      ],
-      "category": "后续装备"
-    },
-    {
-      "items": [
-        {
-          "id": 3165,
-          "name": "莫雷洛秘典"
-        }
-      ],
-      "category": "后续装备"
-    },
-    {
-      "items": [
-        {
-          "id": 3102,
-          "name": "女妖面纱"
-        }
-      ],
-      "category": "后续装备"
-    },
-    {
-      "items": [
-        {
-          "id": 2420,
-          "name": "探索者的护臂"
-        }
-      ],
-      "category": "后续装备"
-    },
-    {
-      "items": [
-        {
-          "id": 3137,
-          "name": "蜕生"
-        }
-      ],
-      "category": "后续装备"
-    },
-    {
-      "items": [
-        {
-          "id": 3152,
-          "name": "海克斯科技火箭腰带"
-        }
-      ],
-      "category": "后续装备"
-    },
-    {
-      "items": [
-        {
-          "id": 6620,
-          "name": "海力亚的回响"
-        }
-      ],
-      "category": "后续装备"
-    },
-    {
-      "items": [
-        {
-          "id": 3153,
-          "name": "破败王者之刃"
-        }
-      ],
-      "category": "后续装备"
-    },
-    {
-      "items": [
-        {
-          "id": 4633,
-          "name": "裂隙制造者"
-        }
-      ],
-      "category": "后续装备"
-    },
-    {
-      "items": [
-        {
-          "id": 3078,
-          "name": "三相之力"
-        }
-      ],
-      "category": "后续装备"
-    },
-    {
-      "items": [
-        {
-          "id": 2530,
-          "name": "歌之权冠"
-        }
-      ],
-      "category": "后续装备"
-    },
-    {
-      "items": [
-        {
-          "id": 6617,
-          "name": "月石再生器"
-        }
-      ],
-      "category": "后续装备"
-    },
-    {
-      "items": [
-        {
-          "id": 3748,
-          "name": "巨型九头蛇"
-        }
-      ],
-      "category": "后续装备"
-    },
-    {
-      "items": [
-        {
-          "id": 3107,
-          "name": "救赎"
-        }
-      ],
-      "category": "后续装备"
-    },
-    {
-      "items": [
-        {
-          "id": 3123,
-          "name": "死刑宣告"
-        }
-      ],
-      "category": "后续装备"
-    },
-    {
-      "items": [
-        {
-          "id": 3504,
-          "name": "炽热香炉"
-        }
-      ],
-      "category": "后续装备"
-    },
-    {
-      "items": [
-        {
-          "id": 8010,
-          "name": "放血者的诅咒"
-        }
-      ],
-      "category": "后续装备"
-    },
-    {
-      "items": [
-        {
-          "id": 2510,
-          "name": "黄昏与黎明"
-        }
-      ],
-      "category": "后续装备"
+      "id": 32,
+      "name": "标记",
+      "icon_url": "https://opgg-static.akamaized.net/meta/images/lol/16.21.1/spell/SummonerSnowball.png"
     }
   ],
   "source": "https://op.gg/zh-cn/lol/modes/aram-mayhem/nidalee/augments",
@@ -1523,24 +1343,11 @@
   "build_mode": "aram-mayhem",
   "tier_labels": {},
   "build_verification": "OP.GG Mayhem URL, page title and isAramMayhem=true; core from build page",
-  "items_source": "https://op.gg/zh-cn/lol/modes/aram-mayhem/nidalee/items",
-  "items_note": "",
-  "patch": "16.20.1",
-  "fetched_at": "2026-10-11T13:06:36.335223+00:00",
-  "skill_priority": [
-    "Q",
-    "E"
-  ],
-  "summoner_spells": [
-    {
-      "id": 4,
-      "name": "闪现"
-    },
-    {
-      "id": 32,
-      "name": "标记"
-    }
-  ],
-  "recommendation_source": "https://op.gg/zh-cn/lol/modes/aram-mayhem/nidalee/build",
-  "recommendation_fetched_at": "2026-10-14T03:29:44.286383+00:00"
+  "patch": "16.21.1",
+  "fetched_at": "2026-10-22T04:06:50.282763+00:00",
+  "skill_icons": {
+    "Q": "https://opgg-static.akamaized.net/meta/images/lol/16.21.1/spell/JavelinToss.png",
+    "E": "https://opgg-static.akamaized.net/meta/images/lol/16.21.1/spell/PrimalSurge.png",
+    "W": "https://opgg-static.akamaized.net/meta/images/lol/16.21.1/spell/Bushwhack.png"
+  }
 }

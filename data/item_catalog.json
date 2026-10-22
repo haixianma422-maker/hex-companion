@@ -1,6 +1,6 @@
 {
-  "source": "https://ddragon.leagueoflegends.com/cdn/16.20.1/data/zh_CN/item.json",
-  "patch": "16.20.1",
+  "source": "https://ddragon.leagueoflegends.com/cdn/16.21.1/data/zh_CN/item.json",
+  "patch": "16.21.1",
   "notes": "Completion uses ARAM availability and recipe metadata. Conflict groups are a partial local rule list.",
   "items": {
     "1001": {
@@ -3489,48 +3489,6 @@
       "crit": 0,
       "groups": []
     },
-    "550001": {
-      "name": "生命条色块：蓝色",
-      "complete": false,
-      "crit": 0,
-      "groups": []
-    },
-    "550002": {
-      "name": "生命条色块：橙色",
-      "complete": false,
-      "crit": 0,
-      "groups": []
-    },
-    "550003": {
-      "name": "生命条色块：绿色",
-      "complete": false,
-      "crit": 0,
-      "groups": []
-    },
-    "550004": {
-      "name": "生命条色块：粉色",
-      "complete": false,
-      "crit": 0,
-      "groups": []
-    },
-    "550005": {
-      "name": "生命条清理：重置颜色",
-      "complete": false,
-      "crit": 0,
-      "groups": []
-    },
-    "550006": {
-      "name": "生命条色块：多彩",
-      "complete": false,
-      "crit": 0,
-      "groups": []
-    },
-    "550007": {
-      "name": "派对礼品",
-      "complete": false,
-      "crit": 0,
-      "groups": []
-    },
     "6029": {
       "name": "铁刺鞭",
       "complete": false,
@@ -4170,7 +4128,7 @@
     "773005": {
       "name": "阿塔玛之戟",
       "complete": true,
-      "crit": 0.15,
+      "crit": 0.18,
       "groups": []
     },
     "773006": {

@@ -26,44 +26,72 @@ class Match:
     status: str = 'unknown'
 
 
-def normalize(text):
+def visible(text):
     # Observed in a real OCR run of 魔法飞弹: the model emits the Japanese
     # variant 弾. Normalize this single verified variant, keeping other typos
     # uncertain and duplicate normalized titles ambiguous.
-    visible = ''.join(c for c in unicodedata.normalize('NFKC', text).replace('弾', '弹').casefold()
-                      if unicodedata.category(c)[0] not in ('Z', 'C'))
-    letters = ''.join(c for c in visible if unicodedata.category(c)[0] != 'P')
+    return ''.join(c for c in unicodedata.normalize('NFKC', text).replace('弾', '弹').casefold()
+                   if unicodedata.category(c)[0] not in ('Z', 'C'))
+
+
+def normalize(text):
+    shown = visible(text)
+    letters = ''.join(c for c in shown if unicodedata.category(c)[0] != 'P')
     # "？？？" is an actual augment title. Preserve punctuation-only input
     # without letting a blank crop turn into that title.
-    return letters or visible
+    return letters or shown
 
 
-def title_query(text, known_names=()):
+def title_lines(text, known_names=()):
     lines = [line.strip() for line in text.splitlines() if line.strip()]
-    query = normalize(''.join(lines))
     # Preserve title fragments (e.g. "哎哟，" / "我的硬币！"). Only remove
     # complete trailing chip lines, never substrings from an augment's name.
     # Stop at the longest complete known title, including title fragments
     # such as "速度" that also happen to be display-tag words.
-    while len(lines) > 1 and query not in known_names and CHIP_LINE.fullmatch(normalize(lines[-1])):
+    while (len(lines) > 1 and normalize(''.join(lines)) not in known_names
+           and CHIP_LINE.fullmatch(normalize(lines[-1]))):
         lines.pop()
-        query = normalize(''.join(lines))
-    return query
+    return lines
+
+
+def title_query(text, known_names=()):
+    return normalize(''.join(title_lines(text, known_names)))
+
+
+def with_catalog(rated, catalog):
+    """Source entries keep their ratings. The catalog adds only titles the source
+    lacks, so one title never maps to two ids and turns an exact read ambiguous."""
+    ids = {augment.id for augment in rated}
+    names = {visible(augment.name) for augment in rated}
+    extra = []
+    for augment in catalog:
+        name = visible(augment.name)
+        if augment.id not in ids and name not in names:
+            ids.add(augment.id)
+            names.add(name)
+            extra.append(augment)
+    return list(rated) + extra
 
 
 def match_slots(texts, augments):
-    names = {}
+    names, shown = {}, {}
     for augment in augments:
         names.setdefault(normalize(augment.name), []).append(augment.id)
+        shown[augment.id] = visible(augment.name)
     result = []
     for slot in range(3):
         text = texts[slot] if slot < len(texts) else ''
         # An exact complete title wins even if its final OCR fragment looks
         # like a category. Never strip a word from an already known title.
-        query = title_query(text, names)
+        lines = title_lines(text, names)
+        query = normalize(''.join(lines))
         exact = names.get(query, []) if query else []
+        # Titles may differ only by punctuation: 罪恶快感 and 罪恶快感！ (26.21).
+        punctuated = [aid for aid in exact if shown[aid] == visible(''.join(lines))]
         if len(exact) == 1:
             result.append(Match(slot, text, exact[0], exact, 'matched'))
+        elif len(punctuated) == 1:
+            result.append(Match(slot, text, punctuated[0], exact, 'matched'))
         elif exact:
             result.append(Match(slot, text, None, exact, 'ambiguous'))
         else:
