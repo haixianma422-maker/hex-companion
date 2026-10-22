@@ -4,7 +4,9 @@ import io
 import json
 import tempfile
 import unittest
+import zipfile
 from pathlib import Path
+from unittest.mock import patch
 
 from aram_demo.updater import CNB_FEED_TAG, FEEDS
 from scripts import publish_update
@@ -96,6 +98,33 @@ class CNBPublishTests(unittest.TestCase):
         self.assertEqual(cnb.puts[0][1], 'App-0.8.1-full.nupkg')
         with self.assertRaises(SystemExit):
             self.publish(FakeCNB(put_errors=publish_update.UPLOAD_ATTEMPTS))
+
+
+class PackTests(unittest.TestCase):
+    def setUp(self):
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        self.root = Path(directory.name)
+        self.app = self.root / 'app'
+        self.app.mkdir()
+        (self.app / 'HexCompanion.exe').write_bytes(b'build A')
+        self.releases = self.root / 'releases'
+        self.releases.mkdir()
+        with zipfile.ZipFile(self.releases / 'App-0.9.0-full.nupkg', 'w') as package:
+            package.writestr('lib/app/HexCompanion.exe', b'build A')
+        (self.releases / publish_update.FEED).write_text(json.dumps({'Assets': [
+            {'FileName': 'App-0.9.0-full.nupkg', 'Type': 'Full', 'Version': '0.9.0'}]}), encoding='utf-8')
+
+    def test_upload_after_packing_reuses_packages_of_the_same_build(self):
+        with patch.object(publish_update, 'run') as run, contextlib.redirect_stdout(io.StringIO()):
+            publish_update.pack(self.app, self.releases, '0.9.0', self.root / 'notes.md')
+        run.assert_not_called()
+
+    def test_a_different_build_under_a_packed_version_is_refused(self):
+        (self.app / 'HexCompanion.exe').write_bytes(b'build B')
+        with patch.object(publish_update, 'run') as run, self.assertRaises(SystemExit):
+            publish_update.pack(self.app, self.releases, '0.9.0', self.root / 'notes.md')
+        run.assert_not_called()
 
 
 class StageTests(unittest.TestCase):

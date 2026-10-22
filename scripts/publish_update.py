@@ -15,6 +15,7 @@ import sys
 import urllib.error
 import urllib.parse
 import urllib.request
+import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -55,6 +56,15 @@ def read_feed(releases):
 
 def pack(app_dir, releases, version, notes):
     releases.mkdir(parents=True, exist_ok=True)
+    packed = [asset for asset in read_feed(releases)['Assets'] if asset['Type'] == 'Full' and asset['Version'] == version]
+    if packed:
+        # Packing first and uploading later is the documented flow; reuse packages of this very build.
+        with zipfile.ZipFile(releases / packed[0]['FileName']) as package:
+            inside = hashlib.sha256(package.read('lib/app/HexCompanion.exe')).hexdigest()
+        if inside != sha(app_dir / 'HexCompanion.exe'):
+            raise SystemExit(f'{version} 已用另一份构建打包。请提升版本号，或删除 {releases} 中 {version} 的包和更新源条目。')
+        print(f'{version} 已用这份构建打包，沿用现有包')
+        return
     older = [asset for asset in read_feed(releases)['Assets'] if asset['Type'] == 'Full'
              and version_key(asset['Version']) < version_key(version) and (releases / asset['FileName']).is_file()]
     if not older:
