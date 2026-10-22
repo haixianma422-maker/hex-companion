@@ -31,14 +31,15 @@ class FakeManager:
 class UpdaterTests(unittest.TestCase):
     def make(self, hosts, installed=True):
         """hosts: {source: FakeManager}; every call for a source returns the same fake."""
-        self.calls, self.notes = [], []
+        self.calls, self.notes, self.answers = [], [], []
         def manager(source, timeout_ms):
             if not installed:
                 raise RuntimeError('This application is not properly installed')
             self.calls.append((source, timeout_ms))
             return hosts.get(source, FakeManager())
         sources = (('CNB', 'cnb'), ('GitHub', 'github'))
-        result = Updater(lambda callback: callback(), self.notes.append, manager=manager, sources=sources)
+        result = Updater(lambda callback: callback(), self.notes.append, self.answers.append,
+                         manager=manager, sources=sources)
         self.calls.clear()
         return result
 
@@ -59,7 +60,8 @@ class UpdaterTests(unittest.TestCase):
         self.run_check(item, manual=True)
         self.assertIsNone(item.ready)
         self.assertNotIn('github', [source for source, _ in self.calls])
-        self.assertIn('已是最新版本', self.notes[-1])
+        self.assertIn('已是最新版本', self.answers[-1])
+        self.assertEqual(self.notes, [])
 
     def test_unreachable_cnb_falls_back_to_github(self):
         item = self.make({'cnb': FakeManager(check=OSError('timed out')),
@@ -78,18 +80,29 @@ class UpdaterTests(unittest.TestCase):
         hosts = {'cnb': FakeManager(check=OSError('a')), 'github': FakeManager(check=OSError('b'))}
         item = self.make(hosts)
         self.run_check(item)
-        self.assertEqual(self.notes, [])
+        self.assertEqual(self.notes + self.answers, [])
         self.assertFalse(item.busy)
         self.run_check(item, manual=True)
-        self.assertIn('检查更新失败', self.notes[-1])
-        self.assertIn('CNB', self.notes[-1])
+        self.assertIn('检查更新失败', self.answers[-1])
+        self.assertIn('CNB', self.answers[-1])
+        self.assertEqual(self.notes, [])
 
     def test_copies_not_installed_by_velopack_never_check(self):
         item = self.make({}, installed=False)
         self.assertFalse(item.installed)
         item.check(manual=True)
         self.assertFalse(item.busy)
-        self.assertIn('不是安装版', self.notes[-1])
+        self.assertIn('不是安装版', self.answers[-1])
+
+    def test_manual_check_answers_directly_and_announces_the_download_in_background(self):
+        item = self.make({'cnb': FakeManager(check=release('0.8.1'))})
+        self.run_check(item, manual=True)
+        self.assertEqual(len(self.answers), 1)
+        self.assertIn('发现新版本 0.8.1', self.answers[0])
+        self.assertEqual(len(self.notes), 1)
+        self.assertIn('0.8.1 已下载', self.notes[0])
+        item.check(manual=True)
+        self.assertIn('已下载', self.answers[-1])
 
     def test_downloaded_update_installs_once_on_exit(self):
         github = FakeManager(check=release('0.8.1'))

@@ -164,7 +164,19 @@ dotnet tool install -g vpk --version 1.2.161
 - `gh` 已登录；已添加 CNB 远程仓库：`git remote add cnb https://cnb.cool/haixianma422-maker/hex-companion.git`。
 - 环境变量 `CNB_TOKEN` 是有该仓库 Release 读写权限的 CNB 访问令牌。
 
-每个 Release 上传本版完整包、最近 10 个差量包、安装包、免安装包，最后上传 `releases.win.json`，再标为最新正式版。客户端从两边固定的 `latest/download` 地址读取更新，所以带更新的版本不能标为预发布。CNB 仓库地址改变时，同步修改 `aram_demo/updater.py` 的 `CNB_REPO`。测试时可设置环境变量 `HEX_COMPANION_UPDATE_URL` 指向本地更新目录，代替两个线上地址。
+GitHub 的版本 Release 上传本版完整包、最近 10 个差量包、安装包、免安装包，最后上传 `releases.win.json`，再标为最新正式版。客户端从 GitHub 固定的 `latest/download` 地址读取更新，所以带更新的版本不能标为预发布。
+
+CNB 没有文档化的 `latest/download` 地址，客户端改从固定标签 `update-feed` 的 Release（“自动更新源”）读取：完整包、差量包和 `releases.win.json` 上传到这里，新更新源上线后删除它不再列出的旧包；安装包和免安装包上传到本版 Release，再标为最新正式版。`update-feed` 标签首次发布时自动创建，之后不移动，这个 Release 不要删除。
+
+CNB 上传中断时，用同一版本号补传，已完整上传的附件会跳过，不重新打包，也不再上传 GitHub：
+
+```powershell
+.\.venv\Scripts\python.exe scripts/publish_update.py --cnb-only --notes 版本说明.md
+```
+
+CNB 仓库地址改变时，同步修改 `aram_demo/updater.py` 的 `CNB_REPO`。测试时可设置环境变量 `HEX_COMPANION_UPDATE_URL` 指向本地更新目录，代替两个线上地址。
+
+托盘的“检查更新”和“重启并更新”用程序自己的对话框回复结果，不依赖 Windows 通知；后台自动检查只在下载完新版本后发一条托盘通知。
 
 ## 常见问题
 

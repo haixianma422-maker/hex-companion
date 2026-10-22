@@ -1,6 +1,7 @@
 """Read League window geometry and other Win32 helpers that need no GUI toolkit."""
 import ctypes
 import os
+import threading
 from ctypes import wintypes
 from dataclasses import dataclass
 
@@ -96,10 +97,16 @@ def find_league_window(stage):
     return LeagueWindow(hwnd, rect, (work.left, work.top, work.right, work.bottom), hwnd == foreground)
 
 
-def message_box(title, text):
-    """Blocking native error box; needs no GUI toolkit."""
+def message_box(title, text, icon=0x10):
+    """Blocking native box, an error (MB_ICONERROR) by default; needs no GUI toolkit."""
     if os.name == 'nt':
-        ctypes.windll.user32.MessageBoxW(None, text, title, 0x10 | 0x40000)   # MB_ICONERROR | MB_TOPMOST
+        ctypes.windll.user32.MessageBoxW(None, text, title, icon | 0x40000)   # MB_TOPMOST
+
+
+def show_message(title, text):
+    """Information box on its own thread, so the overlay keeps running. Unlike tray balloons,
+    Windows notification settings and Do Not Disturb cannot hide it."""
+    threading.Thread(target=message_box, args=(title, text, 0x40), daemon=True).start()   # MB_ICONINFORMATION
 
 
 def single_instance():
