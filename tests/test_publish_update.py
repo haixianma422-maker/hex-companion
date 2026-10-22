@@ -114,7 +114,10 @@ class StageTests(unittest.TestCase):
                 (releases / name).write_bytes(b'installer')
             packages, installers, feed_path = publish_update.stage(releases, '0.8.1', keep_deltas=10)
             self.assertEqual([path.name for path in packages], ['App-0.8.1-full.nupkg', 'App-0.8.1-delta.nupkg'])
-            self.assertEqual([path.name for path in installers], list(publish_update.INSTALLERS))
+            # Published without the pack id (the author's name); the packages keep it for updates.
+            self.assertEqual([path.name for path in installers],
+                             ['HexCompanion-Windows-x64-Setup.exe', 'HexCompanion-Windows-x64.zip'])
+            self.assertTrue(all(path.read_bytes() == b'installer' for path in installers))
             listed = json.loads(feed_path.read_text(encoding='utf-8'))['Assets']
             self.assertEqual([asset['FileName'] for asset in listed], [path.name for path in packages])
 

@@ -43,7 +43,7 @@
 
 ## 直接使用
 
-从本仓库的 [Releases](https://github.com/haixianma422-maker/hex-companion/releases) 下载 Windows x64 发布包，解压后打开 `HexCompanion` 文件夹运行 `HexCompanion.exe`。`_internal` 文件夹保存运行所需文件，需与 EXE 放在一起。需要 Windows 10/11 x64，无需安装 Python。
+从本仓库的 [Releases](https://github.com/haixianma422-maker/hex-companion/releases) 下载安装包 `HexCompanion-Windows-x64-Setup.exe` 安装；或下载免安装包 `HexCompanion-Windows-x64.zip`，解压后运行其中的 `海克斯随行.exe`，同目录的 `Update.exe` 和 `current` 文件夹需保留。需要 Windows 10/11 x64，无需安装 Python。
 
 1. 退出旧版工具，双击 EXE 并确认 Windows 管理员权限提示。
 2. 将游戏视频设置中的窗口模式设为 **无边框**。桌面浮窗可能被独占全屏遮住。
@@ -59,7 +59,7 @@
 | Esc / 收起 | 将面板收起为可拖动小浮标 |
 | 单击浮标 | 展开面板 |
 
-**程序更新**：从 v0.8.0 起，Releases 提供安装包 `HaixianMa.HexCompanion-win-Setup.exe` 和免安装包 `HaixianMa.HexCompanion-win-Portable.zip`，两者都能自动更新。安装包装到 `%LOCALAPPDATA%\HaixianMa.HexCompanion`。工具启动约 1 分钟后检查一次新版本，之后每 6 小时检查一次；先查 [CNB 镜像](https://cnb.cool/haixianma422-maker/hex-companion)，连不上再查 GitHub。新版本在后台下载，通常只需下载差量包。下载完成后，在托盘菜单选“重启并更新”即可安装，组队、选人和对局中不会重启；也可以直接退出，退出时自动安装。托盘菜单的“检查更新”可随时手动检查。v0.7.0 及更早的压缩包不含更新程序，需要重新下载一次安装包。
+**程序更新**：从 v0.8.0 起，Releases 提供安装包和免安装包，两者都能自动更新（v0.8.0 的文件名为 `HaixianMa.HexCompanion-win-Setup.exe` 和 `HaixianMa.HexCompanion-win-Portable.zip`，v0.9.0 起为 `HexCompanion-Windows-x64-Setup.exe` 和 `HexCompanion-Windows-x64.zip`）。安装包装到 `%LOCALAPPDATA%\HaixianMa.HexCompanion`。工具启动约 1 分钟后检查一次新版本，之后每 6 小时检查一次；先查 [CNB 镜像](https://cnb.cool/haixianma422-maker/hex-companion)，连不上再查 GitHub。新版本在后台下载，通常只需下载差量包。下载完成后，在托盘菜单选“重启并更新”即可安装，组队、选人和对局中不会重启；也可以直接退出，退出时自动安装。托盘菜单的“检查更新”可随时手动检查。v0.7.0 及更早的压缩包不含更新程序，需要重新下载一次安装包。
 
 EXE 的设置和更新缓存保存在 `%LOCALAPPDATA%\HexCompanion\data`。获取新资料需要能够访问所选数据来源；101 的召唤师技能补充需要访问 OP.GG。已有缓存和文字识别可离线使用。
 

@@ -9,6 +9,7 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import urllib.error
@@ -25,7 +26,10 @@ from scripts.package_binary import package, sha
 CNB_API = 'https://api.cnb.cool'
 CHANNEL = 'win'
 FEED = f'releases.{CHANNEL}.json'
-INSTALLERS = (f'{PACK_ID}-{CHANNEL}-Setup.exe', f'{PACK_ID}-{CHANNEL}-Portable.zip')
+# Velopack names the installers after the pack id; releases publish them under neutral names.
+# Packages keep the pack id: installed copies find their updates by it.
+INSTALLERS = {f'{PACK_ID}-{CHANNEL}-Setup.exe': 'HexCompanion-Windows-x64-Setup.exe',
+              f'{PACK_ID}-{CHANNEL}-Portable.zip': 'HexCompanion-Windows-x64.zip'}
 GITHUB_FEED = dict(FEEDS)['GitHub']
 UPLOAD_ATTEMPTS = 3
 FEED_RELEASE_NOTES = '程序自动更新从这里读取更新源与安装包。每次发版都会替换其中的文件，请勿删除。'
@@ -80,11 +84,13 @@ def stage(releases, version, keep_deltas):
     feed_path = staged / FEED
     feed_path.write_text(json.dumps({**feed, 'Assets': full + deltas}, ensure_ascii=False, indent=2), encoding='utf-8')
     packages = [releases / asset['FileName'] for asset in full + deltas]
-    installers = [releases / name for name in INSTALLERS]
-    missing = [path.name for path in packages + installers if not path.is_file()]
+    missing = [path.name for path in packages + [releases / name for name in INSTALLERS] if not path.is_file()]
     assert not missing, f'缺少待上传文件：{missing}'
     for asset in full + deltas:
         assert sha(releases / asset['FileName']) == asset['SHA256'].lower(), f'校验不符：{asset["FileName"]}'
+    installers = [staged / published for published in INSTALLERS.values()]
+    for built, target in zip(INSTALLERS, installers):
+        shutil.copyfile(releases / built, target)
     return packages, installers, feed_path
 
 
