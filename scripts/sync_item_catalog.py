@@ -6,7 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser()
-parser.add_argument('--patch', default='16.20.1')
+parser.add_argument('--patch', default='16.21.1')
 parser.add_argument('--input', type=Path, help='Use a saved Riot item.json instead of downloading')
 args = parser.parse_args()
 url = f'https://ddragon.leagueoflegends.com/cdn/{args.patch}/data/zh_CN/item.json'

@@ -9,9 +9,13 @@ from unittest.mock import patch
 from PIL import Image
 
 
+from aram_demo.item_icons import ITEM_PATCH
+
 GAREN = 'https://game.gtimg.cn/images/lol/act/img/spell/GarenE.png'
 FLASH = 'https://game.gtimg.cn/images/lol/act/img/spell/Summoner_flash.png'
-CDN = 'https://opgg-static.akamaized.net/meta/images/lol/16.20.1/spell/GarenE.png'
+# 101 URLs carry no version and resolve to the shipped item patch; OP.GG URLs name theirs.
+CDN = f'https://opgg-static.akamaized.net/meta/images/lol/{ITEM_PATCH}/spell/GarenE.png'
+OTHER_CDN = 'https://opgg-static.akamaized.net/meta/images/lol/16.1.1/spell/GarenE.png'
 
 
 def png(color=(20, 80, 140), size=(64, 64)):
@@ -22,7 +26,7 @@ def png(color=(20, 80, 140), size=(64, 64)):
 
 class AdviceIconTests(unittest.TestCase):
     def test_offline_riot_spell_cache_is_shared_by_101_and_opgg_urls(self):
-        official = 'https://ddragon.leagueoflegends.com/cdn/16.20.1/img/spell/GarenE.png'
+        official = f'https://ddragon.leagueoflegends.com/cdn/{ITEM_PATCH}/img/spell/GarenE.png'
         cache = self.cache()
         with patch.object(cache, '_download', return_value=png()):
             cache.ensure([official])
@@ -59,7 +63,7 @@ class AdviceIconTests(unittest.TestCase):
             self.assertEqual(restarted.ensure([GAREN, FLASH]), [])
 
     def test_known_spell_aliases_share_cache_but_versions_and_unrelated_paths_remain_separate(self):
-        urls = [GAREN, CDN, CDN.replace('16.20.1', '16.21.1')]
+        urls = [GAREN, CDN, OTHER_CDN]
         cache = self.cache()
         with patch.object(cache, '_download', return_value=png()):
             self.assertEqual(cache.ensure(urls), [urls[0],urls[2]])

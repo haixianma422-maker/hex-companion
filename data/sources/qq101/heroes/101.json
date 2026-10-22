@@ -99,18 +99,6 @@
       "rarity": 8
     },
     {
-      "id": 1416,
-      "name": "海克斯科技龙魂",
-      "tier": 0,
-      "rarity": 1
-    },
-    {
-      "id": 2116,
-      "name": "威能之追求",
-      "tier": 0,
-      "rarity": 4
-    },
-    {
       "id": 1098,
       "name": "急急小子",
       "tier": 0,
@@ -121,12 +109,6 @@
       "name": "巨人杀手",
       "tier": 0,
       "rarity": 8
-    },
-    {
-      "id": 1384,
-      "name": "捐赠",
-      "tier": 0,
-      "rarity": 4
     },
     {
       "id": 1053,
@@ -183,14 +165,26 @@
       "rarity": 1
     },
     {
-      "id": 2083,
-      "name": "牙仙子",
+      "id": 1103,
+      "name": "面包和黄油",
       "tier": 1,
       "rarity": 4
     },
     {
-      "id": 1103,
-      "name": "面包和黄油",
+      "id": 1416,
+      "name": "海克斯科技龙魂",
+      "tier": 1,
+      "rarity": 1
+    },
+    {
+      "id": 2116,
+      "name": "威能之追求",
+      "tier": 1,
+      "rarity": 4
+    },
+    {
+      "id": 2083,
+      "name": "牙仙子",
       "tier": 1,
       "rarity": 4
     },
@@ -211,6 +205,12 @@
       "name": "大师铸就",
       "tier": 1,
       "rarity": 1
+    },
+    {
+      "id": 1384,
+      "name": "捐赠",
+      "tier": 1,
+      "rarity": 4
     },
     {
       "id": 2100,
@@ -255,32 +255,20 @@
       "rarity": 1
     },
     {
-      "id": 1329,
-      "name": "史上最大雪球",
-      "tier": 1,
-      "rarity": 8
-    },
-    {
       "id": 1062,
       "name": "全能龙魂",
       "tier": 1,
       "rarity": 8
     },
     {
-      "id": 1345,
-      "name": "心灵净化",
-      "tier": 1,
-      "rarity": 4
-    },
-    {
-      "id": 1335,
-      "name": "夺金",
+      "id": 1154,
+      "name": "海牛阿福的勇士",
       "tier": 1,
       "rarity": 8
     },
     {
-      "id": 1154,
-      "name": "海牛阿福的勇士",
+      "id": 1335,
+      "name": "夺金",
       "tier": 1,
       "rarity": 8
     },
@@ -309,22 +297,10 @@
       "rarity": 8
     },
     {
-      "id": 2098,
-      "name": "吃过路兵",
-      "tier": 1,
-      "rarity": 8
-    },
-    {
       "id": 2119,
       "name": "过量延伸者",
       "tier": 1,
       "rarity": 4
-    },
-    {
-      "id": 2118,
-      "name": "大招工具人",
-      "tier": 2,
-      "rarity": 8
     },
     {
       "id": 2072,
@@ -345,8 +321,8 @@
       "rarity": 8
     },
     {
-      "id": 1150,
-      "name": "面包和果酱",
+      "id": 2077,
+      "name": "贪欲束缚",
       "tier": 2,
       "rarity": 4
     },
@@ -357,16 +333,16 @@
       "rarity": 4
     },
     {
-      "id": 2077,
-      "name": "贪欲束缚",
+      "id": 1150,
+      "name": "面包和果酱",
       "tier": 2,
       "rarity": 4
     },
     {
-      "id": 1029,
-      "name": "虚幻武器",
+      "id": 1349,
+      "name": "终极唤醒",
       "tier": 2,
-      "rarity": 4
+      "rarity": 8
     },
     {
       "id": 2055,
@@ -375,10 +351,10 @@
       "rarity": 8
     },
     {
-      "id": 1349,
-      "name": "终极唤醒",
+      "id": 1029,
+      "name": "虚幻武器",
       "tier": 2,
-      "rarity": 8
+      "rarity": 4
     },
     {
       "id": 1056,
@@ -393,16 +369,22 @@
       "rarity": 4
     },
     {
-      "id": 1044,
-      "name": "冰寒",
+      "id": 1329,
+      "name": "史上最大雪球",
       "tier": 2,
-      "rarity": 1
+      "rarity": 8
     },
     {
       "id": 1129,
       "name": "神射法师",
       "tier": 2,
       "rarity": 4
+    },
+    {
+      "id": 1044,
+      "name": "冰寒",
+      "tier": 2,
+      "rarity": 1
     },
     {
       "id": 1332,
@@ -423,16 +405,10 @@
       "rarity": 4
     },
     {
-      "id": 2016,
-      "name": "注魔",
+      "id": 1308,
+      "name": "火狐",
       "tier": 2,
       "rarity": 1
-    },
-    {
-      "id": 2095,
-      "name": "掷骰狂人",
-      "tier": 2,
-      "rarity": 8
     },
     {
       "id": 1402,
@@ -441,40 +417,46 @@
       "rarity": 8
     },
     {
-      "id": 1308,
-      "name": "火狐",
-      "tier": 2,
-      "rarity": 1
-    },
-    {
       "id": 1404,
       "name": "属性！",
       "tier": 2,
       "rarity": 1
     },
     {
-      "id": 1358,
-      "name": "弹球",
-      "tier": 2,
-      "rarity": 4
-    },
-    {
-      "id": 2088,
-      "name": "下雪天",
-      "tier": 2,
-      "rarity": 1
-    },
-    {
-      "id": 2042,
-      "name": "藏身草丛",
-      "tier": 2,
-      "rarity": 4
-    },
-    {
-      "id": 2063,
-      "name": "位面转移",
+      "id": 1344,
+      "name": "最终形态",
       "tier": 2,
       "rarity": 8
+    },
+    {
+      "id": 2098,
+      "name": "吃过路兵",
+      "tier": 2,
+      "rarity": 8
+    },
+    {
+      "id": 1326,
+      "name": "夜狩",
+      "tier": 2,
+      "rarity": 4
+    },
+    {
+      "id": 2080,
+      "name": "冰雪爆裂",
+      "tier": 2,
+      "rarity": 4
+    },
+    {
+      "id": 2107,
+      "name": "濒死悟道",
+      "tier": 2,
+      "rarity": 8
+    },
+    {
+      "id": 2016,
+      "name": "注魔",
+      "tier": 3,
+      "rarity": 1
     },
     {
       "id": 1054,
@@ -489,10 +471,10 @@
       "rarity": 8
     },
     {
-      "id": 1337,
-      "name": "尊我为王",
+      "id": 1358,
+      "name": "弹球",
       "tier": 3,
-      "rarity": 8
+      "rarity": 4
     },
     {
       "id": 1011,
@@ -507,22 +489,16 @@
       "rarity": 1
     },
     {
-      "id": 1344,
-      "name": "最终形态",
+      "id": 1337,
+      "name": "尊我为王",
       "tier": 3,
       "rarity": 8
     },
     {
-      "id": 1326,
-      "name": "夜狩",
+      "id": 2088,
+      "name": "下雪天",
       "tier": 3,
-      "rarity": 4
-    },
-    {
-      "id": 2034,
-      "name": "鲨鱼暴风",
-      "tier": 3,
-      "rarity": 4
+      "rarity": 1
     },
     {
       "id": 1057,
@@ -531,34 +507,22 @@
       "rarity": 1
     },
     {
-      "id": 1392,
-      "name": "神圣雪球",
-      "tier": 3,
-      "rarity": 8
-    },
-    {
-      "id": 2080,
-      "name": "冰雪爆裂",
+      "id": 2034,
+      "name": "鲨鱼暴风",
       "tier": 3,
       "rarity": 4
-    },
-    {
-      "id": 2107,
-      "name": "濒死悟道",
-      "tier": 3,
-      "rarity": 8
-    },
-    {
-      "id": 2046,
-      "name": "魄罗蛮冲",
-      "tier": 3,
-      "rarity": 8
     },
     {
       "id": 1996,
       "name": "升级：耀光",
       "tier": 3,
       "rarity": 4
+    },
+    {
+      "id": 1392,
+      "name": "神圣雪球",
+      "tier": 3,
+      "rarity": 8
     },
     {
       "id": 1386,
@@ -614,12 +578,12 @@
     {
       "id": 4,
       "name": "闪现",
-      "icon_url": "https://opgg-static.akamaized.net/meta/images/lol/16.20.1/spell/SummonerFlash.png"
+      "icon_url": "https://opgg-static.akamaized.net/meta/images/lol/16.21.1/spell/SummonerFlash.png"
     },
     {
       "id": 13,
       "name": "清晰术",
-      "icon_url": "https://opgg-static.akamaized.net/meta/images/lol/16.20.1/spell/SummonerMana.png"
+      "icon_url": "https://opgg-static.akamaized.net/meta/images/lol/16.21.1/spell/SummonerMana.png"
     }
   ],
   "tier_labels": {
@@ -636,10 +600,10 @@
   "build_mode_verified": true,
   "build_verification": "101 official Hextech ARAM fuwen_hero_rank endpoint; champion id and 255 augment group validated",
   "recommendation_order": "101 q0: core winrate descending (stable source ties); first boots and first skill summary",
-  "patch": "16.20",
-  "stat_date": "20261013",
-  "fetched_at": "2026-10-14T12:46:12.533428Z",
+  "patch": "16.21",
+  "stat_date": "20261021",
+  "fetched_at": "2026-10-22T04:08:59.726836Z",
   "summoner_source": "opgg",
   "summoner_source_name": "OP.GG",
-  "summoner_fetched_at": "2026-10-14T12:44:53.840598+00:00"
+  "summoner_fetched_at": "2026-10-22T04:06:57.288028+00:00"
 }
