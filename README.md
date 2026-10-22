@@ -59,6 +59,8 @@
 | Esc / 收起 | 将面板收起为可拖动小浮标 |
 | 单击浮标 | 展开面板 |
 
+**程序更新**：从 v0.8.0 起，Releases 提供安装包 `HaixianMa.HexCompanion-win-Setup.exe` 和免安装包 `HaixianMa.HexCompanion-win-Portable.zip`，两者都能自动更新。安装包装到 `%LOCALAPPDATA%\HaixianMa.HexCompanion`。工具启动约 1 分钟后检查一次新版本，之后每 6 小时检查一次；先查 [CNB 镜像](https://cnb.cool/haixianma422-maker/hex-companion)，连不上再查 GitHub。新版本在后台下载，通常只需下载差量包。下载完成后，在托盘菜单选“重启并更新”即可安装，组队、选人和对局中不会重启；也可以直接退出，退出时自动安装。托盘菜单的“检查更新”可随时手动检查。v0.7.0 及更早的压缩包不含更新程序，需要重新下载一次安装包。
+
 EXE 的设置和更新缓存保存在 `%LOCALAPPDATA%\HexCompanion\data`。获取新资料需要能够访问所选数据来源；101 的召唤师技能补充需要访问 OP.GG。已有缓存和内置 OCR 模型可离线使用。
 
 在“设置 → 快捷键”中点击输入框后按下组合键，或填写 `F8`、`Ctrl+Alt+H` 等形式。重复、无效或已被其他程序占用的组合会提示错误，并保留原设置；设置窗口打开期间暂停全局快捷键。
@@ -148,6 +150,21 @@ if ($checkProcess.ExitCode -ne 0) { throw 'EXE 验收失败，请检查 verifica
 ```
 
 验收会短暂显示程序窗口，禁用网络并使用临时设置，不连接真实对局；也可用 `scripts/check_frozen_hidden.py` 在不可见桌面运行。打包脚本核对验收报告与 EXE 的 SHA-256，检查图片、两套来源、OCR 模型、界面文件及个人文件排除情况。分享包 `HexCompanion-Windows-x64.zip`、`release_manifest.json` 和 EXE 校验文件输出在程序文件夹的上一级目录，包内附使用说明、MIT 许可证、第三方依赖许可证和验收报告。
+
+发布自动更新版本：先修改 `aram_demo/__init__.py` 的 `__version__`，构建并验收，再用 Velopack 打包并上传到 GitHub 和 CNB。打包需要 .NET SDK 和与 `requirements.txt` 中 velopack 同版本的 vpk：
+
+```powershell
+dotnet tool install -g vpk --version 1.2.161
+.\.venv\Scripts\python.exe scripts/publish_update.py --exe $exePath --check $reportPath
+```
+
+不加 `--upload` 时只打包，产物在 `dist/velopack-releases`。该目录保留历次完整包和差量包，下一版据此生成差量；目录不存在时，脚本从 GitHub 已发布的更新源取回上一版完整包。正式发布加 `--upload --notes 版本说明.md`，并满足：
+
+- 在已推送的 `main` 上发布，工作区无未提交修改。脚本在当前提交创建 `v版本号` 标签，推送到 GitHub 和 CNB。
+- `gh` 已登录；已添加 CNB 远程仓库：`git remote add cnb https://cnb.cool/haixianma422-maker/hex-companion.git`。
+- 环境变量 `CNB_TOKEN` 是有该仓库 Release 读写权限的 CNB 访问令牌。
+
+每个 Release 上传本版完整包、最近 10 个差量包、安装包、免安装包，最后上传 `releases.win.json`，再标为最新正式版。客户端从两边固定的 `latest/download` 地址读取更新，所以带更新的版本不能标为预发布。CNB 仓库地址改变时，同步修改 `aram_demo/updater.py` 的 `CNB_REPO`。测试时可设置环境变量 `HEX_COMPANION_UPDATE_URL` 指向本地更新目录，代替两个线上地址。
 
 ## 常见问题
 

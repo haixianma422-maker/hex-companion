@@ -12,6 +12,11 @@ from aram_demo.windows import single_instance
 
 
 def main():
+    if getattr(sys, 'frozen', False):
+        # Velopack runs install/update hooks by starting the EXE with its own arguments and
+        # exits there; it must come before argument parsing, elevation and the instance lock.
+        import velopack
+        velopack.App().run()
     parser = argparse.ArgumentParser()
     parser.add_argument('--preview', action='store_true', help='预览小浮窗的选人 / 对局样式')
     parser.add_argument('--inspector', action='store_true', help='开发调试用资料查看器')

@@ -5,14 +5,20 @@ from .brand import brand_image
 
 
 class Tray:
-    def __init__(self, dispatch, toggle, settings, refresh, close, on_error=None):
+    def __init__(self, dispatch, toggle, settings, refresh, close, on_error=None, updates=None):
         import pystray
         image = brand_image()
-        def item(label, callback, default=False):
-            return pystray.MenuItem(label, lambda icon, menu_item: dispatch(callback), default=default)
-        menu = pystray.Menu(item('展开 / 收起伴随浮窗', toggle, True),
-                            item('设置 / 手动修正', settings), item('刷新数据与客户端', refresh),
-                            pystray.Menu.SEPARATOR, item('退出海克斯随行', close))
+        def item(label, callback, default=False, visible=True):
+            return pystray.MenuItem(label, lambda icon, menu_item: dispatch(callback), default=default, visible=visible)
+        entries = [item('展开 / 收起伴随浮窗', toggle, True),
+                   item('设置 / 手动修正', settings), item('刷新数据与客户端', refresh)]
+        if updates:
+            # ready_version is read on the tray thread; it only changes when a download finishes.
+            check, restart, ready_version = updates
+            entries += [item('检查更新', check),
+                        item(lambda menu_item: f'重启并更新到 {ready_version()}', restart,
+                             visible=lambda menu_item: bool(ready_version()))]
+        menu = pystray.Menu(*entries, pystray.Menu.SEPARATOR, item('退出海克斯随行', close))
         self.icon = pystray.Icon('hex-companion', image, '海克斯随行 · 等待海克斯大乱斗', menu)
         self.dispatch, self.on_error = dispatch, on_error
         self.stopping = threading.Event()
@@ -47,6 +53,18 @@ class Tray:
                 self._failed(exc)
         self.thread = threading.Thread(target=run, daemon=True)
         self.thread.start()
+
+    def notify(self, text):
+        try:
+            self.icon.notify(text, '海克斯随行')
+        except Exception:
+            logging.getLogger(__name__).exception('托盘通知失败')
+
+    def refresh_menu(self):
+        try:
+            self.icon.update_menu()
+        except Exception:
+            logging.getLogger(__name__).exception('刷新托盘菜单失败')
 
     def stop(self):
         self.stopping.set()

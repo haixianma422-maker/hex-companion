@@ -35,6 +35,22 @@ class CompanionAppTests(unittest.TestCase):
         pump(until=lambda: not self.window().isVisible())
         self.assertFalse(self.app.panel.visible)
 
+    def test_update_restart_waits_until_lobby_select_and_game_are_over(self):
+        from unittest.mock import Mock
+        self.app.updater = Mock(ready=('manager', 'info'))
+        notes = []
+        self.app.notify = notes.append
+        for phase in ('Lobby', 'ChampSelect', 'InProgress'):
+            self.app.on_client_state(ClientState(phase, 222, queue_id=2400))
+            self.app.restart_update()
+        self.app.updater.restart.assert_not_called()
+        self.assertFalse(self.app.closed)
+        self.assertEqual(len(notes), 3)
+        self.app.on_client_state(ClientState('None', queue_id=None))
+        self.app.restart_update()
+        self.app.updater.restart.assert_called_once()
+        self.assertTrue(self.app.closed)
+
     def test_tencent_custom_mayhem_select_shows_real_hero_panel(self):
         self.app.on_client_state(ClientState('ChampSelect', 222, queue_id=3270))
         self.assertTrue(self.app.panel.visible)

@@ -3,3 +3,4 @@ rapidocr==3.10.0
 onnxruntime==1.31.0
 pystray==0.19.5
 PySide6-Essentials==6.12.0
+velopack==1.2.161

@@ -8,7 +8,7 @@ from dataclasses import replace
 from PySide6.QtCore import QTimer
 from PySide6.QtGui import QGuiApplication
 
-from .companion_state import MAYHEM_QUEUES, PLAYING, SessionTracker
+from .companion_state import ACTIVE, MAYHEM_QUEUES, PLAYING, SessionTracker
 from .cache import DataStore, SOURCE_NAMES, is_current, is_fresh
 from .advice_icons import AdviceIconCache
 from .builds import recommended_items
@@ -20,6 +20,7 @@ from .qt_overlay import CompanionBubble, CompanionPanel, Overlay
 from .qt_settings import show_settings
 from .visual_assets import VisualAssetCache
 from .runtime_log import health as log_health
+from .updater import CHECK_INTERVAL_MS, FIRST_CHECK_MS, Updater
 from .recognition import Recognizer, match_slots, with_catalog
 from .windows import LeagueWindow, find_league_window, foreground_is_ours, message_box
 
@@ -66,7 +67,7 @@ class CompanionApp:
         self.source_errors = {}
         self.dialog = None
         self.anchor = None
-        self.tray = None
+        self.tray = self.updater = None
         self.item_icons = ItemIconCache(store.root, store.seed_root)
         self.advice_icons = AdviceIconCache(store.root, store.seed_root)
         self.visual_assets = VisualAssetCache(store.root, store.seed_root)
@@ -104,13 +105,17 @@ class CompanionApp:
         self.bubble.set_hotkeys(self.hotkeys.bindings)
         if services:
             from .tray import Tray
-            self.tray = Tray(self.dispatch, self.toggle, self.show_settings, self.refresh, self.close, self.tray_failed)
+            self.updater = Updater(self.dispatch, self.notify, on_ready=lambda: self.tray and self.tray.refresh_menu())
+            self.tray = Tray(self.dispatch, self.toggle, self.show_settings, self.refresh, self.close, self.tray_failed,
+                             updates=(lambda: self.updater.check(manual=True), self.restart_update,
+                                      lambda: self.updater.ready_version))
             self.tray.start()
             self.hotkeys.start()
             QTimer.singleShot(80, self._pump)
             QTimer.singleShot(500, self._tick)
             if not preview:
                 QTimer.singleShot(100, self.poll)
+                QTimer.singleShot(FIRST_CHECK_MS, self.auto_check_update)
 
     def dispatch(self, callback):
         self.events.put(('call', callback))
@@ -688,11 +693,41 @@ class CompanionApp:
     def show_settings(self, slot=None):
         show_settings(self, slot)
 
+    def notify(self, text):
+        if self.tray:
+            self.tray.notify(text)
+
+    def auto_check_update(self):
+        if self.closed:
+            return
+        self.updater.check()
+        QTimer.singleShot(CHECK_INTERVAL_MS, self.auto_check_update)
+
+    def restart_update(self):
+        # Restarting closes the overlay, so it waits for the lobby, champion select and the game to end.
+        if self.state.phase in ACTIVE:
+            self.notify('组队、选人或对局中暂不重启。结束后再选“重启并更新”，退出程序时也会自动安装。')
+            return
+        if not self.updater.ready:
+            return
+        try:
+            self.updater.restart()
+        except Exception as exc:
+            logging.getLogger(__name__).exception('启动更新失败')
+            self.notify('启动更新失败：' + str(exc)[:120])
+            return
+        self.close()
+
     def close(self):
         if self.closed:
             return
         self.closed = True
         logging.getLogger(__name__).info('shutdown requested')
+        try:
+            if self.updater:
+                self.updater.apply_on_exit()
+        except Exception:
+            logging.getLogger(__name__).exception('安排退出时更新失败')
         try:
             try:
                 self.hotkeys.stop()
